@@ -58,6 +58,3 @@ CREATE TABLE post_categories(
    CONSTRAINT id_post_id FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE,
    CONSTRAINT id_category_id FOREIGN KEY (category_id) REFERENCES categories (id)
 );
-
--- Включить проверку внешних ключей
-PRAGMA foreign_keys = ON;
