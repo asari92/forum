@@ -41,10 +41,10 @@ func (m *PostModel) Get(id int) (*Post, error) {
 
 	row := m.DB.QueryRow(stmt, id)
 
-	s := &Post{}
+	p := &Post{}
 	var created string
 
-	err := row.Scan(&s.ID, &s.Title, &s.Content, &s.UserID, &created)
+	err := row.Scan(&p.ID, &p.Title, &p.Content, &p.UserID, &created)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
@@ -53,14 +53,45 @@ func (m *PostModel) Get(id int) (*Post, error) {
 		}
 	}
 
-	s.Created, err = time.Parse("2006-01-02 15:04:05", created)
+	p.Created, err = time.Parse("2006-01-02 15:04:05", created)
 	if err != nil {
 		return nil, err
 	}
 
-	return s, nil
+	return p, nil
 }
 
 func (m *PostModel) Latest() ([]*Post, error) {
-	return nil, nil
+	stmt := `SELECT id, title, content, user_id, created FROM posts
+    ORDER BY id DESC LIMIT 10`
+
+	rows, err := m.DB.Query(stmt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	posts := []*Post{}
+	var created string
+
+	for rows.Next() {
+		p := &Post{}
+		err = rows.Scan(&p.ID, &p.Title, &p.Content, &p.UserID, &created)
+		if err != nil {
+			return nil, err
+		}
+
+		p.Created, err = time.Parse("2006-01-02 15:04:05", created)
+		if err != nil {
+			return nil, err
+		}
+
+		posts = append(posts, p)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
 }

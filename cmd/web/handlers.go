@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
 	"strconv"
 
@@ -16,22 +15,32 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	files := []string{
-		"./ui/html/base.html",
-		"./ui/html/partials/nav.html",
-		"./ui/html/pages/home.html",
-	}
-
-	ts, err := template.ParseFiles(files...)
+	posts, err := app.posts.Latest()
 	if err != nil {
-		app.serverError(w, err) // Use the serverError() helper.
+		app.serverError(w, err)
 		return
 	}
 
-	err = ts.ExecuteTemplate(w, "base", nil)
-	if err != nil {
-		app.serverError(w, err) // Use the serverError() helper.
+	for _, post := range posts {
+		fmt.Fprintf(w, "%+v\n", post)
 	}
+
+	// files := []string{
+	// 	"./ui/html/base.html",
+	// 	"./ui/html/partials/nav.html",
+	// 	"./ui/html/pages/home.html",
+	// }
+
+	// ts, err := template.ParseFiles(files...)
+	// if err != nil {
+	// 	app.serverError(w, err) // Use the serverError() helper.
+	// 	return
+	// }
+
+	// err = ts.ExecuteTemplate(w, "base", nil)
+	// if err != nil {
+	// 	app.serverError(w, err) // Use the serverError() helper.
+	// }
 }
 
 func (app *application) postView(w http.ResponseWriter, r *http.Request) {
