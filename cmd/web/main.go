@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"forum/internal/models"
 	"log"
 	"net/http"
 	"os"
@@ -13,6 +14,7 @@ import (
 type application struct {
 	errorLog *log.Logger
 	infoLog  *log.Logger
+	posts *models.PostModel
 }
 
 func main() {
@@ -38,6 +40,7 @@ func main() {
 	app := &application{
 		errorLog: errorLog,
 		infoLog:  infoLog,
+		posts: &models.PostModel{DB: db},
 	}
 
 	srv := &http.Server{
@@ -76,7 +79,7 @@ func initDB(db *sql.DB) error {
 
 	// Проверка наличия данных
 	var count int
-	row := db.QueryRow("SELECT COUNT(*) FROM snippets")
+	row := db.QueryRow("SELECT COUNT(*) FROM posts")
 	err = row.Scan(&count)
 	if err != nil {
 		return err
