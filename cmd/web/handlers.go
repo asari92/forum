@@ -39,6 +39,14 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
+
+	// возможный способ создания куки
+	// session, _ := h.service.CreateSession(models)
+	// cokkies := &http.Cookie{
+	// 	Value: session.ID,
+	// }
+
+	// http.SetCookie(w, cokkies)
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
