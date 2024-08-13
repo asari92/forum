@@ -21,9 +21,10 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.render(w, http.StatusOK, "home.html", &templateData{
-		Posts: posts,
-	})
+	data := app.newTemplateData(r)
+    data.Posts = posts
+
+	app.render(w, http.StatusOK, "home.html", data)
 }
 
 func (app *application) postView(w http.ResponseWriter, r *http.Request) {
@@ -43,9 +44,10 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.render(w, http.StatusOK, "view.html", &templateData{
-		Post: post,
-	})
+	data := app.newTemplateData(r)
+    data.Post = post
+
+    app.render(w, http.StatusOK, "view.html", data)
 
 	// возможный способ создания куки
 	// session, _ := h.service.CreateSession(models)

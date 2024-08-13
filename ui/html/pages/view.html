@@ -10,7 +10,7 @@
         <pre><code>{{.Content}}</code></pre>
         <div class='metadata'>
             <time>UserID: {{.UserID}}</time>
-            <time>Created: {{.Created}}</time>
+            <time>Created: {{humanDate .Created}}</time>
         </div>
     </div>
     {{end}}
