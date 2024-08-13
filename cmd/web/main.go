@@ -3,18 +3,21 @@ package main
 import (
 	"database/sql"
 	"flag"
-	"forum/internal/models"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
+
+	"forum/internal/models"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type application struct {
-	errorLog *log.Logger
-	infoLog  *log.Logger
-	posts *models.PostModel
+	errorLog      *log.Logger
+	infoLog       *log.Logger
+	posts         *models.PostModel
+	templateCache map[string]*template.Template
 }
 
 func main() {
@@ -37,10 +40,16 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
 	app := &application{
-		errorLog: errorLog,
-		infoLog:  infoLog,
-		posts: &models.PostModel{DB: db},
+		errorLog:      errorLog,
+		infoLog:       infoLog,
+		posts:         &models.PostModel{DB: db},
+		templateCache: templateCache,
 	}
 
 	srv := &http.Server{

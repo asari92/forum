@@ -21,26 +21,9 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, post := range posts {
-		fmt.Fprintf(w, "%+v\n", post)
-	}
-
-	// files := []string{
-	// 	"./ui/html/base.html",
-	// 	"./ui/html/partials/nav.html",
-	// 	"./ui/html/pages/home.html",
-	// }
-
-	// ts, err := template.ParseFiles(files...)
-	// if err != nil {
-	// 	app.serverError(w, err) // Use the serverError() helper.
-	// 	return
-	// }
-
-	// err = ts.ExecuteTemplate(w, "base", nil)
-	// if err != nil {
-	// 	app.serverError(w, err) // Use the serverError() helper.
-	// }
+	app.render(w, http.StatusOK, "home.html", &templateData{
+		Posts: posts,
+	})
 }
 
 func (app *application) postView(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +43,9 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "%+v", post)
+	app.render(w, http.StatusOK, "view.html", &templateData{
+		Post: post,
+	})
 
 	// возможный способ создания куки
 	// session, _ := h.service.CreateSession(models)
