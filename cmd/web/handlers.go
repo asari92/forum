@@ -22,7 +22,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := app.newTemplateData(r)
-    data.Posts = posts
+	data.Posts = posts
 
 	app.render(w, http.StatusOK, "home.html", data)
 }
@@ -45,9 +45,9 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := app.newTemplateData(r)
-    data.Post = post
+	data.Post = post
 
-    app.render(w, http.StatusOK, "view.html", data)
+	app.render(w, http.StatusOK, "view.html", data)
 
 	// возможный способ создания куки
 	// session, _ := h.service.CreateSession(models)
