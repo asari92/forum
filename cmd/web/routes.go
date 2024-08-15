@@ -13,5 +13,11 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("/post/view", app.postView)
 	mux.HandleFunc("/post/create", app.postCreate)
 
-	return app.recoverPanic(app.logRequest(secureHeaders(mux)))
+	// Create and apply middleware chains
+	myChain := New(app.recoverPanic, app.logRequest)
+	myOtherChain := myChain.Append(secureHeaders)
+
+	return myOtherChain.Then(mux)
+	
+	// return app.recoverPanic(app.logRequest(secureHeaders(mux)))
 }
