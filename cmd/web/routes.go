@@ -2,22 +2,20 @@ package main
 
 import "net/http"
 
-// The routes() method returns a servemux containing our application routes.
 func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
-	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
+	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 
-	mux.HandleFunc("/", app.home)
-	mux.HandleFunc("/post/view", app.postView)
-	mux.HandleFunc("/post/create", app.postCreate)
+	mux.HandleFunc("GET /", app.errorHandler)
+	mux.HandleFunc("GET /{$}", app.home)
+	mux.HandleFunc("GET /post/view/{id}", app.postView)
+	mux.HandleFunc("GET /post/create", app.postCreateForm)
+	mux.HandleFunc("POST /post/create", app.postCreate)
 
-	// Create and apply middleware chains
 	myChain := New(app.recoverPanic, app.logRequest)
 	myOtherChain := myChain.Append(secureHeaders)
 
 	return myOtherChain.Then(mux)
-	
-	// return app.recoverPanic(app.logRequest(secureHeaders(mux)))
 }

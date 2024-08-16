@@ -26,7 +26,8 @@ func (c *Chain) Append(middlewares ...Middleware) *Chain {
 // Then applies all middleware to the given handler
 func (c *Chain) Then(h http.Handler) http.Handler {
 	for i := len(c.middlewares) - 1; i >= 0; i-- {
-	// for i := 0; i < len(c.middlewares); i++ {
+		// for i := 0; i < len(c.middlewares); i++ {
+		// Используем reflect для получения имени функции
 		h = c.middlewares[i](h)
 	}
 	return h
@@ -40,9 +41,7 @@ func secureHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "deny")
 		w.Header().Set("X-XSS-Protection", "0")
-		fmt.Println("secureHeaders before")
 		next.ServeHTTP(w, r)
-		fmt.Println("secureHeaders after")
 	})
 }
 
@@ -50,9 +49,7 @@ func (app *application) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		app.infoLog.Printf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
 
-		fmt.Println("logRequest before")
 		next.ServeHTTP(w, r)
-		fmt.Println("logRequest after")
 	})
 }
 
@@ -65,8 +62,6 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 			}
 		}()
 
-		fmt.Println("logRequest before")
 		next.ServeHTTP(w, r)
-		fmt.Println("logRequest after")
 	})
 }
