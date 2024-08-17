@@ -58,19 +58,56 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) postCreateForm(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Display the form for creating a new snippet..."))
-}
+	data := app.newTemplateData(r)
 
-func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
-	title := "O snail"
-	content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
-	userID := 1
+	app.render(w, http.StatusOK, "create.html", data)
 
-	id, err := app.posts.Insert(title, content, userID)
+	categories, err := app.categories.GetAll() // Предполагается, что у вас есть метод для получения всех категорий.
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
+	data := app.newTemplateData(r)
+	data.Categories = categories
+
+	app.render(w, http.StatusOK, "create_post.html", data)
+}
+
+func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	title := r.PostForm.Get("title")
+	content := r.PostForm.Get("content")
+
+	// пока непонятно откуда брать юзерайди
+	userID, err := strconv.Atoi(r.PostForm.Get("userID"))
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	// тут нужно получить категории
+	// categories := r.PostForm.Get("categories")
+
+	// валидировать все данные
+
+	postId, err := app.posts.Insert(title, content, userID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	// внести в бд записи с айди
+	// _, err := app.category.Insert(postId, categories)
+	// if err != nil {
+	// 	app.serverError(w, err)
+	// 	return
+	// }
+
+	http.Redirect(w, r, fmt.Sprintf("/post/view/%d", postId), http.StatusSeeOther)
 }

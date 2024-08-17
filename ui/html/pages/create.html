@@ -1,0 +1,26 @@
+{{define "title"}}Create a New Post{{end}}
+
+{{define "main"}}
+<form action='/post/create' method='POST'>
+    <div>
+        <label>Title:</label>
+        <input type='text' name='title'>
+    </div>
+    <div>
+        <label>Content:</label>
+        <textarea name='content'></textarea>
+    </div>
+    <div>
+        <label>Categories:</label>
+        <!-- Динамическое отображение категорий -->
+        {{range .Categories}}
+        <div>
+            <input type='checkbox' name='categories' value='{{.ID}}'> {{.Name}}
+        </div>
+        {{end}}
+    </div>
+    <div>
+        <input type='submit' value='Publish post'>
+    </div>
+</form>
+{{end}}
