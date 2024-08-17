@@ -18,21 +18,66 @@ type PostModel struct {
 	DB *sql.DB
 }
 
-func (m *PostModel) Insert(title string, content string, userID int) (int, error) {
-	stmt := `INSERT INTO posts (title, content, user_id, created_date)
-    VALUES(?, ?, ?, datetime('now'))`
+// func (m *PostModel) Insert(title string, content string, userID int) (int, error) {
+// 	stmt := `INSERT INTO posts (title, content, user_id, created)
+//     VALUES(?, ?, ?, datetime('now'))`
 
-	result, err := m.DB.Exec(stmt, title, content, userID)
+// 	result, err := m.DB.Exec(stmt, title, content, userID)
+// 	if err != nil {
+// 		return 0, err
+// 	}
+
+// 	id, err := result.LastInsertId()
+// 	if err != nil {
+// 		return 0, err
+// 	}
+
+// 	return int(id), nil
+// }
+
+func (m *PostModel) InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error) {
+	// Начинаем транзакцию
+	tx, err := m.DB.Begin()
 	if err != nil {
 		return 0, err
 	}
 
-	id, err := result.LastInsertId()
+	// В случае ошибки откатываем транзакцию
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Вставляем пост в базу данных
+	stmt := `INSERT INTO posts (title, content, user_id, created) VALUES (?, ?, ?, datetime('now'))`
+	result, err := tx.Exec(stmt, title, content, userID)
 	if err != nil {
 		return 0, err
 	}
 
-	return int(id), nil
+	// Получаем ID вставленного поста
+	postID, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	// Вставляем категории для поста
+	stmt = `INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)`
+	for _, categoryID := range categoryIDs {
+		_, err := tx.Exec(stmt, postID, categoryID)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	// Фиксируем транзакцию
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(postID), nil
 }
 
 func (m *PostModel) Get(id int) (*Post, error) {
@@ -94,4 +139,15 @@ func (m *PostModel) Latest() ([]*Post, error) {
 	}
 
 	return posts, nil
+}
+
+func (m *PostModel) Delete(id int) error {
+	stmt := `DELETE FROM posts WHERE id = ?`
+
+	_, err := m.DB.Exec(stmt, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -58,11 +58,7 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) postCreateForm(w http.ResponseWriter, r *http.Request) {
-	data := app.newTemplateData(r)
-
-	app.render(w, http.StatusOK, "create.html", data)
-
-	categories, err := app.categories.GetAll() // Предполагается, что у вас есть метод для получения всех категорий.
+	categories, err := app.categories.GetAll()
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -84,30 +80,31 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	title := r.PostForm.Get("title")
 	content := r.PostForm.Get("content")
 
-	// пока непонятно откуда брать юзерайди
-	userID, err := strconv.Atoi(r.PostForm.Get("userID"))
-	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
-		return
-	}
+	// пока непонятно откуда брать юзерайди кажется из сессии
+	// userID, err := strconv.Atoi(r.PostForm.Get("userID"))
+	// if err != nil {
+	// 	app.clientError(w, http.StatusBadRequest)
+	// 	return
+	// }
 
-	// тут нужно получить категории
-	// categories := r.PostForm.Get("categories")
+	var categoryIDs []int
+	for _, id := range r.PostForm["categories"] {
+		intID, err := strconv.Atoi(id)
+		if err != nil {
+			app.clientError(w, http.StatusBadRequest)
+			return
+		}
+		categoryIDs = append(categoryIDs, intID)
+	}
 
 	// валидировать все данные
 
-	postId, err := app.posts.Insert(title, content, userID)
+	//!!!!!!!!!!!!!!пока везде юзерайди = 1
+	postId, err := app.posts.InsertPostWithCategories(title, content, 1, categoryIDs)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-
-	// внести в бд записи с айди
-	// _, err := app.category.Insert(postId, categories)
-	// if err != nil {
-	// 	app.serverError(w, err)
-	// 	return
-	// }
 
 	http.Redirect(w, r, fmt.Sprintf("/post/view/%d", postId), http.StatusSeeOther)
 }

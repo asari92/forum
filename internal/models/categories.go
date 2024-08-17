@@ -69,41 +69,41 @@ func (m *CategoryModel) Delete(categoryId int) error {
 	return nil
 }
 
-func (m *CategoryModel) InsertCategoriesForPost(postId int, categoryIDs []int) error {
-	stmt := `INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)`
+// func (m *CategoryModel) InsertCategoriesForPost(postId int, categoryIDs []int) error {
+// 	stmt := `INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)`
 
-	// Начинаем транзакцию для выполнения нескольких вставок
-	tx, err := m.DB.Begin()
-	if err != nil {
-		return err
-	}
+// 	// Начинаем транзакцию для выполнения нескольких вставок
+// 	tx, err := m.DB.Begin()
+// 	if err != nil {
+// 		return err
+// 	}
 
-	// Подготовленный запрос для вставки данных
-	stmtInsert, err := tx.Prepare(stmt)
-	if err != nil {
-		tx.Rollback() // откат транзакции в случае ошибки
-		return err
-	}
-	defer stmtInsert.Close()
+// 	// Подготовленный запрос для вставки данных
+// 	stmtInsert, err := tx.Prepare(stmt)
+// 	if err != nil {
+// 		tx.Rollback() // откат транзакции в случае ошибки
+// 		return err
+// 	}
+// 	defer stmtInsert.Close()
 
-	// Вставляем каждую категорию для поста
-	for _, categoryID := range categoryIDs {
-		_, err := stmtInsert.Exec(postId, categoryID)
-		if err != nil {
-			tx.Rollback() // откат транзакции в случае ошибки
-			return err
-		}
-	}
+// 	// Вставляем каждую категорию для поста
+// 	for _, categoryID := range categoryIDs {
+// 		_, err := stmtInsert.Exec(postId, categoryID)
+// 		if err != nil {
+// 			tx.Rollback() // откат транзакции в случае ошибки
+// 			return err
+// 		}
+// 	}
 
-	// Завершаем транзакцию
-	err = tx.Commit()
-	if err != nil {
-		tx.Rollback() // откат транзакции в случае ошибки
-		return err
-	}
+// 	// Завершаем транзакцию
+// 	err = tx.Commit()
+// 	if err != nil {
+// 		tx.Rollback() // откат транзакции в случае ошибки
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 func (m *CategoryModel) GetCategoriesForPost(postId int) ([]*Category, error) {
 	stmt := `SELECT c.id, c.name 

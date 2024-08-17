@@ -10,6 +10,7 @@ import (
 
 type templateData struct {
 	CurrentYear int
+	Categories  []*models.Category
 	Post        *models.Post
 	Posts       []*models.Post
 }
