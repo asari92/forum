@@ -4,18 +4,28 @@
 <form action='/post/create' method='POST'>
     <div>
         <label>Title:</label>
-        <input type='text' name='title'>
+        {{with .Form.FieldErrors.title}}
+            <label class='error'>{{.}}</label>
+        {{end}}
+        <input type='text' name='title' value='{{.Form.Title}}'>
     </div>
     <div>
         <label>Content:</label>
-        <textarea name='content'></textarea>
+        {{with .Form.FieldErrors.content}}
+            <label class='error'>{{.}}</label>
+        {{end}}
+        <textarea name='content'>{{.Form.Content}}</textarea>
     </div>
     <div>
         <label>Categories:</label>
+        {{with .Form.FieldErrors.categories}}
+            <label class='error'>{{.}}</label>
+        {{end}}
         <!-- Динамическое отображение категорий -->
         {{range .Categories}}
         <div>
-            <input type='checkbox' name='categories' value='{{.ID}}'> {{.Name}}
+            <input type='checkbox' name='categories' value='{{.ID}}' 
+            {{if (contains $.Form.Categories .ID)}}checked{{end}}> {{.Name}}
         </div>
         {{end}}
     </div>

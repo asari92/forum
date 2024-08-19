@@ -11,7 +11,7 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("GET /", app.errorHandler)
 	mux.HandleFunc("GET /{$}", app.home)
 	mux.HandleFunc("GET /post/view/{id}", app.postView)
-	mux.HandleFunc("GET /post/create", app.postCreateForm)
+	mux.HandleFunc("GET /post/create", app.postCreateView)
 	mux.HandleFunc("POST /post/create", app.postCreate)
 
 	myChain := New(app.recoverPanic, app.logRequest)

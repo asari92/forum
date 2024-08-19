@@ -13,14 +13,25 @@ type templateData struct {
 	Categories  []*models.Category
 	Post        *models.Post
 	Posts       []*models.Post
+	Form        any
 }
 
 func humanDate(t time.Time) string {
 	return t.Format("02 Jan 2006 at 15:04")
 }
 
+func contains(s []int, e int) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
 var functions = template.FuncMap{
 	"humanDate": humanDate,
+	"contains": contains,
 }
 
 func newTemplateCache() (map[string]*template.Template, error) {

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
+	"unicode/utf8"
 
 	"forum/internal/models"
 )
@@ -57,17 +59,34 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	// http.SetCookie(w, cokkies)
 }
 
-func (app *application) postCreateForm(w http.ResponseWriter, r *http.Request) {
+func (app *application) postCreateView(w http.ResponseWriter, r *http.Request) {
 	categories, err := app.categories.GetAll()
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
+	// Инициализация слайса с нулями и одной единицей
+	selectedCategories := make([]int, len(categories))
+	if len(selectedCategories) > 0 {
+		selectedCategories[0] = 1 // первая категория отмечена
+	}
+
 	data := app.newTemplateData(r)
 	data.Categories = categories
+	data.Form = postCreateForm{
+		// первая категория всегда отмечена
+		Categories: selectedCategories,
+	}
 
 	app.render(w, http.StatusOK, "create_post.html", data)
+}
+
+type postCreateForm struct {
+	Title       string
+	Content     string
+	Categories  []int
+	FieldErrors map[string]string
 }
 
 func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
@@ -76,9 +95,6 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
-
-	title := r.PostForm.Get("title")
-	content := r.PostForm.Get("content")
 
 	// пока непонятно откуда брать юзерайди кажется из сессии
 	// userID, err := strconv.Atoi(r.PostForm.Get("userID"))
@@ -97,10 +113,67 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 		categoryIDs = append(categoryIDs, intID)
 	}
 
+	form := postCreateForm{
+		Title:       r.PostForm.Get("title"),
+		Content:     r.PostForm.Get("content"),
+		Categories:  categoryIDs,
+		FieldErrors: map[string]string{},
+	}
+
 	// валидировать все данные
+	if strings.TrimSpace(form.Title) == "" {
+		form.FieldErrors["title"] = "This field cannot be blank"
+	} else if utf8.RuneCountInString(form.Title) > 100 {
+		form.FieldErrors["title"] = "This field cannot be more than 100 characters long"
+	}
+
+	if strings.TrimSpace(form.Content) == "" {
+		form.FieldErrors["content"] = "This field cannot be blank"
+	}
+
+	allCategories, err := app.categories.GetAll()
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	if len(form.Categories) == 0 {
+		form.FieldErrors["categories"] = "Need one or more category"
+	} else {
+		categoryMap := make(map[int]bool)
+		for _, category := range allCategories {
+			categoryMap[category.ID] = true
+		}
+
+		// Инициализация слайса с нулями и одной единицей
+		categoryIDs = make([]int, len(allCategories))
+
+		for i, c := range form.Categories {
+			if _, exists := categoryMap[c]; exists {
+				categoryIDs[i] = c
+			} else {
+				form.FieldErrors["categories"] = "One or more categories are invalid"
+			}
+		}
+
+		if categoryIDs[0] == 0 {
+			// первая категория будет отмечена по умолчанию
+			categoryIDs[0] = 1
+		}
+
+		form.Categories = categoryIDs
+	}
+
+	if len(form.FieldErrors) > 0 {
+		data := app.newTemplateData(r)
+		data.Categories = allCategories
+		data.Form = form
+		app.render(w, http.StatusUnprocessableEntity, "create_post.html", data)
+		return
+	}
 
 	//!!!!!!!!!!!!!!пока везде юзерайди = 1
-	postId, err := app.posts.InsertPostWithCategories(title, content, 1, categoryIDs)
+	postId, err := app.posts.InsertPostWithCategories(form.Title, form.Content, 1, form.Categories)
 	if err != nil {
 		app.serverError(w, err)
 		return
