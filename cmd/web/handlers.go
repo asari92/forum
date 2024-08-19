@@ -66,17 +66,11 @@ func (app *application) postCreateView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Инициализация слайса с нулями и одной единицей
-	selectedCategories := make([]int, len(categories))
-	if len(selectedCategories) > 0 {
-		selectedCategories[0] = 1 // первая категория отмечена
-	}
-
 	data := app.newTemplateData(r)
 	data.Categories = categories
 	data.Form = postCreateForm{
 		// первая категория всегда отмечена
-		Categories: selectedCategories,
+		Categories: []int{1},
 	}
 
 	app.render(w, http.StatusOK, "create_post.html", data)
@@ -131,7 +125,7 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 		form.FieldErrors["content"] = "This field cannot be blank"
 	}
 
-	allCategories, err := app.categories.GetAll()
+	categories, err := app.categories.GetAll()
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -141,32 +135,31 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 		form.FieldErrors["categories"] = "Need one or more category"
 	} else {
 		categoryMap := make(map[int]bool)
-		for _, category := range allCategories {
+		for _, category := range categories {
 			categoryMap[category.ID] = true
 		}
 
-		// Инициализация слайса с нулями и одной единицей
-		categoryIDs = make([]int, len(allCategories))
+		categoryIDs = []int{}
 
-		for i, c := range form.Categories {
+		for _, c := range form.Categories {
 			if _, exists := categoryMap[c]; exists {
-				categoryIDs[i] = c
+				categoryIDs = append(categoryIDs, c)
 			} else {
 				form.FieldErrors["categories"] = "One or more categories are invalid"
 			}
 		}
 
-		if categoryIDs[0] == 0 {
+		if len(categoryIDs) > 0 {
+			form.Categories = categoryIDs
+		} else {
 			// первая категория будет отмечена по умолчанию
-			categoryIDs[0] = 1
+			form.Categories = []int{1}
 		}
-
-		form.Categories = categoryIDs
 	}
 
 	if len(form.FieldErrors) > 0 {
 		data := app.newTemplateData(r)
-		data.Categories = allCategories
+		data.Categories = categories
 		data.Form = form
 		app.render(w, http.StatusUnprocessableEntity, "create_post.html", data)
 		return
