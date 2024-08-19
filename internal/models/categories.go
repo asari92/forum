@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 )
 
 const DefaultCategory = 1
@@ -30,6 +31,26 @@ func (m *CategoryModel) Insert(name string) (int, error) {
 	}
 
 	return int(id), nil
+}
+
+func (m *CategoryModel) Get(categoryId int) (*Category, error) {
+	stmt := `SELECT id, name FROM categories
+		WHERE id = ?`
+
+	row := m.DB.QueryRow(stmt, categoryId)
+
+	c := &Category{}
+
+	err := row.Scan(&c.ID, &c.Name)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoRecord
+		} else {
+			return nil, err
+		}
+	}
+
+	return c, nil
 }
 
 func (m *CategoryModel) GetAll() ([]*Category, error) {

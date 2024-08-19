@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
-	"unicode/utf8"
 
 	"forum/internal/models"
 	"forum/internal/validator"
@@ -109,17 +107,17 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := postCreateForm{
-		Title:       r.PostForm.Get("title"),
-		Content:     r.PostForm.Get("content"),
-		Categories:  categoryIDs,
+		Title:      r.PostForm.Get("title"),
+		Content:    r.PostForm.Get("content"),
+		Categories: categoryIDs,
 	}
 
 	// валидировать все данные
 	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
-    form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
-    form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
 
-	categories, err := app.categories.GetAll()
+	allCategories, err := app.categories.GetAll()
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -129,7 +127,7 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 		form.AddFieldError("categories", "Need one or more category")
 	} else {
 		categoryMap := make(map[int]bool)
-		for _, category := range categories {
+		for _, category := range allCategories {
 			categoryMap[category.ID] = true
 		}
 
@@ -139,21 +137,21 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 			if _, exists := categoryMap[c]; exists {
 				categoryIDs = append(categoryIDs, c)
 			} else {
-				form.FieldErrors["categories"] = "One or more categories are invalid"
+				form.AddFieldError("categories", "One or more categories are invalid")
 			}
 		}
+	}
 
-		if len(categoryIDs) > 0 {
-			form.Categories = categoryIDs
-		} else {
-			// первая категория будет отмечена по умолчанию
-			form.Categories = []int{models.DefaultCategory}
-		}
+	if len(categoryIDs) > 0 {
+		form.Categories = categoryIDs
+	} else {
+		// первая категория будет отмечена по умолчанию
+		form.Categories = []int{models.DefaultCategory}
 	}
 
 	if !form.Valid() {
 		data := app.newTemplateData(r)
-		data.Categories = categories
+		data.Categories = allCategories
 		data.Form = form
 		app.render(w, http.StatusUnprocessableEntity, "create_post.html", data)
 		return

@@ -40,11 +40,11 @@ INSERT INTO comment_reactions (user_id, comment_id, is_like) VALUES
 
 -- Вставка категорий в таблицу categories
 INSERT INTO categories (name) VALUES
+('Other');
 ('Technology'),
 ('Science'),
 ('Art'),
 ('Music'),
-('Literature');
 
 -- Вставка категорий для постов в таблицу post_categories
 INSERT INTO post_categories (post_id, category_id) VALUES
