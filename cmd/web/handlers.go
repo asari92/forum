@@ -9,6 +9,7 @@ import (
 	"unicode/utf8"
 
 	"forum/internal/models"
+	"forum/internal/validator"
 )
 
 func (app *application) errorHandler(w http.ResponseWriter, r *http.Request) {
@@ -70,17 +71,17 @@ func (app *application) postCreateView(w http.ResponseWriter, r *http.Request) {
 	data.Categories = categories
 	data.Form = postCreateForm{
 		// первая категория всегда отмечена
-		Categories: []int{1},
+		Categories: []int{models.DefaultCategory},
 	}
 
 	app.render(w, http.StatusOK, "create_post.html", data)
 }
 
 type postCreateForm struct {
-	Title       string
-	Content     string
-	Categories  []int
-	FieldErrors map[string]string
+	Title      string
+	Content    string
+	Categories []int
+	validator.Validator
 }
 
 func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
@@ -111,19 +112,12 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 		Title:       r.PostForm.Get("title"),
 		Content:     r.PostForm.Get("content"),
 		Categories:  categoryIDs,
-		FieldErrors: map[string]string{},
 	}
 
 	// валидировать все данные
-	if strings.TrimSpace(form.Title) == "" {
-		form.FieldErrors["title"] = "This field cannot be blank"
-	} else if utf8.RuneCountInString(form.Title) > 100 {
-		form.FieldErrors["title"] = "This field cannot be more than 100 characters long"
-	}
-
-	if strings.TrimSpace(form.Content) == "" {
-		form.FieldErrors["content"] = "This field cannot be blank"
-	}
+	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
+    form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
+    form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
 
 	categories, err := app.categories.GetAll()
 	if err != nil {
@@ -132,7 +126,7 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(form.Categories) == 0 {
-		form.FieldErrors["categories"] = "Need one or more category"
+		form.AddFieldError("categories", "Need one or more category")
 	} else {
 		categoryMap := make(map[int]bool)
 		for _, category := range categories {
@@ -153,11 +147,11 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 			form.Categories = categoryIDs
 		} else {
 			// первая категория будет отмечена по умолчанию
-			form.Categories = []int{1}
+			form.Categories = []int{models.DefaultCategory}
 		}
 	}
 
-	if len(form.FieldErrors) > 0 {
+	if !form.Valid() {
 		data := app.newTemplateData(r)
 		data.Categories = categories
 		data.Form = form

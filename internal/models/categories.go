@@ -4,6 +4,8 @@ import (
 	"database/sql"
 )
 
+const DefaultCategory = 1
+
 type Category struct {
 	ID   int
 	Name string
