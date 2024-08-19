@@ -123,31 +123,7 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(form.Categories) == 0 {
-		form.AddFieldError("categories", "Need one or more category")
-	} else {
-		categoryMap := make(map[int]bool)
-		for _, category := range allCategories {
-			categoryMap[category.ID] = true
-		}
-
-		categoryIDs = []int{}
-
-		for _, c := range form.Categories {
-			if _, exists := categoryMap[c]; exists {
-				categoryIDs = append(categoryIDs, c)
-			} else {
-				form.AddFieldError("categories", "One or more categories are invalid")
-			}
-		}
-	}
-
-	if len(categoryIDs) > 0 {
-		form.Categories = categoryIDs
-	} else {
-		// первая категория будет отмечена по умолчанию
-		form.Categories = []int{models.DefaultCategory}
-	}
+	form.validateCategories(allCategories)
 
 	if !form.Valid() {
 		data := app.newTemplateData(r)
@@ -165,4 +141,31 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/post/view/%d", postId), http.StatusSeeOther)
+}
+
+func (form *postCreateForm) validateCategories(allCategories []*models.Category) {
+	var categoryIDs = []int{}
+	if len(form.Categories) == 0 {
+		form.AddFieldError("categories", "Need one or more category")
+	} else {
+		categoryMap := make(map[int]bool)
+		for _, category := range allCategories {
+			categoryMap[category.ID] = true
+		}
+
+		for _, c := range form.Categories {
+			if _, exists := categoryMap[c]; exists {
+				categoryIDs = append(categoryIDs, c)
+			} else {
+				form.AddFieldError("categories", "One or more categories are invalid")
+			}
+		}
+	}
+
+	if len(categoryIDs) > 0 {
+		form.Categories = categoryIDs
+	} else {
+		// первая категория будет отмечена по умолчанию
+		form.Categories = []int{models.DefaultCategory}
+	}
 }
