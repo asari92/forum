@@ -82,10 +82,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS users_uc_email ON users(email);
 
 CREATE TABLE IF NOT EXISTS sessions(
   user_id INTEGER NOT NULL,
-  token VARCHAR NOT NULL,
-  data BLOB NOT NULL,
+  token VARCHAR PRIMARY KEY NOT NULL,
   expires TEXT NOT NULL,
-  PRIMARY KEY(token)
+  CONSTRAINT users_tokens
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE Cascade
+      ON UPDATE No action
 );
 
 CREATE INDEX IF NOT EXISTS sessions_expires_idx ON sessions(expires);
