@@ -1,0 +1,30 @@
+{{define "title"}}Login{{end}}
+
+{{define "main"}}
+<form action='/login' method='POST'>
+    <div>
+        <label>Username:</label>
+        {{with .Form.FieldErrors.username}}
+            <label class='error'>{{.}}</label>
+        {{end}}
+        <input type='text' name='username' value='{{.Form.Username}}'>
+    </div>
+    <div>
+        <label>Email:</label>
+        {{with .Form.FieldErrors.email}}
+            <label class='error'>{{.}}</label>
+        {{end}}
+        <input type='text' name='email' value='{{.Form.Email}}'>
+    </div>
+    <div>
+        <label>Password:</label>
+        {{with .Form.FieldErrors.password}}
+            <label class='error'>{{.}}</label>
+        {{end}}
+        <input type='text' name='password' value='{{.Form.Password}}'>
+    </div>
+    <div>
+        <input type='submit' value='Login'>
+    </div>
+</form>
+{{end}}

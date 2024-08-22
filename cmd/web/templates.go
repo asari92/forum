@@ -14,6 +14,7 @@ type templateData struct {
 	Post        *models.Post
 	Posts       []*models.Post
 	Form        any
+	Session     interface{}
 }
 
 func humanDate(t time.Time) string {
@@ -31,7 +32,7 @@ func contains(s []int, e int) bool {
 
 var functions = template.FuncMap{
 	"humanDate": humanDate,
-	"contains": contains,
+	"contains":  contains,
 }
 
 func newTemplateCache() (map[string]*template.Template, error) {

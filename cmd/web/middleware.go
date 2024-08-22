@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 // Middleware type for handling HTTP requests
@@ -64,4 +65,52 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (app *application) sessionMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sess := app.globalSessions.SessionStart(w, r)
+		user := sess.Get("username")
+		role := sess.Get("role")
+
+		if user == nil && requiresAuth(r.URL.Path) {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+		// Проверка ролей для защищённых маршрутов
+		if role != nil && !hasAccess(role, r.URL.Path) {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+
+		// Продолжить выполнение запроса
+		next.ServeHTTP(w, r)
+	})
+}
+
+func requiresAuth(path string) bool {
+	// Определить, требует ли страница авторизации
+	return strings.HasPrefix(path, "/post/create") || strings.HasPrefix(path, "/moderation")
+}
+
+func hasAccess(role interface{}, path string) bool {
+	// Определяем доступность страниц для различных ролей
+	switch role {
+	case "admin":
+		return true // Админы имеют доступ ко всему
+	case "moderator":
+		// Модеры имеют доступ к страницам модерации
+		// if strings.HasPrefix(path, "/moderation") {
+		return true
+		// }
+	case "user":
+		// Обычные пользователи могут создавать посты, но не имеют доступа к модерации
+		if strings.HasPrefix(path, "/post/create") {
+			return true
+		}
+	// Гостям доступ ограничен, они могут только просматривать
+	default:
+		return false
+	}
+	return false
 }

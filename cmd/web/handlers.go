@@ -169,3 +169,60 @@ func (form *postCreateForm) validateCategories(allCategories []*models.Category)
 		form.Categories = []int{models.DefaultCategory}
 	}
 }
+
+func (app *application) loginView(w http.ResponseWriter, r *http.Request) {
+	sess := app.globalSessions.SessionStart(w, r)
+	data := app.newTemplateData(r)
+	data.Session = sess.Get("username")
+	data.Form = loginForm{}
+	app.render(w, http.StatusOK, "login_post.html", data)
+}
+
+type loginForm struct {
+	Username string
+	Email    string
+	Password string
+	validator.Validator
+}
+
+func (app *application) login(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+	form := loginForm{
+		Username: r.PostForm.Get("username"),
+		Email:    r.PostForm.Get("email"),
+		Password: r.PostForm.Get("password"),
+	}
+
+	//ДОБАВИТЬ ПРОВЕРОК!!!!!!!!!!!!!!!!!!!
+	form.CheckField(validator.NotBlank(form.Username), "username", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Username, 100), "username", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, http.StatusUnprocessableEntity, "login_post.html", data)
+		return
+	}
+
+	// Проверка имени пользователя и пароля
+	// if !app.authenticate(username, password) {
+	// 	// Если проверка не удалась, вернуть сообщение об ошибке
+	// 	http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+	// 	return
+	// }
+
+	// Получение роли пользователя из базы данных или другого источника
+	// role := app.users.getUserRole(username)
+
+	// Запуск сессии и сохранение данных пользователя
+	sess := app.globalSessions.SessionStart(w, r)
+	sess.Set("username", form.Username)
+	// sess.Set("role", role) // Сохраняем роль в сессии
+	// Перенаправление на главную страницу после успешного входа
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}

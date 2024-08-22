@@ -8,17 +8,20 @@ import (
 	"net/http"
 	"os"
 
+	_ "forum/internal/memory"
 	"forum/internal/models"
+	"forum/internal/session"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type application struct {
-	errorLog      *log.Logger
-	infoLog       *log.Logger
-	posts         *models.PostModel
-	categories    *models.CategoryModel
-	templateCache map[string]*template.Template
+	errorLog       *log.Logger
+	infoLog        *log.Logger
+	posts          *models.PostModel
+	categories     *models.CategoryModel
+	templateCache  map[string]*template.Template
+	globalSessions *session.Manager
 }
 
 func main() {
@@ -46,12 +49,20 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
+	globalSessions, err := session.NewManager("memory", "gosessionid", 600)
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
+	go globalSessions.GC()
+
 	app := &application{
-		errorLog:      errorLog,
-		infoLog:       infoLog,
-		posts:         &models.PostModel{DB: db},
-		categories:    &models.CategoryModel{DB: db},
-		templateCache: templateCache,
+		errorLog:       errorLog,
+		infoLog:        infoLog,
+		posts:          &models.PostModel{DB: db},
+		categories:     &models.CategoryModel{DB: db},
+		templateCache:  templateCache,
+		globalSessions: globalSessions,
 	}
 
 	srv := &http.Server{
