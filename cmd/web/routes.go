@@ -16,8 +16,8 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("GET /login", app.loginView)
 	mux.HandleFunc("POST /login", app.login)
 
-	myChain := New(app.recoverPanic, app.logRequest, secureHeaders, app.sessionMiddleware)
-	myOtherChain := myChain.Append(app.verifyCSRF)
+	myChain := New(app.recoverPanic, app.logRequest, secureHeaders, app.verifyCSRF)
+	myOtherChain := myChain.Append(app.sessionMiddleware)
 
 	return myOtherChain.Then(mux)
 }

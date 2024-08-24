@@ -66,6 +66,9 @@ func (app *application) postCreateView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := app.newTemplateData(r)
+	// Извлечение CSRF-токена из контекста
+	token := r.Context().Value("csrfToken").(string)
+	data.CSRFToken = token
 	data.Categories = categories
 	data.Form = postCreateForm{
 		// первая категория всегда отмечена
@@ -144,7 +147,7 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (form *postCreateForm) validateCategories(allCategories []*models.Category) {
-	var categoryIDs = []int{}
+	categoryIDs := []int{}
 	if len(form.Categories) == 0 {
 		form.AddFieldError("categories", "Need one or more category")
 	} else {
@@ -173,6 +176,9 @@ func (form *postCreateForm) validateCategories(allCategories []*models.Category)
 func (app *application) loginView(w http.ResponseWriter, r *http.Request) {
 	sess := app.globalSessions.SessionStart(w, r)
 	data := app.newTemplateData(r)
+	// Извлечение CSRF-токена из контекста
+	token := r.Context().Value("csrfToken").(string)
+	data.CSRFToken = token
 	data.Session = sess.Get("username")
 	data.Form = loginForm{}
 	app.render(w, http.StatusOK, "login_post.html", data)
@@ -197,7 +203,7 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 		Password: r.PostForm.Get("password"),
 	}
 
-	//ДОБАВИТЬ ПРОВЕРОК!!!!!!!!!!!!!!!!!!!
+	// ДОБАВИТЬ ПРОВЕРОК!!!!!!!!!!!!!!!!!!!
 	form.CheckField(validator.NotBlank(form.Username), "username", "This field cannot be blank")
 	form.CheckField(validator.MaxChars(form.Username, 100), "username", "This field cannot be more than 100 characters long")
 	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")

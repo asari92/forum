@@ -11,6 +11,7 @@ import (
 type templateData struct {
 	CurrentYear int
 	Categories  []*models.Category
+	CSRFToken   string
 	Post        *models.Post
 	Posts       []*models.Post
 	Form        any

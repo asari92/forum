@@ -68,7 +68,7 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) addCSRFMiddleware(next http.Handler) http.Handler {
+func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess := app.globalSessions.SessionStart(w, r)
 
@@ -80,32 +80,6 @@ func (app *application) addCSRFMiddleware(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), "csrfToken", token)
 		r = r.WithContext(ctx)
 
-		// Продолжение выполнения запроса
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (app *application) verifyCSRF(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Проверяем только POST-запросы
-		if r.Method != http.MethodGet && r.Method != http.MethodHead {
-			sess := app.globalSessions.SessionStart(w, r)
-			sessionToken := sess.Get("token").(string)
-			requestToken := r.FormValue("token")
-
-			if sessionToken == "" || requestToken != sessionToken {
-				http.Error(w, "Invalid CSRF token", http.StatusForbidden)
-				return
-			}
-		}
-		// Продолжить выполнение запроса
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (app *application) sessionMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		sess := app.globalSessions.SessionStart(w, r)
 		user := sess.Get("username")
 		role := sess.Get("role")
 
@@ -119,6 +93,24 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		// Продолжить выполнение запроса
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *application) verifyCSRF(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Проверяем все запросы которые могут изменить данные
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			sess := app.globalSessions.SessionStart(w, r)
+			sessionToken := sess.Get("token").(string)
+			requestToken := r.FormValue("token")
+
+			if sessionToken == "" || requestToken != sessionToken {
+				http.Error(w, "Invalid CSRF token", http.StatusForbidden)
+				return
+			}
+		}
 		// Продолжить выполнение запроса
 		next.ServeHTTP(w, r)
 	})
