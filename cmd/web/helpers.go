@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"crypto/md5"
 	"fmt"
+	"io"
 	"net/http"
 	"runtime/debug"
 	"time"
@@ -57,4 +59,13 @@ func (app *application) newTemplateData(r *http.Request) *templateData {
 	return &templateData{
 		CurrentYear: time.Now().Year(),
 	}
+}
+
+// Генерация CSRF-токена
+func (app *application) generateCSRFToken() string {
+	h := md5.New()
+	salt := "YouShallNotPass%^7&8888" // Используйте уникальную соль для своего приложения
+	io.WriteString(h, salt+time.Now().String())
+	token := fmt.Sprintf("%x", h.Sum(nil))
+	return token
 }

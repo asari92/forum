@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -63,6 +64,41 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 			}
 		}()
 
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *application) addCSRFMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sess := app.globalSessions.SessionStart(w, r)
+
+		// Генерация нового CSRF-токена
+		token := app.generateCSRFToken()
+		sess.Set("token", token)
+
+		// Вставка токена в контекст запроса
+		ctx := context.WithValue(r.Context(), "csrfToken", token)
+		r = r.WithContext(ctx)
+
+		// Продолжение выполнения запроса
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *application) verifyCSRF(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Проверяем только POST-запросы
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			sess := app.globalSessions.SessionStart(w, r)
+			sessionToken := sess.Get("token").(string)
+			requestToken := r.FormValue("token")
+
+			if sessionToken == "" || requestToken != sessionToken {
+				http.Error(w, "Invalid CSRF token", http.StatusForbidden)
+				return
+			}
+		}
+		// Продолжить выполнение запроса
 		next.ServeHTTP(w, r)
 	})
 }

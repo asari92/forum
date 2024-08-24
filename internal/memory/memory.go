@@ -2,17 +2,30 @@ package memory
 
 import (
 	"container/list"
-	"forum/internal/session"
 	"sync"
 	"time"
+
+	"forum/internal/session"
 )
 
 var pder = &Provider{list: list.New()}
+
+
+func init() {
+	pder.sessions = make(map[string]*list.Element, 0)
+	session.Register("memory", pder)
+}
 
 type SessionStore struct {
 	sid          string                      // unique session id
 	timeAccessed time.Time                   // last access time
 	value        map[interface{}]interface{} // session value stored inside
+}
+
+type Provider struct {
+	lock     sync.Mutex               // lock
+	sessions map[string]*list.Element // save in memory
+	list     *list.List               // gc
 }
 
 func (st *SessionStore) Set(key, value interface{}) error {
@@ -39,12 +52,6 @@ func (st *SessionStore) Delete(key interface{}) error {
 
 func (st *SessionStore) SessionID() string {
 	return st.sid
-}
-
-type Provider struct {
-	lock     sync.Mutex               // lock
-	sessions map[string]*list.Element // save in memory
-	list     *list.List               // gc
 }
 
 func (pder *Provider) SessionInit(sid string) (session.Session, error) {
@@ -103,9 +110,4 @@ func (pder *Provider) SessionUpdate(sid string) error {
 		return nil
 	}
 	return nil
-}
-
-func init() {
-	pder.sessions = make(map[string]*list.Element, 0)
-	session.Register("memory", pder)
 }

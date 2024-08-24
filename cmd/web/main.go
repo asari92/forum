@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 
+	// Go вызывает функцию init() внутри этого пакета.
 	_ "forum/internal/memory"
 	"forum/internal/models"
 	"forum/internal/session"

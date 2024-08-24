@@ -12,7 +12,7 @@ import (
 )
 
 type Manager struct {
-	cookieName  string     //private cookiename
+	cookieName  string     // private cookiename
 	lock        sync.Mutex // protects session
 	provider    Provider
 	maxlifetime int64
@@ -26,11 +26,13 @@ type Provider interface {
 }
 
 type Session interface {
-	Set(key, value interface{}) error //set session value
-	Get(key interface{}) interface{}  //get session value
-	Delete(key interface{}) error     //delete session value
-	SessionID() string                //back current sessionID
+	Set(key, value interface{}) error // set session value
+	Get(key interface{}) interface{}  // get session value
+	Delete(key interface{}) error     // delete session value
+	SessionID() string                // back current sessionID
 }
+
+var provides = make(map[string]Provider)
 
 func NewManager(provideName, cookieName string, maxlifetime int64) (*Manager, error) {
 	provider, ok := provides[provideName]
@@ -55,7 +57,15 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 	if err != nil || cookie.Value == "" {
 		sid := manager.sessionId()
 		session, _ = manager.provider.SessionInit(sid)
-		cookie := http.Cookie{Name: manager.cookieName, Value: url.QueryEscape(sid), Path: "/", HttpOnly: true, MaxAge: int(manager.maxlifetime)}
+		// Установка cookie с флагами HttpOnly и Secure
+		cookie := http.Cookie{
+			Name:     manager.cookieName,
+			Value:    url.QueryEscape(sid),
+			Path:     "/",
+			HttpOnly: true, // HttpOnly защищает от XSS-атак
+			// Secure:   true, // Secure защищает от передачи через HTTP (только HTTPS)
+			MaxAge: int(manager.maxlifetime),
+		}
 		http.SetCookie(w, &cookie)
 	} else {
 		sid, _ := url.QueryUnescape(cookie.Value)
@@ -63,8 +73,6 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 	}
 	return
 }
-
-var provides = make(map[string]Provider)
 
 // Register makes a session provider available by the provided name.
 // If a Register is called twice with the same name or if the driver is nil,
