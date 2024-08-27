@@ -55,9 +55,18 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 	buf.WriteTo(w)
 }
 
-func (app *application) newTemplateData(r *http.Request) *templateData {
+func (app *application) newTemplateData(w http.ResponseWriter, r *http.Request) *templateData {
+	sess := app.sessionManager.SessionStart(w, r)
+	flash, ok := sess.Get("flash").(string)
+	if ok {
+		err := sess.Delete("flash")
+		if err != nil {
+			app.serverError(w, err)
+		}
+	}
 	return &templateData{
 		CurrentYear: time.Now().Year(),
+		Flash: flash,
 	}
 }
 

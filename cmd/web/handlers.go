@@ -21,7 +21,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := app.newTemplateData(r)
+	data := app.newTemplateData(w, r)
 	data.Posts = posts
 
 	app.render(w, http.StatusOK, "home.html", data)
@@ -44,18 +44,8 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sess := app.sessionManager.SessionStart(w, r)
-	flash, ok := sess.Get("flash").(string)
-	if ok {
-		err = sess.Delete("flash")
-		if err != nil {
-			app.serverError(w, err)
-		}
-	}
-
-	data := app.newTemplateData(r)
+	data := app.newTemplateData(w, r)
 	data.Post = post
-	data.Flash = flash
 
 	app.render(w, http.StatusOK, "view.html", data)
 
@@ -75,7 +65,7 @@ func (app *application) postCreateView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := app.newTemplateData(r)
+	data := app.newTemplateData(w, r)
 	// Извлечение CSRF-токена из контекста
 	token := r.Context().Value("csrfToken").(string)
 	data.CSRFToken = token
@@ -139,7 +129,7 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	form.validateCategories(allCategories)
 
 	if !form.Valid() {
-		data := app.newTemplateData(r)
+		data := app.newTemplateData(w, r)
 		data.Categories = allCategories
 		data.Form = form
 		app.render(w, http.StatusUnprocessableEntity, "create_post.html", data)
@@ -190,7 +180,7 @@ func (form *postCreateForm) validateCategories(allCategories []*models.Category)
 
 func (app *application) loginView(w http.ResponseWriter, r *http.Request) {
 	sess := app.sessionManager.SessionStart(w, r)
-	data := app.newTemplateData(r)
+	data := app.newTemplateData(w, r)
 	// Извлечение CSRF-токена из контекста
 	token := r.Context().Value("csrfToken").(string)
 	data.CSRFToken = token
@@ -224,7 +214,7 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
 
 	if !form.Valid() {
-		data := app.newTemplateData(r)
+		data := app.newTemplateData(w, r)
 		data.Form = form
 		app.render(w, http.StatusUnprocessableEntity, "login_post.html", data)
 		return
