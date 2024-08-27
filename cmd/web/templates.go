@@ -16,6 +16,7 @@ type templateData struct {
 	Posts       []*models.Post
 	Form        any
 	Session     interface{}
+	Flash       string
 }
 
 func humanDate(t time.Time) string {

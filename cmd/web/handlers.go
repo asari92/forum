@@ -44,8 +44,18 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sess := app.sessionManager.SessionStart(w, r)
+	flash, ok := sess.Get("flash").(string)
+	if ok {
+		err = sess.Delete("flash")
+		if err != nil {
+			app.serverError(w, err)
+		}
+	}
+
 	data := app.newTemplateData(r)
 	data.Post = post
+	data.Flash = flash
 
 	app.render(w, http.StatusOK, "view.html", data)
 
@@ -143,6 +153,11 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = app.sessionManager.SessionStart(w, r).Set("flash", "Post successfully created!")
+	if err != nil {
+		app.serverError(w, err)
+	}
+
 	http.Redirect(w, r, fmt.Sprintf("/post/view/%d", postId), http.StatusSeeOther)
 }
 
@@ -174,7 +189,7 @@ func (form *postCreateForm) validateCategories(allCategories []*models.Category)
 }
 
 func (app *application) loginView(w http.ResponseWriter, r *http.Request) {
-	sess := app.globalSessions.SessionStart(w, r)
+	sess := app.sessionManager.SessionStart(w, r)
 	data := app.newTemplateData(r)
 	// Извлечение CSRF-токена из контекста
 	token := r.Context().Value("csrfToken").(string)
@@ -226,7 +241,7 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	// role := app.users.getUserRole(username)
 
 	// Запуск сессии и сохранение данных пользователя
-	sess := app.globalSessions.SessionStart(w, r)
+	sess := app.sessionManager.SessionStart(w, r)
 	sess.Set("username", form.Username)
 	// sess.Set("role", role) // Сохраняем роль в сессии
 	// Перенаправление на главную страницу после успешного входа

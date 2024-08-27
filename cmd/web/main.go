@@ -22,7 +22,7 @@ type application struct {
 	posts          *models.PostModel
 	categories     *models.CategoryModel
 	templateCache  map[string]*template.Template
-	globalSessions *session.Manager
+	sessionManager *session.Manager
 }
 
 func main() {
@@ -50,12 +50,12 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
-	globalSessions, err := session.NewManager("memory", "gosessionid", 600)
+	sessionManager, err := session.NewManager("memory", "gosessionid", 600)
 	if err != nil {
 		errorLog.Fatal(err)
 	}
 
-	go globalSessions.GC()
+	go sessionManager.GC()
 
 	app := &application{
 		errorLog:       errorLog,
@@ -63,7 +63,7 @@ func main() {
 		posts:          &models.PostModel{DB: db},
 		categories:     &models.CategoryModel{DB: db},
 		templateCache:  templateCache,
-		globalSessions: globalSessions,
+		sessionManager: sessionManager,
 	}
 
 	srv := &http.Server{

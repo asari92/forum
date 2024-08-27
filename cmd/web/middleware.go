@@ -70,7 +70,7 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 
 func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		sess := app.globalSessions.SessionStart(w, r)
+		sess := app.sessionManager.SessionStart(w, r)
 
 		// Генерация нового CSRF-токена
 		token := app.generateCSRFToken()
@@ -102,8 +102,12 @@ func (app *application) verifyCSRF(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Проверяем все запросы которые могут изменить данные
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
-			sess := app.globalSessions.SessionStart(w, r)
+			sess := app.sessionManager.SessionStart(w, r)
 			sessionToken := sess.Get("token").(string)
+			err := sess.Delete("token")
+			if err != nil {
+				app.serverError(w, err)
+			}
 			requestToken := r.FormValue("token")
 
 			if sessionToken == "" || requestToken != sessionToken {
@@ -111,6 +115,7 @@ func (app *application) verifyCSRF(next http.Handler) http.Handler {
 				return
 			}
 		}
+
 		// Продолжить выполнение запроса
 		next.ServeHTTP(w, r)
 	})
