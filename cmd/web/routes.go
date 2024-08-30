@@ -13,8 +13,11 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("GET /post/view/{id}", app.postView)
 	mux.HandleFunc("GET /post/create", app.postCreateView)
 	mux.HandleFunc("POST /post/create", app.postCreate)
-	mux.HandleFunc("GET /login", app.loginView)
-	mux.HandleFunc("POST /login", app.login)
+	mux.HandleFunc("GET /user/signup", app.userSignupView)
+	mux.HandleFunc("POST /user/signup", app.userSignup)
+	mux.HandleFunc("GET /user/login", app.userLoginView)
+	mux.HandleFunc("POST /user/login", app.userLogin)
+	mux.HandleFunc("POST /user/logout", app.userLogout)
 
 	myChain := New(app.recoverPanic, app.logRequest, secureHeaders, app.verifyCSRF)
 	myOtherChain := myChain.Append(app.sessionMiddleware)

@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS users(
   username TEXT NOT NULL,
   email TEXT NOT NULL,
   password TEXT NOT NULL,
-  created INTEGER NOT NULL
+  created TEXT NOT NULL
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS users_uc_email ON users(email);

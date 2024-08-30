@@ -68,36 +68,6 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) sessionMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		sess := app.sessionManager.SessionStart(w, r)
-
-		// Генерация нового CSRF-токена
-		token := app.generateCSRFToken()
-		sess.Set("token", token)
-
-		// Вставка токена в контекст запроса
-		ctx := context.WithValue(r.Context(), "csrfToken", token)
-		r = r.WithContext(ctx)
-
-		user := sess.Get("username")
-		role := sess.Get("role")
-
-		if user == nil && requiresAuth(r.URL.Path) {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			return
-		}
-		// Проверка ролей для защищённых маршрутов
-		if role != nil && !hasAccess(role, r.URL.Path) {
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			return
-		}
-
-		// Продолжить выполнение запроса
-		next.ServeHTTP(w, r)
-	})
-}
-
 func (app *application) verifyCSRF(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Проверяем все запросы которые могут изменить данные
@@ -121,9 +91,40 @@ func (app *application) verifyCSRF(next http.Handler) http.Handler {
 	})
 }
 
+func (app *application) sessionMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sess := app.sessionManager.SessionStart(w, r)
+
+		// Генерация нового CSRF-токена
+		token := app.generateCSRFToken()
+		sess.Set("token", token)
+
+		// Вставка токена в контекст запроса
+		ctx := context.WithValue(r.Context(), "csrfToken", token)
+		r = r.WithContext(ctx)
+
+		user := sess.Get("username")
+		role := sess.Get("role")
+
+		if user == nil && requiresAuth(r.URL.Path) {
+			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+			return
+		}
+		// Проверка ролей для защищённых маршрутов
+		if role != nil && hasAccess(role, r.URL.Path) {
+			// http.Error(w, "Forbidden", http.StatusForbidden)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
+		// Продолжить выполнение запроса
+		next.ServeHTTP(w, r)
+	})
+}
+
 func requiresAuth(path string) bool {
 	// Определить, требует ли страница авторизации
-	return strings.HasPrefix(path, "/post/create") || strings.HasPrefix(path, "/moderation")
+	return strings.HasPrefix(path, "/post/create") || strings.HasPrefix(path, "/user/logout") || strings.HasPrefix(path, "/moderation")
 }
 
 func hasAccess(role interface{}, path string) bool {
@@ -138,8 +139,8 @@ func hasAccess(role interface{}, path string) bool {
 		// }
 	case "user":
 		// Обычные пользователи могут создавать посты, но не имеют доступа к модерации
-		if strings.HasPrefix(path, "/post/create") {
-			return true
+		if strings.HasPrefix(path, "/moderation") || strings.HasPrefix(path, "/user/signup") || strings.HasPrefix(path, "/user/login") {
+			return false
 		}
 	// Гостям доступ ограничен, они могут только просматривать
 	default:

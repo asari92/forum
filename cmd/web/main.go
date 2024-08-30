@@ -21,6 +21,7 @@ import (
 type application struct {
 	errorLog       *log.Logger
 	infoLog        *log.Logger
+	users          *models.UserModel
 	posts          *models.PostModel
 	categories     *models.CategoryModel
 	templateCache  map[string]*template.Template
@@ -62,6 +63,7 @@ func main() {
 	app := &application{
 		errorLog:       errorLog,
 		infoLog:        infoLog,
+		users:          &models.UserModel{DB: db},
 		posts:          &models.PostModel{DB: db},
 		categories:     &models.CategoryModel{DB: db},
 		templateCache:  templateCache,

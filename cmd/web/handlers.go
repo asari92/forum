@@ -178,31 +178,31 @@ func (form *postCreateForm) validateCategories(allCategories []*models.Category)
 	}
 }
 
-func (app *application) loginView(w http.ResponseWriter, r *http.Request) {
+func (app *application) userSignupView(w http.ResponseWriter, r *http.Request) {
 	sess := app.sessionManager.SessionStart(w, r)
 	data := app.newTemplateData(w, r)
 	// Извлечение CSRF-токена из контекста
 	token := r.Context().Value("csrfToken").(string)
 	data.CSRFToken = token
 	data.Session = sess.Get("username")
-	data.Form = loginForm{}
+	data.Form = signupForm{}
 	app.render(w, http.StatusOK, "login_post.html", data)
 }
 
-type loginForm struct {
+type signupForm struct {
 	Username string
 	Email    string
 	Password string
 	validator.Validator
 }
 
-func (app *application) login(w http.ResponseWriter, r *http.Request) {
+func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
-	form := loginForm{
+	form := signupForm{
 		Username: r.PostForm.Get("username"),
 		Email:    r.PostForm.Get("email"),
 		Password: r.PostForm.Get("password"),
@@ -236,4 +236,16 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	// sess.Set("role", role) // Сохраняем роль в сессии
 	// Перенаправление на главную страницу после успешного входа
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (app *application) userLoginView(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Display a HTML form for logging in a user...")
+}
+
+func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Authenticate and login the user...")
+}
+
+func (app *application) userLogout(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Logout the user...")
 }
