@@ -74,11 +74,9 @@ func (app *application) verifyCSRF(next http.Handler) http.Handler {
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
 			sess := app.sessionManager.SessionStart(w, r)
 			sessionToken := sess.Get("token").(string)
-			err := sess.Delete("token")
-			if err != nil {
-				app.serverError(w, err)
-			}
 			requestToken := r.FormValue("token")
+
+			fmt.Println("checking", requestToken, sessionToken)
 
 			if sessionToken == "" || requestToken != sessionToken {
 				http.Error(w, "Invalid CSRF token", http.StatusForbidden)
@@ -95,10 +93,14 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess := app.sessionManager.SessionStart(w, r)
 
-		// Генерация нового CSRF-токена
-		token := app.generateCSRFToken()
-		sess.Set("token", token)
+		// Если токен уже существует в сессии, не перезаписываем его
+		token, ok := sess.Get("token").(string)
+		if !ok || token == "" {
+			token = app.generateCSRFToken()
+			sess.Set("token", token)
+		}
 
+		fmt.Println(token)
 		// Вставка токена в контекст запроса
 		ctx := context.WithValue(r.Context(), "csrfToken", token)
 		r = r.WithContext(ctx)

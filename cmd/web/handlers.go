@@ -47,7 +47,7 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(w, r)
 	data.Post = post
 
-	app.render(w, http.StatusOK, "view.html", data)
+	app.render(w, http.StatusOK, "post_view.html", data)
 
 	// возможный способ создания куки
 	// session, _ := h.service.CreateSession(models)
@@ -179,14 +179,14 @@ func (form *postCreateForm) validateCategories(allCategories []*models.Category)
 }
 
 func (app *application) userSignupView(w http.ResponseWriter, r *http.Request) {
-	sess := app.sessionManager.SessionStart(w, r)
+	// sess := app.sessionManager.SessionStart(w, r)
 	data := app.newTemplateData(w, r)
 	// Извлечение CSRF-токена из контекста
 	token := r.Context().Value("csrfToken").(string)
 	data.CSRFToken = token
-	data.Session = sess.Get("username")
+	// data.Session = sess.Get("username")                    !!!!!!!!!!!!!!!!!!! ДЛЯ ЧЕГО Я ЭТО ДЕЛАЛ?!
 	data.Form = signupForm{}
-	app.render(w, http.StatusOK, "login_post.html", data)
+	app.render(w, http.StatusOK, "signup.html", data)
 }
 
 type signupForm struct {
@@ -211,12 +211,17 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 	// ДОБАВИТЬ ПРОВЕРОК!!!!!!!!!!!!!!!!!!!
 	form.CheckField(validator.NotBlank(form.Username), "username", "This field cannot be blank")
 	form.CheckField(validator.MaxChars(form.Username, 100), "username", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Email, 100), "email", "This field cannot be more than 100 characters long")
 	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Password, 100), "password", "This field cannot be more than 100 characters long")
 
 	if !form.Valid() {
 		data := app.newTemplateData(w, r)
 		data.Form = form
-		app.render(w, http.StatusUnprocessableEntity, "login_post.html", data)
+		token := r.Context().Value("csrfToken").(string)
+		data.CSRFToken = token
+		app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
 		return
 	}
 
@@ -233,6 +238,8 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 	// Запуск сессии и сохранение данных пользователя
 	sess := app.sessionManager.SessionStart(w, r)
 	sess.Set("username", form.Username)
+	// Если валидация прошла успешно, удаляем токен из сессии
+	sess.Delete("token")
 	// sess.Set("role", role) // Сохраняем роль в сессии
 	// Перенаправление на главную страницу после успешного входа
 	http.Redirect(w, r, "/", http.StatusSeeOther)

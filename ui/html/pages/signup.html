@@ -1,7 +1,7 @@
-{{define "title"}}Login{{end}}
+{{define "title"}}Signup{{end}}
 
 {{define "main"}}
-<form action='/login' method='POST'>
+<form action='/user/signup' method='POST'>
     <input type="hidden" name="token" value="{{.CSRFToken}}">
     <div>
         <label>Username:</label>
@@ -22,10 +22,10 @@
         {{with .Form.FieldErrors.password}}
             <label class='error'>{{.}}</label>
         {{end}}
-        <input type='text' name='password' value='{{.Form.Password}}'>
+        <input type='text' name='password'>
     </div>
     <div>
-        <input type='submit' value='Login'>
+        <input type='submit' value='Signup'>
     </div>
 </form>
 {{end}}

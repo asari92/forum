@@ -15,7 +15,7 @@ type templateData struct {
 	Post        *models.Post
 	Posts       []*models.Post
 	Form        any
-	Session     interface{}
+	// Session     interface{}
 	Flash       string
 }
 
