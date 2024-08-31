@@ -71,12 +71,14 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 func (app *application) verifyCSRF(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Проверяем все запросы которые могут изменить данные
-		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		if r.Method == http.MethodPost {
 			sess := app.sessionManager.SessionStart(w, r)
-			sessionToken := sess.Get("token").(string)
+			sessionToken, ok := sess.Get("token").(string)
+			if !ok || sessionToken == "" {
+				sessionToken = app.generateCSRFToken()
+				sess.Set("token", sessionToken)
+			}
 			requestToken := r.FormValue("token")
-
-			fmt.Println("checking", requestToken, sessionToken)
 
 			if sessionToken == "" || requestToken != sessionToken {
 				http.Error(w, "Invalid CSRF token", http.StatusForbidden)
@@ -100,7 +102,6 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 			sess.Set("token", token)
 		}
 
-		fmt.Println(token)
 		// Вставка токена в контекст запроса
 		ctx := context.WithValue(r.Context(), "csrfToken", token)
 		r = r.WithContext(ctx)

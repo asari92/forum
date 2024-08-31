@@ -212,37 +212,45 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 	form.CheckField(validator.NotBlank(form.Username), "username", "This field cannot be blank")
 	form.CheckField(validator.MaxChars(form.Username, 100), "username", "This field cannot be more than 100 characters long")
 	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")
 	form.CheckField(validator.MaxChars(form.Email, 100), "email", "This field cannot be more than 100 characters long")
 	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+	form.CheckField(validator.MinChars(form.Password, 8), "password", "This field must be at least 8 characters long")
 	form.CheckField(validator.MaxChars(form.Password, 100), "password", "This field cannot be more than 100 characters long")
 
 	if !form.Valid() {
 		data := app.newTemplateData(w, r)
 		data.Form = form
-		token := r.Context().Value("csrfToken").(string)
-		data.CSRFToken = token
+		data.CSRFToken = r.Context().Value("csrfToken").(string)
 		app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
 		return
 	}
 
-	// Проверка имени пользователя и пароля
-	// if !app.authenticate(username, password) {
-	// 	// Если проверка не удалась, вернуть сообщение об ошибке
-	// 	http.Error(w, "Invalid credentials", http.StatusUnauthorized)
-	// 	return
-	// }
+	err = app.users.Insert(form.Username, form.Email, form.Password)
+	if err != nil {
+		if errors.Is(err, models.ErrDuplicateEmail) {
+			form.AddFieldError("email", "Email address is already in use")
 
-	// Получение роли пользователя из базы данных или другого источника
-	// role := app.users.getUserRole(username)
+			data := app.newTemplateData(w, r)
+			data.Form = form
+			data.CSRFToken = r.Context().Value("csrfToken").(string)
+			app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
+		} else {
+			app.serverError(w, err)
+		}
 
-	// Запуск сессии и сохранение данных пользователя
+		return
+	}
 	sess := app.sessionManager.SessionStart(w, r)
-	sess.Set("username", form.Username)
 	// Если валидация прошла успешно, удаляем токен из сессии
 	sess.Delete("token")
-	// sess.Set("role", role) // Сохраняем роль в сессии
-	// Перенаправление на главную страницу после успешного входа
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+
+	err = sess.Set("flash", "Your signup was successful. Please log in.")
+	if err != nil {
+		app.serverError(w, err)
+	}
+
+	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 }
 
 func (app *application) userLoginView(w http.ResponseWriter, r *http.Request) {
@@ -251,6 +259,25 @@ func (app *application) userLoginView(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Authenticate and login the user...")
+
+	// // Проверка имени пользователя и пароля
+	// // if !app.authenticate(username, password) {
+	// // 	// Если проверка не удалась, вернуть сообщение об ошибке
+	// // 	http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+	// // 	return
+	// // }
+
+	// // Получение роли пользователя из базы данных или другого источника
+	// // role := app.users.getUserRole(username)
+
+	// // Запуск сессии и сохранение данных пользователя
+	// sess := app.sessionManager.SessionStart(w, r)
+	// sess.Set("username", form.Username)
+	// // Если валидация прошла успешно, удаляем токен из сессии
+	// sess.Delete("token")
+	// // sess.Set("role", role) // Сохраняем роль в сессии
+	// // Перенаправление на главную страницу после успешного входа
+	// http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (app *application) userLogout(w http.ResponseWriter, r *http.Request) {
