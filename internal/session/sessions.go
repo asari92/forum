@@ -26,10 +26,11 @@ type Provider interface {
 }
 
 type Session interface {
-	Set(key, value interface{}) error // set session value
-	Get(key interface{}) interface{}  // get session value
-	Delete(key interface{}) error     // delete session value
-	SessionID() string                // back current sessionID
+	Set(key, value interface{}) error    // set session value
+	Get(key interface{}) interface{}     // get session value
+	GetAll() map[interface{}]interface{} // get all session values
+	Delete(key interface{}) error        // delete session value
+	SessionID() string                   // back current sessionID
 }
 
 var provides = make(map[string]Provider)
@@ -56,7 +57,10 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 	cookie, err := r.Cookie(manager.cookieName)
 	if err != nil || cookie.Value == "" {
 		sid := manager.sessionId()
-		session, _ = manager.provider.SessionInit(sid)
+		session, err = manager.provider.SessionInit(sid)
+		if err != nil {
+			//!!!!!!!!!!!
+		}
 		// Установка cookie с флагами HttpOnly и Secure
 		cookie := http.Cookie{
 			Name:     manager.cookieName,
@@ -72,6 +76,57 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 		session, _ = manager.provider.SessionRead(sid)
 	}
 	return
+}
+
+func (manager *Manager) RenewToken(w http.ResponseWriter, r *http.Request) error {
+	manager.lock.Lock()
+	defer manager.lock.Unlock()
+
+	// Получаем текущий сессионный ID из куки
+	oldCookie, err := r.Cookie(manager.cookieName)
+	if err != nil || oldCookie.Value == "" {
+		return fmt.Errorf("session: no existing session")
+	}
+
+	// Читаем текущую сессию
+	oldSid, _ := url.QueryUnescape(oldCookie.Value)
+	oldSession, err := manager.provider.SessionRead(oldSid)
+	if err != nil {
+		return err
+	}
+
+	// Генерируем новый сессионный ID
+	newSid := manager.sessionId()
+
+	// Инициализируем новую сессию с новым сессионным ID
+	newSession, err := manager.provider.SessionInit(newSid)
+	if err != nil {
+		return err
+	}
+
+	// Копируем данные из старой сессии в новую
+	for key, value := range oldSession.GetAll() {
+		newSession.Set(key, value)
+	}
+
+	// Уничтожаем старую сессию
+	err = manager.provider.SessionDestroy(oldSid)
+	if err != nil {
+		return err
+	}
+
+	// Устанавливаем новую куку с новым сессионным ID
+	newCookie := http.Cookie{
+		Name:     manager.cookieName,
+		Value:    url.QueryEscape(newSid),
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		MaxAge:   int(manager.maxlifetime),
+	}
+	http.SetCookie(w, &newCookie)
+
+	return nil
 }
 
 // Register makes a session provider available by the provided name.

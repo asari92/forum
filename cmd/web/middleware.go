@@ -106,19 +106,19 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), "csrfToken", token)
 		r = r.WithContext(ctx)
 
-		user := sess.Get("username")
-		role := sess.Get("role")
-
-		if user == nil && requiresAuth(r.URL.Path) {
+		if sess.Get("authenticatedUserID") == nil && requiresAuth(r.URL.Path) {
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 			return
 		}
+
+		// role := sess.Get("role")
+
 		// Проверка ролей для защищённых маршрутов
-		if role != nil && hasAccess(role, r.URL.Path) {
-			// http.Error(w, "Forbidden", http.StatusForbidden)
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
+		// if role != nil && hasAccess(role, r.URL.Path) {
+		// 	// http.Error(w, "Forbidden", http.StatusForbidden)
+		// 	http.Redirect(w, r, "/", http.StatusSeeOther)
+		// 	return
+		// }
 
 		// Продолжить выполнение запроса
 		next.ServeHTTP(w, r)

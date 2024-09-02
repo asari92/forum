@@ -2,6 +2,7 @@ package memory
 
 import (
 	"container/list"
+	"fmt"
 	"sync"
 	"time"
 
@@ -9,7 +10,6 @@ import (
 )
 
 var pder = &Provider{list: list.New()}
-
 
 func init() {
 	pder.sessions = make(map[string]*list.Element, 0)
@@ -29,24 +29,41 @@ type Provider struct {
 }
 
 func (st *SessionStore) Set(key, value interface{}) error {
+	err := pder.SessionUpdate(st.sid)
+	if err != nil {
+		return fmt.Errorf("failed to set the session value: %v", err)
+	}
 	st.value[key] = value
-	pder.SessionUpdate(st.sid)
 	return nil
 }
 
 func (st *SessionStore) Get(key interface{}) interface{} {
-	pder.SessionUpdate(st.sid)
+	err := pder.SessionUpdate(st.sid)
+	if err != nil {
+		fmt.Printf("update error when getting value from session: %v", err)
+	}
+
 	if v, ok := st.value[key]; ok {
 		return v
 	} else {
 		return nil
 	}
-	return nil
+}
+
+func (st *SessionStore) GetAll() map[interface{}]interface{} {
+	err := pder.SessionUpdate(st.sid)
+	if err != nil {
+		fmt.Printf("update error when getting all values from session: %v", err)
+	}
+	return st.value
 }
 
 func (st *SessionStore) Delete(key interface{}) error {
+	err := pder.SessionUpdate(st.sid)
+	if err != nil {
+		return fmt.Errorf("failed to delete the session value: %v", err)
+	}
 	delete(st.value, key)
-	pder.SessionUpdate(st.sid)
 	return nil
 }
 

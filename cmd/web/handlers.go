@@ -48,14 +48,6 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	data.Post = post
 
 	app.render(w, http.StatusOK, "post_view.html", data)
-
-	// возможный способ создания куки
-	// session, _ := h.service.CreateSession(models)
-	// cokkies := &http.Cookie{
-	// 	Value: session.ID,
-	// }
-
-	// http.SetCookie(w, cokkies)
 }
 
 func (app *application) postCreateView(w http.ResponseWriter, r *http.Request) {
@@ -238,7 +230,6 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 		} else {
 			app.serverError(w, err)
 		}
-
 		return
 	}
 	sess := app.sessionManager.SessionStart(w, r)
@@ -253,31 +244,86 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 }
 
+type userLoginForm struct {
+	Email    string
+	Password string
+	validator.Validator
+}
+
 func (app *application) userLoginView(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Display a HTML form for logging in a user...")
+	data := app.newTemplateData(w, r)
+	token := r.Context().Value("csrfToken").(string)
+	data.CSRFToken = token
+	data.Form = userLoginForm{}
+	app.render(w, http.StatusOK, "login.html", data)
 }
 
 func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Authenticate and login the user...")
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+	form := userLoginForm{
+		Email:    r.PostForm.Get("email"),
+		Password: r.PostForm.Get("password"),
+	}
 
-	// // Проверка имени пользователя и пароля
-	// // if !app.authenticate(username, password) {
-	// // 	// Если проверка не удалась, вернуть сообщение об ошибке
-	// // 	http.Error(w, "Invalid credentials", http.StatusUnauthorized)
-	// // 	return
-	// // }
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")
+	form.CheckField(validator.MaxChars(form.Email, 100), "email", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+	form.CheckField(validator.MinChars(form.Password, 8), "password", "This field must be at least 8 characters long")
+	form.CheckField(validator.MaxChars(form.Password, 100), "password", "This field cannot be more than 100 characters long")
 
-	// // Получение роли пользователя из базы данных или другого источника
-	// // role := app.users.getUserRole(username)
+	if !form.Valid() {
+		data := app.newTemplateData(w, r)
+		data.Form = form
+		data.CSRFToken = r.Context().Value("csrfToken").(string)
+		app.render(w, http.StatusUnprocessableEntity, "login.html", data)
+		return
+	}
 
-	// // Запуск сессии и сохранение данных пользователя
-	// sess := app.sessionManager.SessionStart(w, r)
-	// sess.Set("username", form.Username)
-	// // Если валидация прошла успешно, удаляем токен из сессии
-	// sess.Delete("token")
-	// // sess.Set("role", role) // Сохраняем роль в сессии
-	// // Перенаправление на главную страницу после успешного входа
-	// http.Redirect(w, r, "/", http.StatusSeeOther)
+	// Check whether the credentials are valid. If they're not, add a generic
+	// non-field error message and re-display the login page.
+	id, err := app.users.Authenticate(form.Email, form.Password)
+	if err != nil {
+		if errors.Is(err, models.ErrInvalidCredentials) {
+			form.AddNonFieldError("Email or password is incorrect")
+
+			data := app.newTemplateData(w, r)
+			data.Form = form
+			data.CSRFToken = r.Context().Value("csrfToken").(string)
+			app.render(w, http.StatusUnprocessableEntity, "login.html", data)
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	sess := app.sessionManager.SessionStart(w, r)
+	// Если валидация прошла успешно, удаляем токен из сессии
+	sess.Delete("token")
+
+	err = sess.Set("flash", "Your log in was successful.")
+	if err != nil {
+		app.serverError(w, err)
+	}
+
+	// Add the ID of the current user to the session, so that they are now
+	// 'logged in'.
+	err = sess.Set("authenticatedUserID", id)
+	if err != nil {
+		app.serverError(w, err)
+	}
+
+	err = app.sessionManager.RenewToken(w, r)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	http.Redirect(w, r, "/post/create", http.StatusSeeOther)
 }
 
 func (app *application) userLogout(w http.ResponseWriter, r *http.Request) {
