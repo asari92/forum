@@ -8,6 +8,7 @@
         <a href='/user/signup'>Signup</a>
         <a href='/user/login'>Login</a>
         <form action='/user/logout' method='POST'>
+            <input type="hidden" name="token" value="{{.CSRFToken}}">
             <button>Logout</button>
         </form>
     </div>

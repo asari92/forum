@@ -106,12 +106,14 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), "csrfToken", token)
 		r = r.WithContext(ctx)
 
-		if sess.Get("authenticatedUserID") == nil && requiresAuth(r.URL.Path) {
+		userId := sess.Get("authenticatedUserID")
+		if userId == nil && requiresAuth(r.URL.Path) {
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 			return
 		}
 
-		// role := sess.Get("role")
+		
+		// role, err := app.users.DB.getRole(userId.(int))
 
 		// Проверка ролей для защищённых маршрутов
 		// if role != nil && hasAccess(role, r.URL.Path) {

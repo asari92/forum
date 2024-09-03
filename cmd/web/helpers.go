@@ -66,7 +66,8 @@ func (app *application) newTemplateData(w http.ResponseWriter, r *http.Request) 
 	}
 	return &templateData{
 		CurrentYear: time.Now().Year(),
-		Flash: flash,
+		Flash:       flash,
+		CSRFToken:   r.Context().Value("csrfToken").(string),
 	}
 }
 
