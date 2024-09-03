@@ -107,12 +107,12 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 		r = r.WithContext(ctx)
 
 		userId := sess.Get("authenticatedUserID")
+		fmt.Println("mid", sess.Get("authenticatedUserID"))
 		if userId == nil && requiresAuth(r.URL.Path) {
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 			return
 		}
 
-		
 		// role, err := app.users.DB.getRole(userId.(int))
 
 		// Проверка ролей для защищённых маршрутов
