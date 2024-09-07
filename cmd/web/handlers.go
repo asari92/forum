@@ -58,9 +58,6 @@ func (app *application) postCreateView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := app.newTemplateData(w, r)
-	// Извлечение CSRF-токена из контекста
-	// token := r.Context().Value("csrfToken").(string)
-	// data.CSRFToken = token
 	data.Categories = categories
 	data.Form = postCreateForm{
 		// первая категория всегда отмечена
@@ -121,7 +118,7 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sess := app.sessionManager.SessionStart(w, r)
+	sess := app.SessionFromContext(r)
 	userId := sess.Get("authenticatedUserID").(int)
 
 	postId, err := app.posts.InsertPostWithCategories(form.Title, form.Content, userId, form.Categories)
@@ -169,12 +166,7 @@ func (form *postCreateForm) validateCategories(allCategories []*models.Category)
 }
 
 func (app *application) userSignupView(w http.ResponseWriter, r *http.Request) {
-	// sess := app.sessionManager.SessionStart(w, r)
 	data := app.newTemplateData(w, r)
-	// Извлечение CSRF-токена из контекста
-	// token := r.Context().Value("csrfToken").(string)
-	// data.CSRFToken = token
-	// data.Session = sess.Get("username")                    !!!!!!!!!!!!!!!!!!! ДЛЯ ЧЕГО Я ЭТО ДЕЛАЛ?!
 	data.Form = signupForm{}
 	app.render(w, http.StatusOK, "signup.html", data)
 }
@@ -211,7 +203,6 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 	if !form.Valid() {
 		data := app.newTemplateData(w, r)
 		data.Form = form
-		// data.CSRFToken = r.Context().Value("csrfToken").(string)
 		app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
 		return
 	}
@@ -223,14 +214,13 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 
 			data := app.newTemplateData(w, r)
 			data.Form = form
-			// data.CSRFToken = r.Context().Value("csrfToken").(string)
 			app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
 		} else {
 			app.serverError(w, err)
 		}
 		return
 	}
-	sess := app.sessionManager.SessionStart(w, r)
+	sess := app.SessionFromContext(r)
 	// Если валидация прошла успешно, удаляем токен из сессии
 	sess.Delete("token")
 
@@ -250,8 +240,6 @@ type userLoginForm struct {
 
 func (app *application) userLoginView(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(w, r)
-	// token := r.Context().Value("csrfToken").(string)
-	// data.CSRFToken = token
 	data.Form = userLoginForm{}
 	app.render(w, http.StatusOK, "login.html", data)
 }
@@ -277,7 +265,6 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 	if !form.Valid() {
 		data := app.newTemplateData(w, r)
 		data.Form = form
-		// data.CSRFToken = r.Context().Value("csrfToken").(string)
 		app.render(w, http.StatusUnprocessableEntity, "login.html", data)
 		return
 	}
@@ -291,7 +278,6 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 
 			data := app.newTemplateData(w, r)
 			data.Form = form
-			// data.CSRFToken = r.Context().Value("csrfToken").(string)
 			app.render(w, http.StatusUnprocessableEntity, "login.html", data)
 		} else {
 			app.serverError(w, err)
@@ -299,7 +285,7 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sess := app.sessionManager.SessionStart(w, r)
+	sess := app.SessionFromContext(r)
 	// Если валидация прошла успешно, удаляем токен из сессии
 	sess.Delete("token")
 
@@ -325,7 +311,7 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) userLogout(w http.ResponseWriter, r *http.Request) {
-	sess := app.sessionManager.SessionStart(w, r)
+	sess := app.SessionFromContext(r)
 	sess.Delete("authenticatedUserID")
 	// fmt.Println(sess)
 	sess.Set("flash", "You've been logged out successfully!")

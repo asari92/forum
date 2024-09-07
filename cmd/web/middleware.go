@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"forum/internal/session"
 )
 
 // Middleware type for handling HTTP requests
@@ -73,17 +75,24 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 
 func (app *application) verifyCSRF(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Проверяем все запросы которые могут изменить данные
+		// Проверяем (все) запросы которые могут изменить данные
 		if r.Method == http.MethodPost {
 			sess := app.sessionManager.SessionStart(w, r)
 			sessionToken, ok := sess.Get("token").(string)
 			if !ok || sessionToken == "" {
 				sessionToken = app.generateCSRFToken()
-				sess.Set("token", sessionToken)
+				if err := sess.Set("token", sessionToken); err != nil {
+					app.serverError(w, err)
+					return
+				}
 			}
 			requestToken := r.FormValue("token")
 
-			if sessionToken == "" || requestToken != sessionToken {
+			// Вставляем сессию в контекст запроса, чтобы другие хэндлеры могли её использовать
+			ctx := context.WithValue(r.Context(), "session", sess)
+			r = r.WithContext(ctx)
+
+			if requestToken != sessionToken {
 				http.Error(w, "Invalid CSRF token", http.StatusForbidden)
 				return
 			}
@@ -96,18 +105,26 @@ func (app *application) verifyCSRF(next http.Handler) http.Handler {
 
 func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		sess := app.sessionManager.SessionStart(w, r)
-		// fmt.Println("mid", sess)
+		// Извлекаем сессию из контекста
+		sess, ok := r.Context().Value("session").(session.Session)
+		if !ok {
+			sess = app.sessionManager.SessionStart(w, r)
+			// fmt.Println("mid", sess)
+		}
 
 		// Если токен уже существует в сессии, не перезаписываем его
 		token, ok := sess.Get("token").(string)
 		if !ok || token == "" {
 			token = app.generateCSRFToken()
-			sess.Set("token", token)
+			if err := sess.Set("token", token); err != nil {
+				app.serverError(w, err)
+				return
+			}
 		}
 
-		// Вставка токена в контекст запроса
+		// Вставляем токен и сессию в контекст запроса, чтобы другие хэндлеры могли её использовать
 		ctx := context.WithValue(r.Context(), "csrfToken", token)
+		ctx = context.WithValue(ctx, "session", sess)
 		r = r.WithContext(ctx)
 
 		// role, err := app.users.DB.getRole(userId.(int))
@@ -126,7 +143,7 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 
 func (app *application) requireAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !app.isAuthenticated(w, r) {
+		if !app.isAuthenticated(r) {
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 			return
 		}
