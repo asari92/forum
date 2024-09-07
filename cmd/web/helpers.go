@@ -79,9 +79,12 @@ func (app *application) newTemplateData(w http.ResponseWriter, r *http.Request) 
 }
 
 func (app *application) isAuthenticated(r *http.Request) bool {
-	sess := app.SessionFromContext(r)
-	userId := sess.Get("authenticatedUserID")
-	return userId != nil
+	isAuthenticated, ok := r.Context().Value(isAuthenticatedContextKey).(bool)
+	if !ok {
+		return false
+	}
+
+	return isAuthenticated
 }
 
 // Генерация CSRF-токена
