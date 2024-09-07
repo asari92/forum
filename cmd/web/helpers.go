@@ -68,7 +68,14 @@ func (app *application) newTemplateData(w http.ResponseWriter, r *http.Request) 
 		CurrentYear: time.Now().Year(),
 		Flash:       flash,
 		CSRFToken:   r.Context().Value("csrfToken").(string),
+		IsAuthenticated: app.isAuthenticated(w, r),
 	}
+}
+
+func (app *application) isAuthenticated(w http.ResponseWriter, r *http.Request) bool {
+	sess := app.sessionManager.SessionStart(w, r)
+	userId := sess.Get("authenticatedUserID")
+	return userId != nil
 }
 
 // Генерация CSRF-токена

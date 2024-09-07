@@ -28,11 +28,14 @@ func (c *Chain) Append(middlewares ...Middleware) *Chain {
 // Then applies all middleware to the given handler
 func (c *Chain) Then(h http.Handler) http.Handler {
 	for i := len(c.middlewares) - 1; i >= 0; i-- {
-		// for i := 0; i < len(c.middlewares); i++ {
 		// Используем reflect для получения имени функции
 		h = c.middlewares[i](h)
 	}
 	return h
+}
+
+func (c *Chain) ThenFunc(hf http.HandlerFunc) http.Handler {
+	return c.Then(hf)
 }
 
 func secureHeaders(next http.Handler) http.Handler {
@@ -107,13 +110,6 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), "csrfToken", token)
 		r = r.WithContext(ctx)
 
-		userId := sess.Get("authenticatedUserID")
-		// fmt.Println("mid", userId)
-		if userId == nil && requiresAuth(r.URL.Path) {
-			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
-			return
-		}
-
 		// role, err := app.users.DB.getRole(userId.(int))
 
 		// Проверка ролей для защищённых маршрутов
@@ -128,9 +124,20 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func requiresAuth(path string) bool {
-	// Определить, требует ли страница авторизации
-	return strings.HasPrefix(path, "/post/create") || strings.HasPrefix(path, "/user/logout") || strings.HasPrefix(path, "/moderation")
+func (app *application) requireAuthentication(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !app.isAuthenticated(w, r) {
+			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+			return
+		}
+
+		// set the "Cache-Control: no-store" header so that pages
+		// require authentication are not stored in the users browser cache (or
+		// other intermediary cache).
+		w.Header().Add("Cache-Control", "no-store")
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func hasAccess(role interface{}, path string) bool {

@@ -8,19 +8,22 @@ func (app *application) routes() http.Handler {
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 
-	mux.HandleFunc("GET /", app.errorHandler)
-	mux.HandleFunc("GET /{$}", app.home)
-	mux.HandleFunc("GET /post/view/{id}", app.postView)
-	mux.HandleFunc("GET /post/create", app.postCreateView)
-	mux.HandleFunc("POST /post/create", app.postCreate)
-	mux.HandleFunc("GET /user/signup", app.userSignupView)
-	mux.HandleFunc("POST /user/signup", app.userSignup)
-	mux.HandleFunc("GET /user/login", app.userLoginView)
-	mux.HandleFunc("POST /user/login", app.userLogin)
-	mux.HandleFunc("POST /user/logout", app.userLogout)
+	dynamic := New(app.verifyCSRF, app.sessionMiddleware)
 
-	myChain := New(app.recoverPanic, app.logRequest, secureHeaders, app.verifyCSRF)
-	myOtherChain := myChain.Append(app.sessionMiddleware)
+	mux.Handle("GET /", dynamic.ThenFunc(app.errorHandler))
+	mux.Handle("GET /{$}", dynamic.ThenFunc(app.home))
+	mux.Handle("GET /post/view/{id}", dynamic.ThenFunc(app.postView))
+	mux.Handle("GET /user/signup", dynamic.ThenFunc(app.userSignupView))
+	mux.Handle("POST /user/signup", dynamic.ThenFunc(app.userSignup))
+	mux.Handle("GET /user/login", dynamic.ThenFunc(app.userLoginView))
+	mux.Handle("POST /user/login", dynamic.ThenFunc(app.userLogin))
 
-	return myOtherChain.Then(mux)
+	protected := dynamic.Append(app.requireAuthentication)
+
+	mux.Handle("GET /post/create", protected.ThenFunc(app.postCreateView))
+	mux.Handle("POST /post/create", protected.ThenFunc(app.postCreate))
+	mux.Handle("POST /user/logout", protected.ThenFunc(app.userLogout))
+
+	standard := New(app.recoverPanic, app.logRequest, secureHeaders)
+	return standard.Then(mux)
 }
