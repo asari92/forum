@@ -69,6 +69,7 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 			HttpOnly: true, // HttpOnly защищает от XSS-атак
 			Secure:   true, // Secure защищает от передачи через HTTP (только HTTPS)
 			MaxAge:   int(manager.maxlifetime),
+			SameSite: http.SameSiteLaxMode,
 		}
 		http.SetCookie(w, &cookie)
 	} else {
