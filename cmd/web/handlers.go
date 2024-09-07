@@ -84,13 +84,6 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// пока непонятно откуда брать юзерайди кажется из сессии
-	// userID, err := strconv.Atoi(r.PostForm.Get("userID"))
-	// if err != nil {
-	// 	app.clientError(w, http.StatusBadRequest)
-	// 	return
-	// }
-
 	var categoryIDs []int
 	for _, id := range r.PostForm["categories"] {
 		intID, err := strconv.Atoi(id)
@@ -128,16 +121,21 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//!!!!!!!!!!!!!!пока везде юзерайди = 1
-	postId, err := app.posts.InsertPostWithCategories(form.Title, form.Content, 1, form.Categories)
+	sess := app.sessionManager.SessionStart(w, r)
+	userId := sess.Get("authenticatedUserID").(int)
+
+	postId, err := app.posts.InsertPostWithCategories(form.Title, form.Content, userId, form.Categories)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	err = app.sessionManager.SessionStart(w, r).Set("flash", "Post successfully created!")
+	err = sess.Set("flash", "Post successfully created!")
 	if err != nil {
-		app.serverError(w, err)
+		// кажется тут не нужна ошибка, достаточно логирования
+		// app.serverError(w, err)
+		trace := fmt.Sprintf("Error: %+v", err) // Log full stack trace
+		app.errorLog.Println(trace)
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/post/view/%d", postId), http.StatusSeeOther)
@@ -329,7 +327,7 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 func (app *application) userLogout(w http.ResponseWriter, r *http.Request) {
 	sess := app.sessionManager.SessionStart(w, r)
 	sess.Delete("authenticatedUserID")
-	fmt.Println(sess)
+	// fmt.Println(sess)
 	sess.Set("flash", "You've been logged out successfully!")
 
 	err := app.sessionManager.RenewToken(w, r)

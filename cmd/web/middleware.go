@@ -94,6 +94,7 @@ func (app *application) verifyCSRF(next http.Handler) http.Handler {
 func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess := app.sessionManager.SessionStart(w, r)
+		// fmt.Println("mid", sess)
 
 		// Если токен уже существует в сессии, не перезаписываем его
 		token, ok := sess.Get("token").(string)
@@ -107,7 +108,7 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 		r = r.WithContext(ctx)
 
 		userId := sess.Get("authenticatedUserID")
-		fmt.Println("mid", sess.Get("authenticatedUserID"))
+		// fmt.Println("mid", userId)
 		if userId == nil && requiresAuth(r.URL.Path) {
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 			return
