@@ -78,15 +78,15 @@ func (app *application) verifyCSRF(next http.Handler) http.Handler {
 		// Проверяем (все) запросы которые могут изменить данные
 		if r.Method == http.MethodPost {
 			sess := app.sessionManager.SessionStart(w, r)
-			sessionToken, ok := sess.Get("token").(string)
+			sessionToken, ok := sess.Get(CsrfTokenSessionKey).(string)
 			if !ok || sessionToken == "" {
 				sessionToken = app.generateCSRFToken()
-				if err := sess.Set("token", sessionToken); err != nil {
+				if err := sess.Set(CsrfTokenSessionKey, sessionToken); err != nil {
 					app.serverError(w, err)
 					return
 				}
 			}
-			requestToken := r.FormValue("token")
+			requestToken := r.FormValue(CsrfTokenSessionKey)
 
 			// Вставляем сессию в контекст запроса, чтобы другие хэндлеры могли её использовать
 			ctx := context.WithValue(r.Context(), sessionContextKey, sess)
@@ -113,10 +113,10 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Если токен уже существует в сессии, не перезаписываем его
-		token, ok := sess.Get("token").(string)
+		token, ok := sess.Get(CsrfTokenSessionKey).(string)
 		if !ok || token == "" {
 			token = app.generateCSRFToken()
-			if err := sess.Set("token", token); err != nil {
+			if err := sess.Set(CsrfTokenSessionKey, token); err != nil {
 				app.serverError(w, err)
 				return
 			}
@@ -126,6 +126,7 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), csrfTokenContextKey, token)
 		ctx = context.WithValue(ctx, sessionContextKey, sess)
 		r = r.WithContext(ctx)
+		// fmt.Println("sess ctx", sess)
 
 		// role, err := app.users.DB.getRole(userId.(int))
 
@@ -144,7 +145,7 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 func (app *application) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess := app.SessionFromContext(r)
-		id, ok := sess.Get("authenticatedUserID").(int)
+		id, ok := sess.Get(AuthenticatedUserID).(int)
 		if !ok || id == 0 {
 			next.ServeHTTP(w, r)
 			return

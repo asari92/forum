@@ -58,14 +58,14 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 }
 
 func (app *application) SessionFromContext(r *http.Request) session.Session {
-	return r.Context().Value("session").(session.Session)
+	return r.Context().Value(sessionContextKey).(session.Session)
 }
 
 func (app *application) newTemplateData(w http.ResponseWriter, r *http.Request) *templateData {
 	sess := app.SessionFromContext(r)
-	flash, ok := sess.Get("flash").(string)
+	flash, ok := sess.Get(FlashSessionKey).(string)
 	if ok {
-		err := sess.Delete("flash")
+		err := sess.Delete(FlashSessionKey)
 		if err != nil {
 			app.serverError(w, err)
 		}
@@ -73,7 +73,7 @@ func (app *application) newTemplateData(w http.ResponseWriter, r *http.Request) 
 	return &templateData{
 		CurrentYear:     time.Now().Year(),
 		Flash:           flash,
-		CSRFToken:       r.Context().Value("csrfToken").(string),
+		CSRFToken:       r.Context().Value(csrfTokenContextKey).(string),
 		IsAuthenticated: app.isAuthenticated(r),
 	}
 }
