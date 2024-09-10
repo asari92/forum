@@ -44,8 +44,15 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	categories, err := app.categories.GetCategoriesForPost(id)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
 	data := app.newTemplateData(w, r)
 	data.Post = post
+	data.Categories = categories
 
 	app.render(w, http.StatusOK, "post_view.html", data)
 }

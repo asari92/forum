@@ -1,17 +1,27 @@
 {{define "title"}}Post #{{.Post.ID}}{{end}}
 
 {{define "main"}}
+<div class='snippet'>
     {{with .Post}}
-    <div class='snippet'>
-        <div class='metadata'>
-            <strong>{{.Title}}</strong>
-            <span>#{{.ID}}</span>
-        </div>
-        <pre><code>{{.Content}}</code></pre>
-        <div class='metadata'>
-            <time>UserID: {{.UserID}}</time>
-            <time>Created: {{humanDate .Created}}</time>
+    <div class='metadata'>
+        <strong>{{.Title}}</strong>
+        <span>#{{.ID}}</span>
+    </div>
+    <pre><code>{{.Content}}</code></pre>
+    {{end}}
+    <div class='metadata'>
+        <div>
+            <strong>Categories: </strong>
+            {{range .Categories}}
+            <a href='/category/{{.ID}}' class='category-link'>{{.Name}}</a>
+            {{end}}
         </div>
     </div>
+    {{with .Post}}
+    <div class='metadata'>
+        <time>UserID: {{.UserID}}</time>
+        <time>Created: {{humanDate .Created}}</time>
+    </div>
     {{end}}
+</div>
 {{end}}
