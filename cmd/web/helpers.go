@@ -57,15 +57,15 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 	buf.WriteTo(w)
 }
 
-func (app *application) SessionFromContext(r *http.Request) session.Session {
-	return r.Context().Value(sessionContextKey).(session.Session)
+func (app *application) SessionFromContext(r *http.Request) *session.Session {
+	return r.Context().Value(sessionContextKey).(*session.Session)
 }
 
 func (app *application) newTemplateData(w http.ResponseWriter, r *http.Request) *templateData {
 	sess := app.SessionFromContext(r)
-	flash, ok := sess.Get(FlashSessionKey).(string)
+	flash, ok := (*sess).Get(FlashSessionKey).(string)
 	if ok {
-		err := sess.Delete(FlashSessionKey)
+		err := (*sess).Delete(FlashSessionKey)
 		if err != nil {
 			app.serverError(w, err)
 		}

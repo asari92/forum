@@ -119,7 +119,7 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sess := app.SessionFromContext(r)
-	userId := sess.Get(AuthenticatedUserID).(int)
+	userId := (*sess).Get(AuthenticatedUserID).(int)
 
 	postId, err := app.posts.InsertPostWithCategories(form.Title, form.Content, userId, form.Categories)
 	if err != nil {
@@ -127,7 +127,7 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = sess.Set(FlashSessionKey, "Post successfully created!")
+	err = (*sess).Set(FlashSessionKey, "Post successfully created!")
 	if err != nil {
 		// кажется тут не нужна ошибка, достаточно логирования
 		// app.serverError(w, err)
@@ -222,9 +222,9 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 	}
 	sess := app.SessionFromContext(r)
 	// Если валидация прошла успешно, удаляем токен из сессии
-	sess.Delete(CsrfTokenSessionKey)
+	(*sess).Delete(CsrfTokenSessionKey)
 
-	err = sess.Set(FlashSessionKey, "Your signup was successful. Please log in.")
+	err = (*sess).Set(FlashSessionKey, "Your signup was successful. Please log in.")
 	if err != nil {
 		app.serverError(w, err)
 	}
@@ -287,16 +287,16 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 
 	sess := app.SessionFromContext(r)
 	// Если валидация прошла успешно, удаляем токен из сессии
-	sess.Delete(CsrfTokenSessionKey)
+	(*sess).Delete(CsrfTokenSessionKey)
 
-	err = sess.Set(FlashSessionKey, "Your log in was successful.")
+	err = (*sess).Set(FlashSessionKey, "Your log in was successful.")
 	if err != nil {
 		app.serverError(w, err)
 	}
 
 	// Add the ID of the current user to the session, so that they are now
 	// 'logged in'.
-	err = sess.Set(AuthenticatedUserID, id)
+	err = (*sess).Set(AuthenticatedUserID, id)
 	if err != nil {
 		app.serverError(w, err)
 	}
@@ -312,9 +312,9 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) userLogout(w http.ResponseWriter, r *http.Request) {
 	sess := app.SessionFromContext(r)
-	sess.Delete(AuthenticatedUserID)
+	(*sess).Delete(AuthenticatedUserID)
 	// fmt.Println(sess)
-	sess.Set(FlashSessionKey, "You've been logged out successfully!")
+	(*sess).Set(FlashSessionKey, "You've been logged out successfully!")
 
 	err := app.sessionManager.RenewToken(w, r)
 	if err != nil {
