@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"forum/docs"
 	// Go вызывает функцию init() внутри этого пакета.
 	_ "forum/internal/memory"
 	"forum/internal/models"
@@ -111,7 +112,8 @@ func openDB(dsn string) (*sql.DB, error) {
 }
 
 func initDB(db *sql.DB) error {
-	query, err := os.ReadFile("./docs/new_forum.sql")
+	// Используем встроенный файл для инициализации базы данных
+	query, err := docs.DocsFiles.ReadFile("new_forum.sql")
 	if err != nil {
 		return err
 	}
@@ -134,7 +136,7 @@ func initDB(db *sql.DB) error {
 	}
 
 	// Добавление тестовых данных
-	insertTestdataSQL, err := os.ReadFile("./docs/testdata.sql")
+	insertTestdataSQL, err := docs.DocsFiles.ReadFile("testdata.sql")
 	if err != nil {
 		return err
 	}
