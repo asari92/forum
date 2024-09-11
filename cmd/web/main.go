@@ -5,12 +5,15 @@ import (
 	"database/sql"
 	"flag"
 	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"forum/docs"
+	tlsecurity "forum/tls"
+
 	// Go вызывает функцию init() внутри этого пакета.
 	_ "forum/internal/memory"
 	"forum/internal/models"
@@ -71,7 +74,24 @@ func main() {
 		sessionManager: sessionManager,
 	}
 
+	// Чтение встроенных TLS-ключей из файловой системы
+	certPEM, err := fs.ReadFile(tlsecurity.TlsFiles, "cert.pem")
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+	keyPEM, err := fs.ReadFile(tlsecurity.TlsFiles, "key.pem")
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
+	// Загрузка ключей в формате x509
+	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
 	tlsConfig := &tls.Config{
+		Certificates:     []tls.Certificate{tlsCert},
 		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
 		MinVersion:       tls.VersionTLS12,
 		CipherSuites: []uint16{
@@ -85,9 +105,8 @@ func main() {
 	}
 
 	srv := &http.Server{
-		Addr:     *addr,
-		ErrorLog: errorLog,
-		// Call the new app.routes() method to get the servemux containing our routes.
+		Addr:         *addr,
+		ErrorLog:     errorLog,
 		Handler:      app.routes(),
 		TLSConfig:    tlsConfig,
 		IdleTimeout:  time.Minute,
@@ -96,7 +115,7 @@ func main() {
 	}
 
 	infoLog.Printf("Starting server on https://localhost%s", *addr)
-	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
+	err = srv.ListenAndServeTLS("", "") // Пустые строки означают, что сертификат и ключ уже загружены в `tlsConfig`
 	errorLog.Fatal(err)
 }
 
