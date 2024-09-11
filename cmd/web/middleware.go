@@ -92,7 +92,7 @@ func (app *application) verifyCSRF(next http.Handler) http.Handler {
 			ctx := context.WithValue(r.Context(), sessionContextKey, &sess)
 			r = r.WithContext(ctx)
 
-			fmt.Println(requestToken, sessionToken)
+			// fmt.Println(requestToken, sessionToken)
 			if requestToken != sessionToken {
 				http.Error(w, "Invalid CSRF token", http.StatusForbidden)
 				return

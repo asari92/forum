@@ -6,6 +6,12 @@ import (
 	"time"
 )
 
+type PostModelInterface interface {
+    InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error)
+    Get(id int) (*Post, error)
+    Latest() ([]*Post, error)
+}
+
 type Post struct {
 	ID      int
 	Title   string

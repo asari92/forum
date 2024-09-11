@@ -5,4 +5,4 @@ import (
 )
 
 //go:embed *.pem
-var TlsFiles embed.FS
+var Files embed.FS

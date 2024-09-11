@@ -7,6 +7,15 @@ import (
 
 const DefaultCategory = 1
 
+type CategoryModelInterface interface {
+	Insert(name string) (int, error)
+	Get(categoryId int) (*Category, error)
+	GetAll() ([]*Category, error)
+	Delete(categoryId int) error
+	GetCategoriesForPost(postId int) ([]*Category, error)
+	DeleteCategoriesForPost(postId int) error
+}
+
 type Category struct {
 	ID   int
 	Name string

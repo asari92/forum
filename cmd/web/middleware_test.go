@@ -80,7 +80,7 @@ func TestSecureHeaders(t *testing.T) {
 	assert.Equal(t, string(body), "OK")
 }
 
-func newTestApplication(t *testing.T) *application {
+func newMidTestApplication(t *testing.T) *application {
 	// Создаем логгеры для вывода ошибок и информации
 	infoLog := log.New(&bytes.Buffer{}, "", log.Ldate|log.Ltime)
 	errorLog := log.New(&bytes.Buffer{}, "", log.Ldate|log.Ltime|log.Lshortfile)
@@ -113,7 +113,7 @@ func newTestApplication(t *testing.T) *application {
 }
 
 func TestVerifyCSRF(t *testing.T) {
-	app := newTestApplication(t)
+	app := newMidTestApplication(t)
 
 	// Создаем тестовый POST-запрос с CSRF-токеном
 	rr := httptest.NewRecorder()
@@ -148,7 +148,7 @@ func TestVerifyCSRF(t *testing.T) {
 }
 
 func TestSessionMiddleware(t *testing.T) {
-	app := newTestApplication(t)
+	app := newMidTestApplication(t)
 
 	rr := httptest.NewRecorder()
 	r, err := http.NewRequest(http.MethodGet, "/", nil)
@@ -178,7 +178,7 @@ func TestSessionMiddleware(t *testing.T) {
 }
 
 func TestRequireAuthentication(t *testing.T) {
-	app := newTestApplication(t)
+	app := newMidTestApplication(t)
 
 	rr := httptest.NewRecorder()
 	r, err := http.NewRequest(http.MethodGet, "/private", nil)
@@ -199,7 +199,7 @@ func TestRequireAuthentication(t *testing.T) {
 }
 
 func TestAuthenticate(t *testing.T) {
-	app := newTestApplication(t)
+	app := newMidTestApplication(t)
 
 	rr := httptest.NewRecorder()
 	r, err := http.NewRequest(http.MethodGet, "/", nil)

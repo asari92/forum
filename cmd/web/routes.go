@@ -12,6 +12,9 @@ func (app *application) routes() http.Handler {
 	fileServer := http.FileServer(http.FS(ui.Files))
 	mux.Handle("GET /static/", fileServer)
 
+	// Add a test route
+	mux.Handle("GET /ping", http.HandlerFunc(ping))
+
 	dynamic := New(app.verifyCSRF, app.sessionMiddleware, app.authenticate)
 
 	mux.Handle("GET /", dynamic.ThenFunc(app.errorHandler))

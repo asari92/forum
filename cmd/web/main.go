@@ -25,9 +25,9 @@ import (
 type application struct {
 	errorLog       *log.Logger
 	infoLog        *log.Logger
-	users          *models.UserModel
-	posts          *models.PostModel
-	categories     *models.CategoryModel
+	users          models.UserModelInterface
+	posts          models.PostModelInterface
+	categories     models.CategoryModelInterface
 	templateCache  map[string]*template.Template
 	sessionManager *session.Manager
 }
@@ -75,11 +75,11 @@ func main() {
 	}
 
 	// Чтение встроенных TLS-ключей из файловой системы
-	certPEM, err := fs.ReadFile(tlsecurity.TlsFiles, "cert.pem")
+	certPEM, err := fs.ReadFile(tlsecurity.Files, "cert.pem")
 	if err != nil {
 		errorLog.Fatal(err)
 	}
-	keyPEM, err := fs.ReadFile(tlsecurity.TlsFiles, "key.pem")
+	keyPEM, err := fs.ReadFile(tlsecurity.Files, "key.pem")
 	if err != nil {
 		errorLog.Fatal(err)
 	}
@@ -132,7 +132,7 @@ func openDB(dsn string) (*sql.DB, error) {
 
 func initDB(db *sql.DB) error {
 	// Используем встроенный файл для инициализации базы данных
-	query, err := docs.DocsFiles.ReadFile("new_forum.sql")
+	query, err := docs.Files.ReadFile("new_forum.sql")
 	if err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ func initDB(db *sql.DB) error {
 	}
 
 	// Добавление тестовых данных
-	insertTestdataSQL, err := docs.DocsFiles.ReadFile("testdata.sql")
+	insertTestdataSQL, err := docs.Files.ReadFile("testdata.sql")
 	if err != nil {
 		return err
 	}

@@ -5,4 +5,4 @@ import (
 )
 
 //go:embed *.sql
-var DocsFiles embed.FS
+var Files embed.FS
