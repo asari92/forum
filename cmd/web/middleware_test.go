@@ -3,17 +3,12 @@ package main
 import (
 	"bytes"
 	"context"
-	"database/sql"
-	"html/template"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"forum/internal/assert"
-	"forum/internal/models"
-	"forum/internal/session"
 )
 
 func TestSecureHeaders(t *testing.T) {
@@ -80,44 +75,12 @@ func TestSecureHeaders(t *testing.T) {
 	assert.Equal(t, string(body), "OK")
 }
 
-func newMidTestApplication(t *testing.T) *application {
-	// Создаем логгеры для вывода ошибок и информации
-	infoLog := log.New(&bytes.Buffer{}, "", log.Ldate|log.Ltime)
-	errorLog := log.New(&bytes.Buffer{}, "", log.Ldate|log.Ltime|log.Lshortfile)
-
-	// Инициализация тестовой базы данных SQLite
-	db, err := sql.Open("sqlite3", ":memory:") // Использование базы данных в памяти для тестов
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Инициализация сессионного менеджера (используем провайдер памяти)
-	sessionManager, err := session.NewManager("memory", "gosessionid", 600)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Инициализация кеша шаблонов (для примера можно оставить пустым)
-	templateCache := map[string]*template.Template{}
-
-	// Возвращаем новый экземпляр структуры `application` с заполненными полями
-	return &application{
-		errorLog:       errorLog,
-		infoLog:        infoLog,
-		users:          &models.UserModel{DB: db},     // Замена на mock-объекты, если необходимо
-		posts:          &models.PostModel{DB: db},     // Замена на mock-объекты, если необходимо
-		categories:     &models.CategoryModel{DB: db}, // Замена на mock-объекты, если необходимо
-		templateCache:  templateCache,
-		sessionManager: sessionManager,
-	}
-}
-
 func TestVerifyCSRF(t *testing.T) {
-	app := newMidTestApplication(t)
+	app := newTestApplication(t)
 
 	// Создаем тестовый POST-запрос с CSRF-токеном
 	rr := httptest.NewRecorder()
-	r, err := http.NewRequest(http.MethodPost, "/", nil)
+	r, err := http.NewRequest(http.MethodPost, "/post/create", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,7 +111,7 @@ func TestVerifyCSRF(t *testing.T) {
 }
 
 func TestSessionMiddleware(t *testing.T) {
-	app := newMidTestApplication(t)
+	app := newTestApplication(t)
 
 	rr := httptest.NewRecorder()
 	r, err := http.NewRequest(http.MethodGet, "/", nil)
@@ -177,11 +140,35 @@ func TestSessionMiddleware(t *testing.T) {
 	}
 }
 
-func TestRequireAuthentication(t *testing.T) {
-	app := newMidTestApplication(t)
+func TestRequireAuthentication200(t *testing.T) {
+	app := newTestApplication(t)
 
 	rr := httptest.NewRecorder()
-	r, err := http.NewRequest(http.MethodGet, "/private", nil)
+	r, err := http.NewRequest(http.MethodGet, "/post/create", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx := context.WithValue(r.Context(), isAuthenticatedContextKey, true)
+	r = r.WithContext(ctx)
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	app.requireAuthentication(next).ServeHTTP(rr, r)
+
+	rs := rr.Result()
+	if rs.StatusCode != http.StatusOK {
+		t.Errorf("expected status %d; got %d", http.StatusOK, rs.StatusCode)
+	}
+}
+
+func TestRequireAuthentication303(t *testing.T) {
+	app := newTestApplication(t)
+
+	rr := httptest.NewRecorder()
+	r, err := http.NewRequest(http.MethodGet, "/post/create", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,7 +186,7 @@ func TestRequireAuthentication(t *testing.T) {
 }
 
 func TestAuthenticate(t *testing.T) {
-	app := newMidTestApplication(t)
+	app := newTestApplication(t)
 
 	rr := httptest.NewRecorder()
 	r, err := http.NewRequest(http.MethodGet, "/", nil)
@@ -227,7 +214,7 @@ func TestAuthenticate(t *testing.T) {
 	app.authenticate(next).ServeHTTP(rr, r)
 
 	rs := rr.Result()
-	if rs.StatusCode != http.StatusInternalServerError {
-		t.Errorf("expected status %d; got %d", http.StatusInternalServerError, rs.StatusCode)
+	if rs.StatusCode != http.StatusOK {
+		t.Errorf("expected status %d; got %d", http.StatusOK, rs.StatusCode)
 	}
 }
