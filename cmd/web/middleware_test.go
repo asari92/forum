@@ -93,6 +93,12 @@ func TestVerifyCSRF(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Теперь нужно вытащить куку из ответа rr и установить её в следующий запрос
+	cookie := rr.Result().Cookies()
+	for _, c := range cookie {
+		r.AddCookie(c) // Передаем куки в запрос
+	}
+
 	r.PostForm = map[string][]string{
 		CsrfTokenSessionKey: {token},
 	}
@@ -105,7 +111,7 @@ func TestVerifyCSRF(t *testing.T) {
 	app.verifyCSRF(next).ServeHTTP(rr, r)
 	// в миддлеверке первым делом создается сессия
 	rs := rr.Result()
-	if rs.StatusCode != http.StatusForbidden {
+	if rs.StatusCode != http.StatusOK {
 		t.Errorf("expected status %d; got %d", http.StatusOK, rs.StatusCode)
 	}
 }
