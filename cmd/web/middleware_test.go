@@ -206,7 +206,7 @@ func TestAuthenticate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ctx := context.WithValue(r.Context(), sessionContextKey, &sess)
+	ctx := context.WithValue(r.Context(), sessionContextKey, sess)
 	r = r.WithContext(ctx)
 
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

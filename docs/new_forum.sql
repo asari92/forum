@@ -89,4 +89,4 @@ CREATE TABLE IF NOT EXISTS sessions(
       ON UPDATE No action
 );
 
-CREATE INDEX IF NOT EXISTS sessions_expires_idx ON sessions(expires);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires);

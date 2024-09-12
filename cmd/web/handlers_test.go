@@ -91,7 +91,7 @@ func TestUserSignup(t *testing.T) {
 	const (
 		validName     = "Bob"
 		validPassword = "validPa$$word"
-		validEmail    = "bob2ghkh@example.com"
+		validEmail    = "bob@example.com"
 		formTag       = "<form action='/user/signup' method='POST' novalidate>"
 	)
 
