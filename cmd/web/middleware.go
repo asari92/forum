@@ -89,7 +89,7 @@ func (app *application) verifyCSRF(next http.Handler) http.Handler {
 			requestToken := r.FormValue(CsrfTokenSessionKey)
 
 			// Вставляем сессию в контекст запроса, чтобы другие хэндлеры могли её использовать
-			ctx := context.WithValue(r.Context(), sessionContextKey, &sess)
+			ctx := context.WithValue(r.Context(), sessionContextKey, sess)
 			r = r.WithContext(ctx)
 
 			// fmt.Println(requestToken, sessionToken)
@@ -125,7 +125,7 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 
 		// Вставляем токен и сессию в контекст запроса, чтобы другие хэндлеры могли её использовать
 		ctx := context.WithValue(r.Context(), csrfTokenContextKey, token)
-		ctx = context.WithValue(ctx, sessionContextKey, &sess)
+		ctx = context.WithValue(ctx, sessionContextKey, sess)
 		r = r.WithContext(ctx)
 		// fmt.Println("sess ctx", sess)
 
