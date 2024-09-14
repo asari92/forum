@@ -11,14 +11,15 @@ import (
 )
 
 type UserModelInterface interface {
-    Insert(name, email, password string) error
+    Insert(username, email, password string) error
     Authenticate(email, password string) (int, error)
     Exists(id int) (bool, error)
+	Get(id int) (*User, error)
 }
 
 type User struct {
 	ID             int
-	Name           string
+	Username           string
 	Email          string
 	HashedPassword []byte
 	Created        time.Time
@@ -83,4 +84,29 @@ func (m *UserModel) Exists(id int) (bool, error) {
 	stmt := "SELECT EXISTS(SELECT true FROM users WHERE id = ?)"
 	err := m.DB.QueryRow(stmt, id).Scan(&exists)
 	return exists, err
+}
+
+func (m *UserModel) Get(id int) (*User, error) {
+	stmt := `SELECT id, username, email, created FROM users WHERE id = ?`
+
+	row := m.DB.QueryRow(stmt, id)
+
+	u := &User{}
+	var created string
+
+	err := row.Scan(&u.ID, &u.Username, &u.Email, &created)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoRecord
+		} else {
+			return nil, err
+		}
+	}
+
+	u.Created, err = time.Parse("2006-01-02 15:04:05", created)
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }

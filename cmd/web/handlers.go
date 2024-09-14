@@ -340,3 +340,27 @@ func (app *application) aboutView(w http.ResponseWriter, r *http.Request) {
 func ping(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
+
+func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	userID, ok := sess.Get(AuthenticatedUserID).(int)
+	if !ok || userID == 0 {
+		http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+		return
+	}
+
+	user, err := app.users.Get(userID)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	data := app.newTemplateData(w, r)
+	data.User = user
+
+	app.render(w, http.StatusOK, "account.html", data)
+}

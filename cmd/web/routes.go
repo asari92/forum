@@ -30,6 +30,7 @@ func (app *application) routes() http.Handler {
 
 	mux.Handle("GET /post/create", protected.ThenFunc(app.postCreateView))
 	mux.Handle("POST /post/create", protected.ThenFunc(app.postCreate))
+	mux.Handle("GET /account/view", protected.ThenFunc(app.accountView))
 	mux.Handle("POST /user/logout", protected.ThenFunc(app.userLogout))
 
 	standard := New(app.recoverPanic, app.logRequest, secureHeaders)
