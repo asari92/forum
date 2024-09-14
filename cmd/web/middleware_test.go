@@ -183,6 +183,10 @@ func TestRequireAuthentication303(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
+	sess := app.sessionManager.SessionStart(rr, r)
+	ctx := context.WithValue(r.Context(), sessionContextKey, sess)
+	r = r.WithContext(ctx)
+
 	app.requireAuthentication(next).ServeHTTP(rr, r)
 
 	rs := rr.Result()

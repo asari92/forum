@@ -231,7 +231,7 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 	// Если валидация прошла успешно, удаляем токен из сессии
 	err = sess.Delete(CsrfTokenSessionKey)
 	if err != nil {
-		app.errorLog.Printf("got session error during delete csrfToken:%w\n", err)
+		app.errorLog.Printf("got session error during delete csrfToken:%v\n", err)
 	}
 
 	err = sess.Set(FlashSessionKey, "Your signup was successful. Please log in.")
@@ -251,6 +251,7 @@ type userLoginForm struct {
 func (app *application) userLoginView(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(w, r)
 	data.Form = userLoginForm{}
+
 	app.render(w, http.StatusOK, "login.html", data)
 }
 
@@ -299,7 +300,7 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 	// Если валидация прошла успешно, удаляем токен из сессии
 	err = sess.Delete(CsrfTokenSessionKey)
 	if err != nil {
-		app.errorLog.Printf("got session error during delete csrfToken:%w\n", err)
+		app.errorLog.Printf("got session error during delete csrfToken:%v\n", err)
 	}
 
 	err = sess.Set(FlashSessionKey, "Your log in was successful.")
@@ -320,7 +321,7 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 	if path != nil && path.(string) != "" {
 		err = sess.Delete(RedirectPathAfterLoginSessionKey)
 		if err != nil {
-			app.errorLog.Printf("got session error during delete redirectPath:%w\n", err)
+			app.errorLog.Printf("got session error during delete redirectPath:%v\n", err)
 		}
 		redirctUrl = path.(string)
 	}
@@ -338,7 +339,7 @@ func (app *application) userLogout(w http.ResponseWriter, r *http.Request) {
 	sess := app.SessionFromContext(r)
 	err := sess.Delete(AuthUserIDSessionKey)
 	if err != nil {
-		app.errorLog.Printf("got session error during delete authUserID:%w\n", err)
+		app.errorLog.Printf("got session error during delete authUserID:%v\n", err)
 	}
 	// fmt.Println(sess)
 	sess.Set(FlashSessionKey, "You've been logged out successfully!")
@@ -383,4 +384,76 @@ func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
 	data.User = user
 
 	app.render(w, http.StatusOK, "account.html", data)
+}
+
+type accountPasswordUpdateForm struct {
+	CurrentPassword         string
+	NewPassword             string
+	NewPasswordConfirmation string
+	validator.Validator
+}
+
+func (app *application) accountPasswordUpdateView(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(w, r)
+	data.Form = accountPasswordUpdateForm{}
+
+	app.render(w, http.StatusOK, "password.html", data)
+}
+
+func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+	form := accountPasswordUpdateForm{
+		CurrentPassword:         r.PostForm.Get("currentPassword"),
+		NewPassword:             r.PostForm.Get("newPassword"),
+		NewPasswordConfirmation: r.PostForm.Get("newPasswordConfirmation"),
+	}
+
+	form.CheckField(validator.NotBlank(form.CurrentPassword), "currentPassword", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.NewPassword), "newPassword", "This field cannot be blank")
+	form.CheckField(validator.MinChars(form.NewPassword, 8), "newPassword", "This field must be at least 8 characters long")
+	form.CheckField(validator.NotBlank(form.NewPasswordConfirmation), "newPasswordConfirmation", "This field cannot be blank")
+	form.CheckField(form.NewPassword == form.NewPasswordConfirmation, "newPasswordConfirmation", "Passwords do not match")
+
+	if !form.Valid() {
+		data := app.newTemplateData(w, r)
+		data.Form = form
+
+		app.render(w, http.StatusUnprocessableEntity, "password.html", data)
+		return
+	}
+
+	sess := app.SessionFromContext(r)
+	// err = sess.Delete(CsrfTokenSessionKey)
+	// if err != nil {
+	// 	app.errorLog.Printf("got session error during delete csrfToken:%w\n", err)
+	// }
+
+	userID := sess.Get(AuthUserIDSessionKey)
+	id, ok := userID.(int)
+	if !ok {
+		app.serverError(w, err)
+	}
+
+	err = app.users.PasswordUpdate(id, form.CurrentPassword, form.NewPassword)
+	if err != nil {
+		if errors.Is(err, models.ErrInvalidCredentials) {
+			form.AddFieldError("currentPassword", "Current password is incorrect")
+
+			data := app.newTemplateData(w, r)
+			data.Form = form
+
+			app.render(w, http.StatusUnprocessableEntity, "password.html", data)
+		} else if err != nil {
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	sess.Set("flash", "Your password has been updated!")
+
+	http.Redirect(w, r, "/account/view", http.StatusSeeOther)
 }
