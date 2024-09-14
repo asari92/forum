@@ -120,10 +120,12 @@ func (pder *Provider) SessionGC(maxlifetime int64) {
 func (pder *Provider) SessionUpdate(sid string) error {
 	pder.lock.Lock()
 	defer pder.lock.Unlock()
+
 	if element, ok := pder.sessions[sid]; ok {
 		element.Value.(*SessionStore).timeAccessed = time.Now()
 		pder.list.MoveToFront(element)
 		return nil
 	}
-	return nil
+
+	return fmt.Errorf("session not found")
 }

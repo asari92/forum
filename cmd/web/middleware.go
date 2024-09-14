@@ -146,7 +146,7 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 func (app *application) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess := app.SessionFromContext(r)
-		id, ok := sess.Get(AuthenticatedUserID).(int)
+		id, ok := sess.Get(AuthUserIDSessionKey).(int)
 		if !ok || id == 0 {
 			next.ServeHTTP(w, r)
 			return
@@ -170,6 +170,10 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 func (app *application) requireAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !app.isAuthenticated(r) {
+			// Add the path that the user is trying to access to their session
+			// data.
+			sess := app.SessionFromContext(r)
+			sess.Set(RedirectPathAfterLoginSessionKey, r.URL.Path)
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 			return
 		}

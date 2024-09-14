@@ -126,7 +126,7 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sess := app.SessionFromContext(r)
-	userId := sess.Get(AuthenticatedUserID).(int)
+	userId := sess.Get(AuthUserIDSessionKey).(int)
 
 	postId, err := app.posts.InsertPostWithCategories(form.Title, form.Content, userId, form.Categories)
 	if err != nil {
@@ -229,7 +229,10 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 	}
 	sess := app.SessionFromContext(r)
 	// Если валидация прошла успешно, удаляем токен из сессии
-	sess.Delete(CsrfTokenSessionKey)
+	err = sess.Delete(CsrfTokenSessionKey)
+	if err != nil {
+		app.errorLog.Printf("got session error during delete csrfToken:%w\n", err)
+	}
 
 	err = sess.Set(FlashSessionKey, "Your signup was successful. Please log in.")
 	if err != nil {
@@ -294,7 +297,10 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 
 	sess := app.SessionFromContext(r)
 	// Если валидация прошла успешно, удаляем токен из сессии
-	sess.Delete(CsrfTokenSessionKey)
+	err = sess.Delete(CsrfTokenSessionKey)
+	if err != nil {
+		app.errorLog.Printf("got session error during delete csrfToken:%w\n", err)
+	}
 
 	err = sess.Set(FlashSessionKey, "Your log in was successful.")
 	if err != nil {
@@ -303,9 +309,20 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Add the ID of the current user to the session, so that they are now
 	// 'logged in'.
-	err = sess.Set(AuthenticatedUserID, id)
+	err = sess.Set(AuthUserIDSessionKey, id)
 	if err != nil {
 		app.serverError(w, err)
+	}
+
+	redirctUrl := "/post/create"
+
+	path := sess.Get(RedirectPathAfterLoginSessionKey)
+	if path != nil && path.(string) != "" {
+		err = sess.Delete(RedirectPathAfterLoginSessionKey)
+		if err != nil {
+			app.errorLog.Printf("got session error during delete redirectPath:%w\n", err)
+		}
+		redirctUrl = path.(string)
 	}
 
 	err = app.sessionManager.RenewToken(w, r)
@@ -314,16 +331,19 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/post/create", http.StatusSeeOther)
+	http.Redirect(w, r, redirctUrl, http.StatusSeeOther)
 }
 
 func (app *application) userLogout(w http.ResponseWriter, r *http.Request) {
 	sess := app.SessionFromContext(r)
-	sess.Delete(AuthenticatedUserID)
+	err := sess.Delete(AuthUserIDSessionKey)
+	if err != nil {
+		app.errorLog.Printf("got session error during delete authUserID:%w\n", err)
+	}
 	// fmt.Println(sess)
 	sess.Set(FlashSessionKey, "You've been logged out successfully!")
 
-	err := app.sessionManager.RenewToken(w, r)
+	err = app.sessionManager.RenewToken(w, r)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -343,7 +363,7 @@ func ping(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
 	sess := app.SessionFromContext(r)
-	userID, ok := sess.Get(AuthenticatedUserID).(int)
+	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if !ok || userID == 0 {
 		http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 		return

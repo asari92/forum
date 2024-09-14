@@ -201,7 +201,7 @@ func TestAuthenticate(t *testing.T) {
 	}
 
 	sess := app.sessionManager.SessionStart(rr, r)
-	err = sess.Set(AuthenticatedUserID, 1)
+	err = sess.Set(AuthUserIDSessionKey, 1)
 	if err != nil {
 		t.Fatal(err)
 	}

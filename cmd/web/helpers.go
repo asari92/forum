@@ -67,7 +67,7 @@ func (app *application) newTemplateData(w http.ResponseWriter, r *http.Request) 
 	if ok {
 		err := sess.Delete(FlashSessionKey)
 		if err != nil {
-			app.serverError(w, err)
+			app.errorLog.Printf("got session error during delete flash:%w\n", err)
 		}
 	}
 	return &templateData{
