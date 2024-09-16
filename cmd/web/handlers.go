@@ -21,7 +21,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := app.newTemplateData(w, r)
+	data := app.newTemplateData(r)
 	data.Posts = posts
 
 	app.render(w, http.StatusOK, "home.html", data)
@@ -50,7 +50,7 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := app.newTemplateData(w, r)
+	data := app.newTemplateData(r)
 	data.Post = post
 	data.Categories = categories
 
@@ -64,7 +64,7 @@ func (app *application) postCreateView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := app.newTemplateData(w, r)
+	data := app.newTemplateData(r)
 	data.Categories = categories
 	data.Form = postCreateForm{
 		// первая категория всегда отмечена
@@ -118,7 +118,7 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	form.validateCategories(allCategories)
 
 	if !form.Valid() {
-		data := app.newTemplateData(w, r)
+		data := app.newTemplateData(r)
 		data.Categories = allCategories
 		data.Form = form
 		app.render(w, http.StatusUnprocessableEntity, "create_post.html", data)
@@ -173,7 +173,7 @@ func (form *postCreateForm) validateCategories(allCategories []*models.Category)
 }
 
 func (app *application) userSignupView(w http.ResponseWriter, r *http.Request) {
-	data := app.newTemplateData(w, r)
+	data := app.newTemplateData(r)
 	data.Form = signupForm{}
 	app.render(w, http.StatusOK, "signup.html", data)
 }
@@ -208,7 +208,7 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 	form.CheckField(validator.MaxChars(form.Password, 100), "password", "This field cannot be more than 100 characters long")
 
 	if !form.Valid() {
-		data := app.newTemplateData(w, r)
+		data := app.newTemplateData(r)
 		data.Form = form
 		app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
 		return
@@ -219,7 +219,7 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, models.ErrDuplicateEmail) {
 			form.AddFieldError("email", "Email address is already in use")
 
-			data := app.newTemplateData(w, r)
+			data := app.newTemplateData(r)
 			data.Form = form
 			app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
 		} else {
@@ -249,7 +249,7 @@ type userLoginForm struct {
 }
 
 func (app *application) userLoginView(w http.ResponseWriter, r *http.Request) {
-	data := app.newTemplateData(w, r)
+	data := app.newTemplateData(r)
 	data.Form = userLoginForm{}
 
 	app.render(w, http.StatusOK, "login.html", data)
@@ -274,7 +274,7 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 	form.CheckField(validator.MaxChars(form.Password, 100), "password", "This field cannot be more than 100 characters long")
 
 	if !form.Valid() {
-		data := app.newTemplateData(w, r)
+		data := app.newTemplateData(r)
 		data.Form = form
 		app.render(w, http.StatusUnprocessableEntity, "login.html", data)
 		return
@@ -287,7 +287,7 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, models.ErrInvalidCredentials) {
 			form.AddNonFieldError("Email or password is incorrect")
 
-			data := app.newTemplateData(w, r)
+			data := app.newTemplateData(r)
 			data.Form = form
 			app.render(w, http.StatusUnprocessableEntity, "login.html", data)
 		} else {
@@ -318,7 +318,7 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 	redirctUrl := "/post/create"
 
 	path, ok := sess.Get(RedirectPathAfterLoginSessionKey).(string)
-	if !ok {
+	if ok {
 		err = sess.Delete(RedirectPathAfterLoginSessionKey)
 		if err != nil {
 			app.errorLog.Printf("got session error during delete redirectPath:%v\n", err)
@@ -354,7 +354,7 @@ func (app *application) userLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) aboutView(w http.ResponseWriter, r *http.Request) {
-	data := app.newTemplateData(w, r)
+	data := app.newTemplateData(r)
 	app.render(w, http.StatusOK, "about.html", data)
 }
 
@@ -380,7 +380,7 @@ func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := app.newTemplateData(w, r)
+	data := app.newTemplateData(r)
 	data.User = user
 
 	app.render(w, http.StatusOK, "account.html", data)
@@ -394,7 +394,7 @@ type accountPasswordUpdateForm struct {
 }
 
 func (app *application) accountPasswordUpdateView(w http.ResponseWriter, r *http.Request) {
-	data := app.newTemplateData(w, r)
+	data := app.newTemplateData(r)
 	data.Form = accountPasswordUpdateForm{}
 
 	app.render(w, http.StatusOK, "password.html", data)
@@ -419,7 +419,7 @@ func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 	form.CheckField(form.NewPassword == form.NewPasswordConfirmation, "newPasswordConfirmation", "Passwords do not match")
 
 	if !form.Valid() {
-		data := app.newTemplateData(w, r)
+		data := app.newTemplateData(r)
 		data.Form = form
 
 		app.render(w, http.StatusUnprocessableEntity, "password.html", data)
@@ -438,11 +438,11 @@ func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 		if errors.Is(err, models.ErrInvalidCredentials) {
 			form.AddFieldError("currentPassword", "Current password is incorrect")
 
-			data := app.newTemplateData(w, r)
+			data := app.newTemplateData(r)
 			data.Form = form
 
 			app.render(w, http.StatusUnprocessableEntity, "password.html", data)
-		} else if err != nil {
+		} else {
 			app.serverError(w, err)
 		}
 		return

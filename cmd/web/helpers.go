@@ -61,7 +61,7 @@ func (app *application) SessionFromContext(r *http.Request) session.Session {
 	return r.Context().Value(sessionContextKey).(session.Session)
 }
 
-func (app *application) newTemplateData(w http.ResponseWriter, r *http.Request) *templateData {
+func (app *application) newTemplateData(r *http.Request) *templateData {
 	sess := app.SessionFromContext(r)
 	flash, ok := sess.Get(FlashSessionKey).(string)
 	if ok {
