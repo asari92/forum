@@ -317,13 +317,13 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 
 	redirctUrl := "/post/create"
 
-	path := sess.Get(RedirectPathAfterLoginSessionKey)
-	if path != nil && path.(string) != "" {
+	path, ok := sess.Get(RedirectPathAfterLoginSessionKey).(string)
+	if !ok {
 		err = sess.Delete(RedirectPathAfterLoginSessionKey)
 		if err != nil {
 			app.errorLog.Printf("got session error during delete redirectPath:%v\n", err)
 		}
-		redirctUrl = path.(string)
+		redirctUrl = path
 	}
 
 	err = app.sessionManager.RenewToken(w, r)
@@ -427,11 +427,6 @@ func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 	}
 
 	sess := app.SessionFromContext(r)
-	// err = sess.Delete(CsrfTokenSessionKey)
-	// if err != nil {
-	// 	app.errorLog.Printf("got session error during delete csrfToken:%w\n", err)
-	// }
-
 	userID := sess.Get(AuthUserIDSessionKey)
 	id, ok := userID.(int)
 	if !ok {
