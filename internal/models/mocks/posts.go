@@ -33,6 +33,6 @@ func (m *PostModel) Latest() ([]*models.Post, error) {
 	return []*models.Post{mockPost}, nil
 }
 
-func (m *PostModel) GetPostsForCategory(categoryIDs string) ([]*models.Post, error) {
+func (m *PostModel) GetPostsForCategory(categoryIDs []int) ([]*models.Post, error) {
 	return nil, nil
 }
