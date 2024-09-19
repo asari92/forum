@@ -7,9 +7,9 @@ import (
 )
 
 type PostModelInterface interface {
-    InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error)
-    Get(id int) (*Post, error)
-    Latest() ([]*Post, error)
+	InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error)
+	Get(id int) (*Post, error)
+	Latest() ([]*Post, error)
 }
 
 type Post struct {
@@ -110,6 +110,46 @@ func (m *PostModel) Get(id int) (*Post, error) {
 	}
 
 	return p, nil
+}
+
+func (m *PostModel) GetPostsForCategory(categoryIDs []int) ([]*Post, error) {
+	stmt := `SELECT p.id, p.title, p.content, p.user_id, p.created 
+	FROM posts p
+	INNER JOIN post_categories pc ON p.id = pc.post_id
+	WHERE pc.category_id IN ?
+	ORDER BY p.created DESC`
+
+	rows, err := m.DB.Query(stmt, categoryIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	posts := []*Post{}
+	var created string
+
+	// Обрабатываем строки результата запроса.
+	for rows.Next() {
+		p := &Post{}
+		err = rows.Scan(&p.ID, &p.Title, &p.Content, &p.UserID, &created)
+		if err != nil {
+			return nil, err
+		}
+
+		// Преобразуем строку даты в тип time.Time.
+		p.Created, err = time.Parse("2006-01-02 15:04:05", created)
+		if err != nil {
+			return nil, err
+		}
+
+		posts = append(posts, p)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
 }
 
 func (m *PostModel) Latest() ([]*Post, error) {

@@ -57,6 +57,36 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "post_view.html", data)
 }
 
+func (app *application) categoryPostsView(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil || id < 1 {
+		app.notFound(w)
+		return
+	}
+
+	post, err := app.posts.Get(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w)
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	categories, err := app.categories.GetCategoriesForPost(id)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	data := app.newTemplateData(r)
+	data.Post = post
+	data.Categories = categories
+
+	app.render(w, http.StatusOK, "post_view.html", data)
+}
+
 func (app *application) postCreateView(w http.ResponseWriter, r *http.Request) {
 	categories, err := app.categories.GetAll()
 	if err != nil {
