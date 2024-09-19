@@ -3,12 +3,15 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 )
 
 type PostModelInterface interface {
 	InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error)
 	Get(id int) (*Post, error)
+	GetPostsForCategory(categoryIDs []int) ([]*Post, error)
 	Latest() ([]*Post, error)
 }
 
@@ -113,13 +116,22 @@ func (m *PostModel) Get(id int) (*Post, error) {
 }
 
 func (m *PostModel) GetPostsForCategory(categoryIDs []int) ([]*Post, error) {
-	stmt := `SELECT p.id, p.title, p.content, p.user_id, p.created 
-	FROM posts p
-	INNER JOIN post_categories pc ON p.id = pc.post_id
-	WHERE pc.category_id IN ?
-	ORDER BY p.created DESC`
+	placeholders := make([]string, len(categoryIDs))
+	args := make([]interface{}, len(categoryIDs))
 
-	rows, err := m.DB.Query(stmt, categoryIDs)
+	for i, id := range categoryIDs {
+		placeholders[i] = "?" // Placeholder для каждого ID категории
+		args[i] = id          // Аргумент для SQL-запроса
+	}
+
+	stmt := fmt.Sprintf(`SELECT p.id, p.title, p.content, p.user_id, p.created 
+        FROM posts p
+        INNER JOIN post_categories pc ON p.id = pc.post_id
+        WHERE pc.category_id IN (%s)
+        GROUP BY p.id
+        ORDER BY p.created DESC`, strings.Join(placeholders, ", "))
+
+	rows, err := m.DB.Query(stmt, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +160,6 @@ func (m *PostModel) GetPostsForCategory(categoryIDs []int) ([]*Post, error) {
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
-
 	return posts, nil
 }
 

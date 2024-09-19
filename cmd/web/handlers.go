@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"forum/internal/models"
 	"forum/internal/validator"
@@ -58,33 +59,35 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) categoryPostsView(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil || id < 1 {
-		app.notFound(w)
-		return
-	}
+	categoryIDs := strings.Split(r.PathValue("id"), "/")
+	fmt.Println(r.PathValue("id"))
 
-	post, err := app.posts.Get(id)
-	if err != nil {
-		if errors.Is(err, models.ErrNoRecord) {
+	// Преобразуем строковые ID в целые числа для дальнейшего использования
+	var ids []int
+	for _, idStr := range categoryIDs {
+		id, err := strconv.Atoi(idStr)
+		if err != nil || id < 1 {
 			app.notFound(w)
-		} else {
-			app.serverError(w, err)
+			return
 		}
-		return
+		ids = append(ids, id)
 	}
 
-	categories, err := app.categories.GetCategoriesForPost(id)
+	if len(ids) == 0 {
+		// тогда нужно взять из формы и присвоить их ids
+		// r.PostForm
+	}
+
+	posts, err := app.posts.GetPostsForCategory(ids)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
 	data := app.newTemplateData(r)
-	data.Post = post
-	data.Categories = categories
+	data.Posts = posts
 
-	app.render(w, http.StatusOK, "post_view.html", data)
+	app.render(w, http.StatusOK, "category_posts.html", data)
 }
 
 func (app *application) postCreateView(w http.ResponseWriter, r *http.Request) {

@@ -20,7 +20,7 @@ func (app *application) routes() http.Handler {
 	mux.Handle("GET /", dynamic.ThenFunc(app.errorHandler))
 	mux.Handle("GET /{$}", dynamic.ThenFunc(app.home))
 	mux.Handle("GET /post/view/{id}", dynamic.ThenFunc(app.postView))
-	mux.Handle("GET /category/view/{id}", dynamic.ThenFunc(app.categoryPostsView))
+	mux.Handle("GET /category/view/{id...}", dynamic.ThenFunc(app.categoryPostsView))
 	mux.Handle("GET /user/signup", dynamic.ThenFunc(app.userSignupView))
 	mux.Handle("POST /user/signup", dynamic.ThenFunc(app.userSignup))
 	mux.Handle("GET /user/login", dynamic.ThenFunc(app.userLoginView))
