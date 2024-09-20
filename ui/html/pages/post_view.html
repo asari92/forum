@@ -10,12 +10,16 @@
     <pre><code>{{.Content}}</code></pre>
     {{end}}
     <div class='metadata'>
-        <div>
+        <form method="POST" action="/">
+            <input type="hidden" name="token" value="{{.CSRFToken}}">
             <strong>Categories: </strong>
+            <!-- Динамическое отображение категорий -->
             {{range .Categories}}
-            <a href='/category/view/{{.ID}}' class='category-link'>{{.Name}}</a>
+            <div>
+                <button type="submit" name="categories" value="{{.ID}}" class="category-link">{{.Name}}</button>
+            </div>
             {{end}}
-        </div>
+        </form>
     </div>
     {{with .Post}}
     <div class='metadata'>

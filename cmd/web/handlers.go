@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"forum/internal/models"
 	"forum/internal/validator"
@@ -39,36 +38,6 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "home.html", data)
 }
 
-func (app *application) postView(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil || id < 1 {
-		app.notFound(w)
-		return
-	}
-
-	post, err := app.posts.Get(id)
-	if err != nil {
-		if errors.Is(err, models.ErrNoRecord) {
-			app.notFound(w)
-		} else {
-			app.serverError(w, err)
-		}
-		return
-	}
-
-	categories, err := app.categories.GetCategoriesForPost(id)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
-	data := app.newTemplateData(r)
-	data.Post = post
-	data.Categories = categories
-
-	app.render(w, http.StatusOK, "post_view.html", data)
-}
-
 func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
@@ -87,8 +56,6 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := postCreateForm{
-		// Title:      r.PostForm.Get("title"),
-		// Content:    r.PostForm.Get("content"),
 		Categories: categoryIDs,
 	}
 
@@ -123,36 +90,34 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "home.html", data)
 }
 
-func (app *application) categoryPostsView(w http.ResponseWriter, r *http.Request) {
-	categoryIDs := strings.Split(r.PathValue("id"), "/")
-	fmt.Println(r.PathValue("id"))
+func (app *application) postView(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil || id < 1 {
+		app.notFound(w)
+		return
+	}
 
-	// Преобразуем строковые ID в целые числа для дальнейшего использования
-	var ids []int
-	for _, idStr := range categoryIDs {
-		id, err := strconv.Atoi(idStr)
-		if err != nil || id < 1 {
+	post, err := app.posts.Get(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
 			app.notFound(w)
-			return
+		} else {
+			app.serverError(w, err)
 		}
-		ids = append(ids, id)
+		return
 	}
 
-	if len(ids) == 0 {
-		// тогда нужно взять из формы и присвоить их ids
-		// r.PostForm
-	}
-
-	posts, err := app.posts.GetPostsForCategory(ids)
+	categories, err := app.categories.GetCategoriesForPost(id)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
 	data := app.newTemplateData(r)
-	data.Posts = posts
+	data.Post = post
+	data.Categories = categories
 
-	app.render(w, http.StatusOK, "home.html", data)
+	app.render(w, http.StatusOK, "post_view.html", data)
 }
 
 func (app *application) postCreateView(w http.ResponseWriter, r *http.Request) {
