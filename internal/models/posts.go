@@ -124,12 +124,17 @@ func (m *PostModel) GetPostsForCategory(categoryIDs []int) ([]*Post, error) {
 		args[i] = id          // Аргумент для SQL-запроса
 	}
 
-	stmt := fmt.Sprintf(`SELECT p.id, p.title, p.content, p.user_id, p.created 
+	stmt := fmt.Sprintf(`
+        SELECT p.id, p.title, p.content, p.user_id, p.created 
         FROM posts p
         INNER JOIN post_categories pc ON p.id = pc.post_id
         WHERE pc.category_id IN (%s)
         GROUP BY p.id
+        HAVING COUNT(DISTINCT pc.category_id) = ?
         ORDER BY p.created DESC`, strings.Join(placeholders, ", "))
+
+	// Добавляем количество категорий в аргументы запроса
+	args = append(args, len(categoryIDs))
 
 	rows, err := m.DB.Query(stmt, args...)
 	if err != nil {

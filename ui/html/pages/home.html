@@ -1,6 +1,20 @@
 {{define "title"}}Home{{end}}
 
 {{define "main"}}
+    <form method="POST" action="/">
+        <input type="hidden" name="token" value="{{.CSRFToken}}">
+        <label>Categories:</label>
+        <!-- Динамическое отображение категорий -->
+        {{range .Categories}}
+        <div>
+            <input type='checkbox' name='categories' value='{{.ID}}' 
+            {{if (contains $.Form.Categories .ID)}}checked{{end}}> {{.Name}}
+        </div>
+        {{end}}
+        <div>
+            <input type='submit' value='Filter by categories'>
+        </div>
+    </form>
     <h2>Latest Posts</h2>
     {{if .Posts}}
      <table>

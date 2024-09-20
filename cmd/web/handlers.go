@@ -22,9 +22,20 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	categories, err := app.categories.GetAll()
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	form := postCreateForm{
+		Categories: []int{},
+	}
+
 	data := app.newTemplateData(r)
 	data.Posts = posts
-
+	data.Categories = categories
+	data.Form = form
 	app.render(w, http.StatusOK, "home.html", data)
 }
 
@@ -58,6 +69,60 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "post_view.html", data)
 }
 
+func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	var categoryIDs []int
+	for _, id := range r.PostForm["categories"] {
+		intID, err := strconv.Atoi(id)
+		if err != nil {
+			app.clientError(w, http.StatusBadRequest)
+			return
+		}
+		categoryIDs = append(categoryIDs, intID)
+	}
+
+	form := postCreateForm{
+		// Title:      r.PostForm.Get("title"),
+		// Content:    r.PostForm.Get("content"),
+		Categories: categoryIDs,
+	}
+
+	allCategories, err := app.categories.GetAll()
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	form.validateCategories(allCategories)
+
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Categories = allCategories
+		data.Form = form
+		app.render(w, http.StatusUnprocessableEntity, "home.html", data)
+		return
+	}
+
+	// Логика фильтрации постов по категориям
+	posts, err := app.posts.GetPostsForCategory(form.Categories)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	data := app.newTemplateData(r)
+	data.Posts = posts
+	data.Categories = allCategories
+	data.Form = form
+
+	app.render(w, http.StatusOK, "home.html", data)
+}
+
 func (app *application) categoryPostsView(w http.ResponseWriter, r *http.Request) {
 	categoryIDs := strings.Split(r.PathValue("id"), "/")
 	fmt.Println(r.PathValue("id"))
@@ -87,7 +152,7 @@ func (app *application) categoryPostsView(w http.ResponseWriter, r *http.Request
 	data := app.newTemplateData(r)
 	data.Posts = posts
 
-	app.render(w, http.StatusOK, "category_posts.html", data)
+	app.render(w, http.StatusOK, "home.html", data)
 }
 
 func (app *application) postCreateView(w http.ResponseWriter, r *http.Request) {
@@ -153,6 +218,8 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	if !form.Valid() {
 		data := app.newTemplateData(r)
 		data.Categories = allCategories
+		// первая категория будет отмечена по умолчанию
+		form.Categories = []int{models.DefaultCategory}
 		data.Form = form
 		app.render(w, http.StatusUnprocessableEntity, "create_post.html", data)
 		return
@@ -200,8 +267,7 @@ func (form *postCreateForm) validateCategories(allCategories []*models.Category)
 	if len(categoryIDs) > 0 {
 		form.Categories = categoryIDs
 	} else {
-		// первая категория будет отмечена по умолчанию
-		form.Categories = []int{models.DefaultCategory}
+		form.AddFieldError("categories", "Need one or more category")
 	}
 }
 
