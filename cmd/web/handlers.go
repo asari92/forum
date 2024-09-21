@@ -68,7 +68,13 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	form.validateCategories(allCategories)
 
 	if !form.Valid() {
+		posts, err := app.posts.Latest()
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
 		data := app.newTemplateData(r)
+		data.Posts = posts
 		data.Categories = allCategories
 		data.Form = form
 		app.render(w, http.StatusUnprocessableEntity, "home.html", data)
