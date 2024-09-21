@@ -62,8 +62,6 @@ func (m *CategoryModel) Get(categoryId int) (*Category, error) {
 	return c, nil
 }
 
-
-
 func (m *CategoryModel) GetAll() ([]*Category, error) {
 	stmt := `SELECT id, name FROM categories`
 

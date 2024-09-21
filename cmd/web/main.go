@@ -1,18 +1,15 @@
 package main
 
 import (
-	"crypto/tls"
 	"database/sql"
 	"flag"
 	"html/template"
-	"io/fs"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"forum/docs"
-	tlsecurity "forum/tls"
 
 	// Go вызывает функцию init() внутри этого пакета.
 	_ "forum/internal/memory"
@@ -33,7 +30,7 @@ type application struct {
 }
 
 func main() {
-	addr := flag.String("addr", ":4000", "HTTP network address")
+	addr := flag.String("addr", ":7777", "HTTP network address")
 	dsn := flag.String("dsn", "./forum.db", "MySQL data source name")
 
 	flag.Parse()
@@ -75,47 +72,18 @@ func main() {
 	}
 
 	// Чтение встроенных TLS-ключей из файловой системы
-	certPEM, err := fs.ReadFile(tlsecurity.Files, "cert.pem")
-	if err != nil {
-		errorLog.Fatal(err)
-	}
-	keyPEM, err := fs.ReadFile(tlsecurity.Files, "key.pem")
-	if err != nil {
-		errorLog.Fatal(err)
-	}
-
-	// Загрузка ключей в формате x509
-	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
-	if err != nil {
-		errorLog.Fatal(err)
-	}
-
-	tlsConfig := &tls.Config{
-		Certificates:     []tls.Certificate{tlsCert},
-		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
-		MinVersion:       tls.VersionTLS12,
-		CipherSuites: []uint16{
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
-			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-		},
-	}
 
 	srv := &http.Server{
 		Addr:         *addr,
 		ErrorLog:     errorLog,
 		Handler:      app.routes(),
-		TLSConfig:    tlsConfig,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
 	infoLog.Printf("Starting server on https://localhost%s", *addr)
-	err = srv.ListenAndServeTLS("", "") // Пустые строки означают, что сертификат и ключ уже загружены в `tlsConfig`
+	err = srv.ListenAndServe() // Пустые строки означают, что сертификат и ключ уже загружены в `tlsConfig`
 	errorLog.Fatal(err)
 }
 
