@@ -144,8 +144,9 @@ func (app *application) userPostsView(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, models.ErrNoRecord) {
 			if len(posts) == 0 {
 				app.notFound(w)
+				return
 			} else {
-				user = &models.User{Username: "DeletedUser", ID: userId}
+				user = &models.User{Username: "Deleted User", ID: userId}
 			}
 		} else {
 			app.serverError(w, err)
