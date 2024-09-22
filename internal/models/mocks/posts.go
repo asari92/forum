@@ -36,3 +36,12 @@ func (m *PostModel) Latest() ([]*models.Post, error) {
 func (m *PostModel) GetPostsForCategory(categoryIDs []int) ([]*models.Post, error) {
 	return nil, nil
 }
+
+func (m *PostModel) GetUserPosts(userId int) ([]*models.Post, error) {
+	switch userId {
+	case 1:
+		return []*models.Post{mockPost}, nil
+	default:
+		return nil, models.ErrNoRecord
+	}
+}

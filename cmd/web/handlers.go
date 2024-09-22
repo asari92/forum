@@ -126,6 +126,39 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "post_view.html", data)
 }
 
+func (app *application) userPostsView(w http.ResponseWriter, r *http.Request) {
+	userId, err := strconv.Atoi(r.PathValue("userId"))
+	if err != nil || userId < 1 {
+		app.notFound(w)
+		return
+	}
+
+	posts, err := app.posts.GetUserPosts(userId)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	user, err := app.users.Get(userId)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			if len(posts) == 0 {
+				app.notFound(w)
+			} else {
+				user = &models.User{Username: "DeletedUser", ID: userId}
+			}
+		} else {
+			app.serverError(w, err)
+			return
+		}
+	}
+
+	data := app.newTemplateData(r)
+	data.Posts = posts
+	data.User = user
+	app.render(w, http.StatusOK, "user_posts.html", data)
+}
+
 func (app *application) postCreateView(w http.ResponseWriter, r *http.Request) {
 	categories, err := app.categories.GetAll()
 	if err != nil {
