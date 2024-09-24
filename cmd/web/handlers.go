@@ -224,7 +224,9 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 		data := app.newTemplateData(r)
 		data.Categories = allCategories
 		// первая категория будет отмечена по умолчанию
-		form.Categories = []int{models.DefaultCategory}
+		if len(form.Categories) == 0 {
+			form.Categories = []int{models.DefaultCategory}
+		}
 		data.Form = form
 		app.render(w, http.StatusUnprocessableEntity, "create_post.html", data)
 		return
