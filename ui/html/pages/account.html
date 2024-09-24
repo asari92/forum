@@ -1,7 +1,7 @@
-{{define "title"}}Your Account{{end}}
+{{define "title"}}My Account{{end}}
 
 {{define "main"}}
-    <h2>Your Account</h2>
+    <h2>My Account</h2>
     {{with .User}}
      <table>
         <tr>
@@ -19,6 +19,10 @@
         <tr>
             <th>Password</th>
             <td><a href="/account/password/update">Change password</a></td>
+        </tr>
+        <tr>
+            <th>My created posts</th>
+            <td><a href="/user/{{.ID}}/posts">Show my posts</a></td>
         </tr>
     </table>
     {{end }}
