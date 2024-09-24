@@ -97,13 +97,13 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) postView(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil || id < 1 {
+	postID, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil || postID < 1 {
 		app.notFound(w)
 		return
 	}
 
-	post, err := app.posts.Get(id)
+	post, err := app.posts.Get(postID)
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
 			app.notFound(w)
@@ -113,13 +113,13 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	categories, err := app.categories.GetCategoriesForPost(id)
+	categories, err := app.categories.GetCategoriesForPost(postID)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	likes, dislikes, err := app.postReactions.GetReactionsCount(id)
+	likes, dislikes, err := app.postReactions.GetReactionsCount(postID)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -129,7 +129,7 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	var userReaction *models.PostReaction
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if ok && userID != 0 {
-		userReaction, err = app.postReactions.GetUserReaction(id, userID) // Получите реакцию пользователя
+		userReaction, err = app.postReactions.GetUserReaction(userID, postID) // Получите реакцию пользователя
 		if err != nil {
 			app.serverError(w, err)
 			return
@@ -141,9 +141,56 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	data.Categories = categories
 	data.ReactionData.Likes = likes
 	data.ReactionData.Dislikes = dislikes
-	data.ReactionData.UserReaction = userReaction
+	if userReaction != nil {
+		data.ReactionData.UserReaction = userReaction
+	}
 
 	app.render(w, http.StatusOK, "post_view.html", data)
+}
+
+func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	postID, err := strconv.Atoi(r.PostForm.Get("post_id"))
+	if err != nil || postID < 1 {
+		app.notFound(w)
+		return
+	}
+
+	isLike := r.PostForm.Get("is_like")
+	// Преобразуем isLike в bool
+	like := isLike == "true"
+
+	sess := app.SessionFromContext(r)
+	var userReaction *models.PostReaction
+	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if ok && userID != 0 {
+		userReaction, err = app.postReactions.GetUserReaction(userID, postID) // Получите реакцию пользователя
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+	}
+
+	if userReaction != nil && userReaction.IsLike == like {
+		err = app.postReactions.RemoveReaction(userID, postID)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+	} else {
+		err = app.postReactions.AddReaction(userID, postID, like)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 }
 
 func (app *application) userPostsView(w http.ResponseWriter, r *http.Request) {

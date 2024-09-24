@@ -33,7 +33,7 @@ func (m *PostReactionModel) RemoveReaction(userID, postID int) error {
 	return err
 }
 
-func (m *PostReactionModel) GetUserReaction(postID, userID int) (*PostReaction, error) {
+func (m *PostReactionModel) GetUserReaction(userID, postID int) (*PostReaction, error) {
 	stmt := `SELECT is_like FROM post_reactions WHERE post_id = ? AND user_id = ?`
 	row := m.DB.QueryRow(stmt, postID, userID)
 
