@@ -10,6 +10,12 @@ import (
 	"forum/ui"
 )
 
+type ReactionData struct {
+	Likes        int
+	Dislikes     int
+	UserReaction *models.PostReaction
+}
+
 type templateData struct {
 	CurrentYear     int
 	Categories      []*models.Category
@@ -20,6 +26,7 @@ type templateData struct {
 	Flash           string
 	IsAuthenticated bool
 	User            *models.User
+	ReactionData    *ReactionData
 }
 
 func humanDate(t time.Time) string {

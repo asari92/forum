@@ -119,9 +119,29 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	likes, dislikes, err := app.postReactions.GetReactionsCount(id)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	sess := app.SessionFromContext(r)
+	var userReaction *models.PostReaction
+	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if ok && userID != 0 {
+		userReaction, err = app.postReactions.GetUserReaction(id, userID) // Получите реакцию пользователя
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+	}
+
 	data := app.newTemplateData(r)
 	data.Post = post
 	data.Categories = categories
+	data.ReactionData.Likes = likes
+	data.ReactionData.Dislikes = dislikes
+	data.ReactionData.UserReaction = userReaction
 
 	app.render(w, http.StatusOK, "post_view.html", data)
 }

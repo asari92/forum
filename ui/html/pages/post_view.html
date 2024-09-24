@@ -27,5 +27,16 @@
         <time>Created: {{humanDate .Created}}</time>
     </div>
     {{end}}
+    <div>
+        <form method="POST" action="/post/reaction">
+            <input type="hidden" name="token" value="{{.CSRFToken}}">
+            <input type="hidden" name="post_id" value="{{.Post.ID}}">
+            {{with .ReactionData.UserReaction}}
+            <button type="submit" name="is_like" value="true" class="{{if .IsLike}}active{{end}}">Лайк</button>
+            <button type="submit" name="is_like" value="false" class="{{if not .IsLike}}active{{end}}">Дизлайк</button>
+            {{end}}
+            <span>Likes: {{.ReactionData.Likes}} Dislikes: {{.ReactionData.Dislikes}}</span>
+        </form>
+    </div>
 </div>
 {{end}}
