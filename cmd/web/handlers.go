@@ -227,6 +227,31 @@ func (app *application) userPostsView(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "user_posts.html", data)
 }
 
+func (app *application) userLikedPostsView(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userID < 1 {
+		app.serverError(w, errors.New("get userID in userLikedPostsView"))
+	}
+
+	posts, err := app.posts.GetUserLikedPosts(userID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	user, err := app.users.Get(userID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	data := app.newTemplateData(r)
+	data.Posts = posts
+	data.User = user
+	app.render(w, http.StatusOK, "user_posts.html", data)
+}
+
 func (app *application) postCreateView(w http.ResponseWriter, r *http.Request) {
 	categories, err := app.categories.GetAll()
 	if err != nil {
@@ -300,7 +325,10 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sess := app.SessionFromContext(r)
-	userId := sess.Get(AuthUserIDSessionKey).(int)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		app.serverError(w, errors.New("get userID in postCreate"))
+	}
 
 	postId, err := app.posts.InsertPostWithCategories(form.Title, form.Content, userId, form.Categories)
 	if err != nil {
@@ -538,9 +566,8 @@ func ping(w http.ResponseWriter, r *http.Request) {
 func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
 	sess := app.SessionFromContext(r)
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
-	if !ok || userID == 0 {
-		http.Redirect(w, r, "/user/login", http.StatusSeeOther)
-		return
+	if !ok || userID < 1 {
+		app.serverError(w, errors.New("get userID in accountView"))
 	}
 
 	user, err := app.users.Get(userID)
@@ -600,13 +627,12 @@ func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 	}
 
 	sess := app.SessionFromContext(r)
-	userID := sess.Get(AuthUserIDSessionKey)
-	id, ok := userID.(int)
-	if !ok {
-		app.serverError(w, err)
+	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userID < 1 {
+		app.serverError(w, errors.New("get userID in accountPasswordUpdate"))
 	}
 
-	err = app.users.PasswordUpdate(id, form.CurrentPassword, form.NewPassword)
+	err = app.users.PasswordUpdate(userID, form.CurrentPassword, form.NewPassword)
 	if err != nil {
 		if errors.Is(err, models.ErrInvalidCredentials) {
 			form.AddFieldError("currentPassword", "Current password is incorrect")

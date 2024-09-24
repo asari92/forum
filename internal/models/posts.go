@@ -13,6 +13,7 @@ type PostModelInterface interface {
 	Get(id int) (*Post, error)
 	GetPostsForCategory(categoryIDs []int) ([]*Post, error)
 	GetUserPosts(userId int) ([]*Post, error)
+	GetUserLikedPosts(userId int) ([]*Post, error)
 	Latest() ([]*Post, error)
 }
 
@@ -172,6 +173,44 @@ func (m *PostModel) GetPostsForCategory(categoryIDs []int) ([]*Post, error) {
 func (m *PostModel) GetUserPosts(userId int) ([]*Post, error) {
 	stmt := `SELECT id, title, content, user_id, created FROM posts
 	WHERE user_id = ?
+    ORDER BY id DESC`
+
+	rows, err := m.DB.Query(stmt, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	posts := []*Post{}
+	var created string
+
+	for rows.Next() {
+		p := &Post{}
+		err = rows.Scan(&p.ID, &p.Title, &p.Content, &p.UserID, &created)
+		if err != nil {
+			return nil, err
+		}
+
+		p.Created, err = time.Parse("2006-01-02 15:04:05", created)
+		if err != nil {
+			return nil, err
+		}
+
+		posts = append(posts, p)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+
+func (m *PostModel) GetUserLikedPosts(userId int) ([]*Post, error) {
+	stmt := `SELECT id, title, content, p.user_id, created 
+	FROM posts p
+	INNER JOIN post_reactions pr ON p.id = pr.post_id
+	WHERE pr.user_id = ? AND pr.is_like = true
     ORDER BY id DESC`
 
 	rows, err := m.DB.Query(stmt, userId)
