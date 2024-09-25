@@ -97,13 +97,13 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) postView(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil || id < 1 {
+	postID, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil || postID < 1 {
 		app.notFound(w)
 		return
 	}
 
-	post, err := app.posts.Get(id)
+	post, err := app.posts.Get(postID)
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
 			app.notFound(w)
@@ -113,17 +113,84 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	categories, err := app.categories.GetCategoriesForPost(id)
+	categories, err := app.categories.GetCategoriesForPost(postID)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
+	likes, dislikes, err := app.postReactions.GetReactionsCount(postID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	sess := app.SessionFromContext(r)
+	var userReaction *models.PostReaction
+	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if ok && userID != 0 {
+		userReaction, err = app.postReactions.GetUserReaction(userID, postID) // Получите реакцию пользователя
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+	}
+
 	data := app.newTemplateData(r)
 	data.Post = post
 	data.Categories = categories
+	data.ReactionData.Likes = likes
+	data.ReactionData.Dislikes = dislikes
+	if userReaction != nil {
+		data.ReactionData.UserReaction = userReaction
+	}
 
 	app.render(w, http.StatusOK, "post_view.html", data)
+}
+
+func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	postID, err := strconv.Atoi(r.PostForm.Get("post_id"))
+	if err != nil || postID < 1 {
+		app.notFound(w)
+		return
+	}
+
+	isLike := r.PostForm.Get("is_like")
+	// Преобразуем isLike в bool
+	like := isLike == "true"
+
+	sess := app.SessionFromContext(r)
+	var userReaction *models.PostReaction
+	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if ok && userID != 0 {
+		userReaction, err = app.postReactions.GetUserReaction(userID, postID) // Получите реакцию пользователя
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+	}
+
+	if userReaction != nil && userReaction.IsLike == like {
+		err = app.postReactions.RemoveReaction(userID, postID)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+	} else {
+		err = app.postReactions.AddReaction(userID, postID, like)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 }
 
 func (app *application) userPostsView(w http.ResponseWriter, r *http.Request) {
@@ -152,6 +219,31 @@ func (app *application) userPostsView(w http.ResponseWriter, r *http.Request) {
 			app.serverError(w, err)
 			return
 		}
+	}
+
+	data := app.newTemplateData(r)
+	data.Posts = posts
+	data.User = user
+	app.render(w, http.StatusOK, "user_posts.html", data)
+}
+
+func (app *application) userLikedPostsView(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userID < 1 {
+		app.serverError(w, errors.New("get userID in userLikedPostsView"))
+	}
+
+	posts, err := app.posts.GetUserLikedPosts(userID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	user, err := app.users.Get(userID)
+	if err != nil {
+		app.serverError(w, err)
+		return
 	}
 
 	data := app.newTemplateData(r)
@@ -233,7 +325,10 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sess := app.SessionFromContext(r)
-	userId := sess.Get(AuthUserIDSessionKey).(int)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		app.serverError(w, errors.New("get userID in postCreate"))
+	}
 
 	postId, err := app.posts.InsertPostWithCategories(form.Title, form.Content, userId, form.Categories)
 	if err != nil {
@@ -471,9 +566,8 @@ func ping(w http.ResponseWriter, r *http.Request) {
 func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
 	sess := app.SessionFromContext(r)
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
-	if !ok || userID == 0 {
-		http.Redirect(w, r, "/user/login", http.StatusSeeOther)
-		return
+	if !ok || userID < 1 {
+		app.serverError(w, errors.New("get userID in accountView"))
 	}
 
 	user, err := app.users.Get(userID)
@@ -533,13 +627,12 @@ func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 	}
 
 	sess := app.SessionFromContext(r)
-	userID := sess.Get(AuthUserIDSessionKey)
-	id, ok := userID.(int)
-	if !ok {
-		app.serverError(w, err)
+	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userID < 1 {
+		app.serverError(w, errors.New("get userID in accountPasswordUpdate"))
 	}
 
-	err = app.users.PasswordUpdate(id, form.CurrentPassword, form.NewPassword)
+	err = app.users.PasswordUpdate(userID, form.CurrentPassword, form.NewPassword)
 	if err != nil {
 		if errors.Is(err, models.ErrInvalidCredentials) {
 			form.AddFieldError("currentPassword", "Current password is incorrect")

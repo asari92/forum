@@ -27,5 +27,18 @@
         <time>Created: {{humanDate .Created}}</time>
     </div>
     {{end}}
+    <div class='metadata'>
+        <form method="POST" action="/post/view/{{.Post.ID}}">
+            <input type="hidden" name="token" value="{{.CSRFToken}}">
+            <input type="hidden" name="post_id" value="{{.Post.ID}}">
+            <!-- Отображение иконок для лайка и дизлайка -->
+            <button type="submit" name="is_like" value="true" class="like-button">
+                <span class="icon {{if and .ReactionData.UserReaction .ReactionData.UserReaction.IsLike}}icon-like-active{{else}}icon-like{{end}}">{{.ReactionData.Likes}}👍</span>
+            </button>
+            <button type="submit" name="is_like" value="false" class="dislike-button">
+                <span class="icon {{if and .ReactionData.UserReaction (not .ReactionData.UserReaction.IsLike)}}icon-dislike-active{{else}}icon-dislike{{end}}">{{.ReactionData.Dislikes}}👎</span>
+            </button>
+        </form>
+    </div>    
 </div>
 {{end}}

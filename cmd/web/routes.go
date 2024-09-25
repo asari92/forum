@@ -30,9 +30,11 @@ func (app *application) routes() http.Handler {
 
 	protected := dynamic.Append(app.requireAuthentication)
 
+	mux.Handle("POST /post/view/{id}", protected.ThenFunc(app.postReaction))
 	mux.Handle("GET /post/create", protected.ThenFunc(app.postCreateView))
 	mux.Handle("POST /post/create", protected.ThenFunc(app.postCreate))
 	mux.Handle("GET /account/view", protected.ThenFunc(app.accountView))
+	mux.Handle("GET /user/liked", protected.ThenFunc(app.userLikedPostsView))
 	mux.Handle("GET /account/password/update", protected.ThenFunc(app.accountPasswordUpdateView))
 	mux.Handle("POST /account/password/update", protected.ThenFunc(app.accountPasswordUpdate))
 	mux.Handle("POST /user/logout", protected.ThenFunc(app.userLogout))

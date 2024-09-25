@@ -27,6 +27,7 @@ type application struct {
 	infoLog        *log.Logger
 	users          models.UserModelInterface
 	posts          models.PostModelInterface
+	postReactions  models.PostReactionModelInterface
 	categories     models.CategoryModelInterface
 	templateCache  map[string]*template.Template
 	sessionManager *session.Manager
@@ -69,6 +70,7 @@ func main() {
 		infoLog:        infoLog,
 		users:          &models.UserModel{DB: db},
 		posts:          &models.PostModel{DB: db},
+		postReactions:  &models.PostReactionModel{DB: db},
 		categories:     &models.CategoryModel{DB: db},
 		templateCache:  templateCache,
 		sessionManager: sessionManager,

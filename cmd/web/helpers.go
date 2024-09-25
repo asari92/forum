@@ -9,6 +9,7 @@ import (
 	"runtime/debug"
 	"time"
 
+	"forum/internal/models"
 	"forum/internal/session"
 )
 
@@ -75,6 +76,7 @@ func (app *application) newTemplateData(r *http.Request) *templateData {
 		Flash:           flash,
 		CSRFToken:       r.Context().Value(csrfTokenContextKey).(string),
 		IsAuthenticated: app.isAuthenticated(r),
+		ReactionData:    &ReactionData{UserReaction: &models.PostReaction{}},
 	}
 }
 

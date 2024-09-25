@@ -45,3 +45,12 @@ func (m *PostModel) GetUserPosts(userId int) ([]*models.Post, error) {
 		return nil, models.ErrNoRecord
 	}
 }
+
+func (m *PostModel) GetUserLikedPosts(userId int) ([]*models.Post, error) {
+	switch userId {
+	case 1:
+		return []*models.Post{mockPost}, nil
+	default:
+		return nil, models.ErrNoRecord
+	}
+}

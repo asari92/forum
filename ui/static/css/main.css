@@ -311,3 +311,24 @@ footer {
     color: #6A6C6F;
     text-align: center;
 }
+
+.icon {
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.icon-like {
+    color: gray; /* Цвет для неактивной иконки лайка */
+}
+
+.icon-like-active {
+    color: blue; /* Цвет для активной иконки лайка */
+}
+
+.icon-dislike {
+    color: gray; /* Цвет для неактивной иконки дизлайка */
+}
+
+.icon-dislike-active {
+    color: red; /* Цвет для активной иконки дизлайка */
+}
