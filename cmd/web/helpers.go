@@ -8,14 +8,17 @@ import (
 	"forum/internal/session"
 	"io"
 	"net/http"
-	"runtime/debug"
+	"runtime"
 	"time"
 )
 
 func (app *application) serverError(w http.ResponseWriter, err error) {
+	_, path, line, _ := runtime.Caller(1)
+
 	app.logger.Error("Server error occurred",
 		"error", err,
-		"stack_trace", string(debug.Stack()), // Включение стека
+		path, line,
+		// "stack_trace", string(debug.Stack()), // Включение стека
 	)
 
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
