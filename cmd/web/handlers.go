@@ -340,8 +340,9 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// кажется тут не нужна ошибка, достаточно логирования
 		// app.serverError(w, err)
-		trace := fmt.Sprintf("Error: %+v", err) // Log full stack trace
-		app.errorLog.Println(trace)
+		// trace := fmt.Sprintf("Error: %+v", err) // Log full stack trace
+		// app.errorLog.Println(trace)
+		app.logger.Error("Session error during set flash", "error", err)
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/post/view/%d", postId), http.StatusSeeOther)
@@ -432,7 +433,7 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 	// Если валидация прошла успешно, удаляем токен из сессии
 	err = sess.Delete(CsrfTokenSessionKey)
 	if err != nil {
-		app.errorLog.Printf("got session error during delete csrfToken:%v\n", err)
+		app.logger.Error("Session error during delete csrfToken", "error", err)
 	}
 
 	err = sess.Set(FlashSessionKey, "Your signup was successful. Please log in.")
@@ -501,7 +502,8 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 	// Если валидация прошла успешно, удаляем токен из сессии
 	err = sess.Delete(CsrfTokenSessionKey)
 	if err != nil {
-		app.errorLog.Printf("got session error during delete csrfToken:%v\n", err)
+		app.logger.Error("Session error during delete csrfToken", "error", err)
+
 	}
 
 	err = sess.Set(FlashSessionKey, "Your log in was successful.")
@@ -522,7 +524,7 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 	if ok {
 		err = sess.Delete(RedirectPathAfterLoginSessionKey)
 		if err != nil {
-			app.errorLog.Printf("got session error during delete redirectPath:%v\n", err)
+			app.logger.Error("Session error during delete redirectPath", "error", err)
 		}
 		redirctUrl = path
 	}
@@ -540,9 +542,8 @@ func (app *application) userLogout(w http.ResponseWriter, r *http.Request) {
 	sess := app.SessionFromContext(r)
 	err := sess.Delete(AuthUserIDSessionKey)
 	if err != nil {
-		app.errorLog.Printf("got session error during delete authUserID:%v\n", err)
+		app.logger.Error("Session error during delete authUserID", "error", err)
 	}
-	// fmt.Println(sess)
 	sess.Set(FlashSessionKey, "You've been logged out successfully!")
 
 	err = app.sessionManager.RenewToken(w, r)
