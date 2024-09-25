@@ -54,7 +54,12 @@ func secureHeaders(next http.Handler) http.Handler {
 
 func (app *application) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		app.infoLog.Printf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
+		app.logger.Info("Received request",
+			"remote_addr", r.RemoteAddr,
+			"protocol", r.Proto,
+			"method", r.Method,
+			"url", r.URL.RequestURI(),
+		)
 
 		next.ServeHTTP(w, r)
 	})
@@ -92,7 +97,7 @@ func (app *application) verifyCSRF(next http.Handler) http.Handler {
 			ctx := context.WithValue(r.Context(), sessionContextKey, sess)
 			r = r.WithContext(ctx)
 
-			// fmt.Println(requestToken, sessionToken)
+			app.logger.Debug("tokens in verifyCSRF", "request", requestToken, "session", sessionToken)
 			if requestToken != sessionToken {
 				http.Error(w, "Invalid CSRF token", http.StatusForbidden)
 				return
@@ -110,7 +115,7 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 		sess, ok := r.Context().Value(sessionContextKey).(session.Session)
 		if !ok {
 			sess = app.sessionManager.SessionStart(w, r)
-			// fmt.Println("mid", sess)
+			app.logger.Debug("session in sessionMiddleware", "session", sess)
 		}
 
 		// Если токен уже существует в сессии, не перезаписываем его

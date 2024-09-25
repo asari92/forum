@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"html"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -51,9 +51,10 @@ func newTestApplication(t *testing.T) *application {
 
 	go sessionManager.GC()
 
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+
 	return &application{
-		errorLog:       log.New(io.Discard, "", 0),
-		infoLog:        log.New(io.Discard, "", 0),
+		logger:         logger,
 		posts:          &mocks.PostModel{}, // Use the mock.
 		users:          &mocks.UserModel{}, // Use the mock.
 		categories:     &mocks.CategoryModel{},

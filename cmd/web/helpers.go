@@ -4,18 +4,19 @@ import (
 	"bytes"
 	"crypto/md5"
 	"fmt"
+	"forum/internal/models"
+	"forum/internal/session"
 	"io"
 	"net/http"
 	"runtime/debug"
 	"time"
-
-	"forum/internal/models"
-	"forum/internal/session"
 )
 
 func (app *application) serverError(w http.ResponseWriter, err error) {
-	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-	app.errorLog.Output(2, trace)
+	app.logger.Error("Server error occurred",
+		"error", err,
+		"stack_trace", string(debug.Stack()), // Включение стека
+	)
 
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
@@ -68,7 +69,7 @@ func (app *application) newTemplateData(r *http.Request) *templateData {
 	if ok {
 		err := sess.Delete(FlashSessionKey)
 		if err != nil {
-			app.errorLog.Printf("got session error during delete flash:%v\n", err)
+			app.logger.Error("Session error during delete flash", "error", err)
 		}
 	}
 	return &templateData{

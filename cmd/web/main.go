@@ -6,7 +6,7 @@ import (
 	"flag"
 	"html/template"
 	"io/fs"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -23,8 +23,7 @@ import (
 )
 
 type application struct {
-	errorLog       *log.Logger
-	infoLog        *log.Logger
+	logger         *slog.Logger
 	users          models.UserModelInterface
 	posts          models.PostModelInterface
 	postReactions  models.PostReactionModelInterface
@@ -39,35 +38,50 @@ func main() {
 
 	flag.Parse()
 
-	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	// Инициализация нового логгера slog
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,            // Включить вывод источника вызова (файл и строка)
+		Level:     slog.LevelDebug, //задан дебаг уровень, можно поменять на инфо чтобы убрать лишнюю инфу
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.TimeKey {
+				// Устанавливаем формат времени на "2006-01-02 15:04:05"
+				a.Value = slog.StringValue(a.Value.Time().Format("2006-01-02 15:04:05"))
+			}
+			return a
+		},
+	}))
+
+	slog.SetDefault(logger)
 
 	db, err := openDB(*dsn)
 	if err != nil {
-		errorLog.Fatal(err)
+		logger.Error("Unable to open database", "error", err)
+		os.Exit(1)
 	}
 	defer db.Close()
 
 	// Создание таблиц и добавление тестовых данных
 	if err := initDB(db); err != nil {
-		errorLog.Fatal(err)
+		logger.Error("Failed to initialize database", "error", err)
+		os.Exit(1)
 	}
 
 	templateCache, err := newTemplateCache()
 	if err != nil {
-		errorLog.Fatal(err)
+		logger.Error("Failed to create template cache", "error", err)
+		os.Exit(1)
 	}
 
 	sessionManager, err := session.NewManager("memory", "gosessionid", 600)
 	if err != nil {
-		errorLog.Fatal(err)
+		logger.Error("Failed to create session manager", "error", err)
+		os.Exit(1)
 	}
 
 	go sessionManager.GC()
 
 	app := &application{
-		errorLog:       errorLog,
-		infoLog:        infoLog,
+		logger:         logger,
 		users:          &models.UserModel{DB: db},
 		posts:          &models.PostModel{DB: db},
 		postReactions:  &models.PostReactionModel{DB: db},
@@ -79,16 +93,19 @@ func main() {
 	// Чтение встроенных TLS-ключей из файловой системы
 	certPEM, err := fs.ReadFile(tlsecurity.Files, "cert.pem")
 	if err != nil {
-		errorLog.Fatal(err)
+		app.logger.Error("Failed to read TLS certificate", "error", err)
+		os.Exit(1)
 	}
 	keyPEM, err := fs.ReadFile(tlsecurity.Files, "key.pem")
 	if err != nil {
-		errorLog.Fatal(err)
+		app.logger.Error("Failed to read TLS key", "error", err)
+		os.Exit(1)
 	}
 	// Загрузка ключей в формате x509
 	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
 	if err != nil {
-		errorLog.Fatal(err)
+		app.logger.Error("Failed to load TLS certificate pair", "error", err)
+		os.Exit(1)
 	}
 
 	tlsConfig := &tls.Config{
@@ -107,7 +124,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:         *addr,
-		ErrorLog:     errorLog,
+		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
 		Handler:      app.routes(),
 		TLSConfig:    tlsConfig,
 		IdleTimeout:  time.Minute,
@@ -115,9 +132,11 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	infoLog.Printf("Starting server on https://localhost%s", *addr)
+	logger.Info("Starting server", "address", "https://localhost"+*addr)
 	err = srv.ListenAndServeTLS("", "") // Пустые строки означают, что сертификат и ключ уже загружены в `tlsConfig`
-	errorLog.Fatal(err)
+	if err != nil {
+		logger.Error("Server failed to start", "error", err)
+	}
 }
 
 func openDB(dsn string) (*sql.DB, error) {
