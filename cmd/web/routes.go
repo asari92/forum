@@ -2,14 +2,38 @@ package main
 
 import (
 	"net/http"
+	"os"
 
 	"forum/ui"
 )
 
+// Кастомная файловая система, которая запрещает доступ к директориям
+type neuteredFileSystem struct {
+	fs http.FileSystem
+}
+
+func (nfs neuteredFileSystem) Open(path string) (http.File, error) {
+	f, err := nfs.fs.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	if s.IsDir() {
+		return nil, os.ErrNotExist
+	}
+
+	return f, nil
+}
+
 func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
-	fileServer := http.FileServer(http.FS(ui.Files))
+	fileServer := http.FileServer(neuteredFileSystem{http.FS(ui.Files)})
 	mux.Handle("GET /static/", fileServer)
 
 	// Add a test route
