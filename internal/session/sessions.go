@@ -1,14 +1,13 @@
 package session
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
+
+	"github.com/gofrs/uuid"
 )
 
 type Manager struct {
@@ -44,11 +43,11 @@ func NewManager(provideName, cookieName string, maxlifetime int64) (*Manager, er
 }
 
 func (manager *Manager) sessionId() string {
-	b := make([]byte, 32)
-	if _, err := io.ReadFull(rand.Reader, b); err != nil {
+	id, err := uuid.NewV4()
+	if err != nil {
 		return ""
 	}
-	return base64.URLEncoding.EncodeToString(b)
+	return id.String()
 }
 
 func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (session Session) {
