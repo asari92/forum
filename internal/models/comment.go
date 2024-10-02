@@ -24,7 +24,7 @@ type CommentModel struct {
 
 func (c *CommentModel) InsertComment(postID, userID int, content string) error {
 	stmt := `INSERT INTO comments (post_id, user_id,content, created)
-	VALUES (?,?,?, datetime('now'))`
+	VALUES (?,?,?, datetime('now','localtime'))`
 	_, err := c.DB.Exec(stmt, postID, userID, content)
 	if err != nil {
 		return err
@@ -44,10 +44,15 @@ func (c *CommentModel) GetComments(postID int) ([]*Comment, error) {
 	}
 	for rows.Next() {
 		comment := &Comment{}
-		err = rows.Scan(&comment.PostID, &comment.UserID, &comment.Content, &comment.Created)
+		var Created string
+		err = rows.Scan(&comment.PostID, &comment.UserID, &comment.Content, &Created)
 		if err != nil {
 			return nil, err
 		} else {
+			comment.Created, err = time.Parse("2006-01-02 15:04:05", Created)
+			if err != nil {
+				return nil, err
+			}
 			comments = append(comments, comment)
 		}
 	}

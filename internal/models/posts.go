@@ -61,7 +61,7 @@ func (m *PostModel) InsertPostWithCategories(title, content string, userID int, 
 	}()
 
 	// Вставляем пост в базу данных
-	stmt := `INSERT INTO posts (title, content, user_id, created) VALUES (?, ?, ?, datetime('now'))`
+	stmt := `INSERT INTO posts (title, content, user_id, created) VALUES (?, ?, ?, datetime('now','localtime'))`
 	result, err := tx.Exec(stmt, title, content, userID)
 	if err != nil {
 		return 0, err

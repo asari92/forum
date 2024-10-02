@@ -5,12 +5,32 @@
     {{with .Post}}
     <div class='metadata'>
         <h2 class="post-title">{{.Title}}</h2>
-        <span class="post-id">#{{.ID}}</span>
+        <span class="post-id">#{{.ID}}</span>   
     </div>
     <div class="post-content">
         <pre><code>{{.Content}}</code></pre>
     </div>
     {{end}}
+
+    <!-- Комментарии -->
+    <div class="comments-section">
+        <h3>Comments</h3>
+        {{with .Comments}}
+        <ul class="comment-list">
+            {{range .}}
+            <li class="comment">
+                <div class="comment-metadata">
+                    <strong>UserID: {{.UserID}}</strong>
+                    <time>{{ .Created}}</time>
+                </div>
+                <div class="comment-content">{{.Content}}</div>
+            </li>
+            {{else}}
+            <p>No comments yet. Be the first to comment!</p>
+            {{end}}
+        </ul>
+        {{end}}
+    </div>
     
     <!-- Форма для создания комментария -->
     <div class="comment-section">
@@ -22,7 +42,7 @@
             <button type="submit" class="comment-submit-btn">Submit</button>
         </form>
     </div>
-    
+
     <!-- Категории -->
     <div class="metadata">
         <form method="POST" action="/">
@@ -36,20 +56,11 @@
         </form>
     </div>
 
-    {{with .Post}}
-    <div class='metadata post-info'>
-        <span class="user-info">Posted by UserID: {{.UserID}}</span>
-        <time class="post-time">Created: {{humanDate .Created}}</time>
-    </div>
-    {{end}}
-
     <!-- Лайки и дизлайки -->
     <div class='reaction-buttons'>
         <form method="POST" action="/post/view/{{.Post.ID}}">
             <input type="hidden" name="token" value="{{.CSRFToken}}">
             <input type="hidden" name="post_id" value="{{.Post.ID}}">
-            
-            <!-- Иконки лайка и дизлайка -->
             <button type="submit" name="is_like" value="true" class="like-button">
                 <span class="icon {{if and .ReactionData.UserReaction .ReactionData.UserReaction.IsLike}}icon-like-active{{else}}icon-like{{end}}">{{.ReactionData.Likes}} 👍</span>
             </button>

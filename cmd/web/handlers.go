@@ -135,10 +135,18 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	comments, err := app.comments.GetComments(postID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	
 
 	data := app.newTemplateData(r)
 	data.Post = post
 	data.Categories = categories
+	data.Comments = comments
 	data.ReactionData.Likes = likes
 	data.ReactionData.Dislikes = dislikes
 	if userReaction != nil {
