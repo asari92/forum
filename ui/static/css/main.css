@@ -332,3 +332,38 @@ footer {
 .icon-dislike-active {
     color: red; /* Цвет для активной иконки дизлайка */
 }
+
+
+
+.comment-section {
+    margin-top: 20px;
+}
+
+.comment-form {
+    display: flex;
+    flex-direction: column;
+    margin-top: 10px;
+}
+
+.comment-input {
+    padding: 10px;
+    width: 100%;
+    min-height: 80px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    resize: vertical;
+}
+
+.comment-submit-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.comment-submit-btn:hover {
+    background-color: #45a049;
+}

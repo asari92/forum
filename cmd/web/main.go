@@ -26,6 +26,7 @@ type application struct {
 	logger         *slog.Logger
 	users          models.UserModelInterface
 	posts          models.PostModelInterface
+	comments       models.CommentModelInterface
 	postReactions  models.PostReactionModelInterface
 	categories     models.CategoryModelInterface
 	templateCache  map[string]*template.Template
@@ -84,6 +85,7 @@ func main() {
 		logger:         logger,
 		users:          &models.UserModel{DB: db},
 		posts:          &models.PostModel{DB: db},
+		comments:       &models.CommentModel{DB: db},
 		postReactions:  &models.PostReactionModel{DB: db},
 		categories:     &models.CategoryModel{DB: db},
 		templateCache:  templateCache,

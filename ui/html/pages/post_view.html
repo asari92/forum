@@ -4,41 +4,59 @@
 <div class='snippet'>
     {{with .Post}}
     <div class='metadata'>
-        <strong>{{.Title}}</strong>
-        <span>#{{.ID}}</span>
+        <h2 class="post-title">{{.Title}}</h2>
+        <span class="post-id">#{{.ID}}</span>
     </div>
-    <pre><code>{{.Content}}</code></pre>
+    <div class="post-content">
+        <pre><code>{{.Content}}</code></pre>
+    </div>
     {{end}}
-    <div class='metadata'>
+    
+    <!-- Форма для создания комментария -->
+    <div class="comment-section">
+        <h3>Leave a Comment</h3>
+        <form method="POST" action="/comment/create" class="comment-form">
+            <input type="hidden" name="token" value="{{.CSRFToken}}">
+            <input type="hidden" name="postID" value="{{.Post.ID}}">
+            <textarea name="content" placeholder="Write your comment here..." required class="comment-input"></textarea>
+            <button type="submit" class="comment-submit-btn">Submit</button>
+        </form>
+    </div>
+    
+    <!-- Категории -->
+    <div class="metadata">
         <form method="POST" action="/">
             <input type="hidden" name="token" value="{{.CSRFToken}}">
             <strong>Categories: </strong>
-            <!-- Динамическое отображение категорий -->
-            {{range .Categories}}
-            <div>
+            <div class="categories">
+                {{range .Categories}}
                 <button type="submit" name="categories" value="{{.ID}}" class="category-link">{{.Name}}</button>
+                {{end}}
             </div>
-            {{end}}
         </form>
     </div>
+
     {{with .Post}}
-    <div class='metadata'>
-        <time>UserID: {{.UserID}}</time>
-        <time>Created: {{humanDate .Created}}</time>
+    <div class='metadata post-info'>
+        <span class="user-info">Posted by UserID: {{.UserID}}</span>
+        <time class="post-time">Created: {{humanDate .Created}}</time>
     </div>
     {{end}}
-    <div class='metadata'>
+
+    <!-- Лайки и дизлайки -->
+    <div class='reaction-buttons'>
         <form method="POST" action="/post/view/{{.Post.ID}}">
             <input type="hidden" name="token" value="{{.CSRFToken}}">
             <input type="hidden" name="post_id" value="{{.Post.ID}}">
-            <!-- Отображение иконок для лайка и дизлайка -->
+            
+            <!-- Иконки лайка и дизлайка -->
             <button type="submit" name="is_like" value="true" class="like-button">
-                <span class="icon {{if and .ReactionData.UserReaction .ReactionData.UserReaction.IsLike}}icon-like-active{{else}}icon-like{{end}}">{{.ReactionData.Likes}}👍</span>
+                <span class="icon {{if and .ReactionData.UserReaction .ReactionData.UserReaction.IsLike}}icon-like-active{{else}}icon-like{{end}}">{{.ReactionData.Likes}} 👍</span>
             </button>
             <button type="submit" name="is_like" value="false" class="dislike-button">
-                <span class="icon {{if and .ReactionData.UserReaction (not .ReactionData.UserReaction.IsLike)}}icon-dislike-active{{else}}icon-dislike{{end}}">{{.ReactionData.Dislikes}}👎</span>
+                <span class="icon {{if and .ReactionData.UserReaction (not .ReactionData.UserReaction.IsLike)}}icon-dislike-active{{else}}icon-dislike{{end}}">{{.ReactionData.Dislikes}} 👎</span>
             </button>
         </form>
-    </div>    
+    </div>
 </div>
 {{end}}

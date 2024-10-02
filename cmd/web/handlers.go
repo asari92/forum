@@ -652,3 +652,30 @@ func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 
 	http.Redirect(w, r, "/account/view", http.StatusSeeOther)
 }
+
+func (app *application) commentCreate(w http.ResponseWriter, r *http.Request) {
+
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		app.serverError(w, errors.New("get userID in commentCreate"))
+		return
+	}
+	postID, _ := strconv.Atoi(r.PostForm.Get("postID"))
+	content := r.PostForm.Get("content")
+	err = app.comments.InsertComment(postID, userId, content)
+	if err != nil {
+		app.serverError(w, err)
+		return
+
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/post/view/%s", r.PostForm.Get("postID")), http.StatusSeeOther)
+
+}
