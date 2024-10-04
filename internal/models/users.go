@@ -16,6 +16,7 @@ type UserModelInterface interface {
 	Exists(id int) (bool, error)
 	Get(id int) (*User, error)
 	PasswordUpdate(id int, currentPassword, newPassword string) error
+	
 }
 
 type User struct {

@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"time"
 )
 
 type CommentModelInterface interface {
@@ -14,8 +13,9 @@ type Comment struct {
 	ID      int
 	PostID  int
 	UserID  int
+	UserName string
 	Content string
-	Created time.Time
+	Created string
 }
 
 type CommentModel struct {
@@ -35,8 +35,10 @@ func (c *CommentModel) InsertComment(postID, userID int, content string) error {
 }
 
 func (c *CommentModel) GetComments(postID int) ([]*Comment, error) {
-	stmt := `SELECT post_id, user_id, content, created FROM comments
-	WHERE post_id = ?`
+	stmt := `SELECT post_id, username, content, comments.created
+	FROM comments INNER JOIN users ON users.id = comments.user_id
+	WHERE post_id = ?
+	ORDER BY created DESC`
 	comments := []*Comment{}
 	rows, err := c.DB.Query(stmt, postID)
 	if err != nil {
@@ -44,15 +46,11 @@ func (c *CommentModel) GetComments(postID int) ([]*Comment, error) {
 	}
 	for rows.Next() {
 		comment := &Comment{}
-		var Created string
-		err = rows.Scan(&comment.PostID, &comment.UserID, &comment.Content, &Created)
+		err = rows.Scan(&comment.PostID, &comment.UserName, &comment.Content, &comment.Created)
 		if err != nil {
 			return nil, err
 		} else {
-			comment.Created, err = time.Parse("2006-01-02 15:04:05", Created)
-			if err != nil {
-				return nil, err
-			}
+
 			comments = append(comments, comment)
 		}
 	}

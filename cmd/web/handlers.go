@@ -142,6 +142,10 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
 
 	data := app.newTemplateData(r)
 	data.Post = post
@@ -675,7 +679,12 @@ func (app *application) commentCreate(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, errors.New("get userID in commentCreate"))
 		return
 	}
-	postID, _ := strconv.Atoi(r.PostForm.Get("postID"))
+	postID, err := strconv.Atoi(r.PostForm.Get("postID"))
+	if err != nil || postID < 1 {
+		app.notFound(w)
+		return
+	}
+
 	content := r.PostForm.Get("content")
 	err = app.comments.InsertComment(postID, userId, content)
 	if err != nil {

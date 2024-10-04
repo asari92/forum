@@ -22,7 +22,6 @@ type templateData struct {
 	CSRFToken       string
 	Post            *models.Post
 	Posts           []*models.Post
-	Comment         *models.Comment
 	Comments        []*models.Comment
 	Form            any
 	Flash           string
