@@ -16,7 +16,6 @@ type UserModelInterface interface {
 	Exists(id int) (bool, error)
 	Get(id int) (*User, error)
 	PasswordUpdate(id int, currentPassword, newPassword string) error
-	
 }
 
 type User struct {
@@ -31,7 +30,6 @@ type UserModel struct {
 	DB *sql.DB
 }
 
-
 func (m *UserModel) Insert(username, email, password string) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
@@ -39,7 +37,7 @@ func (m *UserModel) Insert(username, email, password string) error {
 	}
 
 	stmt := `INSERT INTO users (username, email, password, created)
-    VALUES(?, ?, ?, datetime('now', 'localtime'))`
+    VALUES(?, ?, ?, datetime('now'))`
 
 	_, err = m.DB.Exec(stmt, username, email, string(hashedPassword))
 	if err != nil {
@@ -143,4 +141,3 @@ func (m *UserModel) PasswordUpdate(id int, currentPassword, newPassword string) 
 	_, err = m.DB.Exec(stmt, string(newHashedPassword), id)
 	return err
 }
-

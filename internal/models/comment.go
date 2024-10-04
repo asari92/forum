@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"time"
 )
 
 type CommentModelInterface interface {
@@ -24,7 +25,7 @@ type CommentModel struct {
 
 func (c *CommentModel) InsertComment(postID, userID int, content string) error {
 	stmt := `INSERT INTO comments (post_id, user_id,content, created)
-	VALUES (?,?,?, datetime('now','localtime'))`
+	VALUES (?,?,?, datetime('now'))`
 	_, err := c.DB.Exec(stmt, postID, userID, content)
 	if err != nil {
 		return err
@@ -34,25 +35,38 @@ func (c *CommentModel) InsertComment(postID, userID int, content string) error {
 }
 
 func (c *CommentModel) GetComments(postID int) ([]*Comment, error) {
-	stmt := `SELECT post_id, username, content, comments.created  ///df
+	stmt := `SELECT post_id, username, content, comments.created  
 	FROM comments INNER JOIN users ON users.id = comments.user_id
 	WHERE post_id = ?
 	ORDER BY comments.created DESC`
-	comments := []*Comment{}
+
 	rows, err := c.DB.Query(stmt, postID)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close() // Не забудьте закрыть rows
+
+	var comments []*Comment
 	for rows.Next() {
 		comment := &Comment{}
-		err = rows.Scan(&comment.PostID, &comment.UserName, &comment.Content, &comment.Created)
+		var created string
+
+		// Сканируем данные в comment и created
+		if err := rows.Scan(&comment.PostID, &comment.UserName, &comment.Content, &created); err != nil {
+			return nil, err
+		}
+
+		// Парсим дату из текстового формата
+		commentTime, err := time.Parse("2006-01-02 15:04:05", created)
 		if err != nil {
 			return nil, err
-		} else {
-			comments = append(comments, comment)
 		}
+
+		comment.Created = commentTime.Format(time.RFC3339) // Форматируем в RFC3339
+		comments = append(comments, comment)
 	}
-	if err = rows.Err(); err != nil {
+
+	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	return comments, nil

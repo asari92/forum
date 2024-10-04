@@ -12,7 +12,6 @@
     </div>
     {{end}}
 
-
     <div class="metadata">
         <form method="POST" action="/">
             <input type="hidden" name="token" value="{{.CSRFToken}}">
@@ -25,8 +24,8 @@
         </form>
     </div>
 
-     <!-- Лайки и дизлайки -->
-     <div class='reaction-buttons'>
+    <!-- Лайки и дизлайки -->
+    <div class='reaction-buttons'>
         <form method="POST" action="/post/view/{{.Post.ID}}">
             <input type="hidden" name="token" value="{{.CSRFToken}}">
             <input type="hidden" name="post_id" value="{{.Post.ID}}">
@@ -40,38 +39,36 @@
     </div>
 </div>
 
-    <!-- Комментарии -->
-    <div class="comments-section">
-        <h3>Comments</h3>
-        {{with .Comments}}
-        <ul class="comment-list">
-            {{range .}}
-            <li class="comment">
-                <div class="comment-metadata">
-                    <strong>UserID: {{.UserID}}</strong>
-                    <time>{{ .Created}}</time>
-                </div>
-                <div class="comment-content">{{.Content}}</div>
-            </li>
-            {{else}}
-            <p>No comments yet. Be the first to comment!</p>
-            {{end}}
-        </ul>
+<!-- Комментарии -->
+<div class="comments-section">
+    <h3>Comments</h3>
+    {{with .Comments}}
+    <ul class="comment-list">
+        {{range .}}
+        <li class="comment">
+            <div class="comment-metadata">
+                <strong>{{.UserName}}</strong>
+                <time class="comment-time" data-time="{{.Created}}"></time>
+            </div>
+            <div class="comment-content">{{.Content}}</div>
+        </li>
+        {{else}}
+        <p class="no-comments">No comments yet. Be the first to comment!</p>
         {{end}}
-    </div>
-    
-    <!-- Форма для создания комментария -->
-    <div class="comment-section">
-        <h3>Leave a Comment</h3>
-        <form method="POST" action="/comment/create" class="comment-form">
-            <input type="hidden" name="token" value="{{.CSRFToken}}">
-            <input type="hidden" name="postID" value="{{.Post.ID}}">
-            <textarea name="content" placeholder="Write your comment here..." required class="comment-input"></textarea>
-            <button type="submit" class="comment-submit-btn">Submit</button>
-        </form>
-    </div>
+    </ul>
+    {{end}}
+</div>
 
-   
+<!-- Форма для создания комментария -->
+<div class="comment-section">
+    <h3>Leave a Comment</h3>
+    <form method="POST" action="/comment/create" class="comment-form">
+        <input type="hidden" name="token" value="{{.CSRFToken}}">
+        <input type="hidden" name="postID" value="{{.Post.ID}}">
+        <textarea name="content" placeholder="Write your comment here..." required class="comment-input"></textarea>
+        <button type="submit" class="comment-submit-btn">Submit</button>
+    </form>
+</div>
 
-   
+
 {{end}}
