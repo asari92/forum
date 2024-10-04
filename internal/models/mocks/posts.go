@@ -29,12 +29,12 @@ func (m *PostModel) Get(id int) (*models.Post, error) {
 	}
 }
 
-func (m *PostModel) Latest() ([]*models.Post, error) {
+func (m *PostModel) GetAllPaginatedPosts(page, pageSize int) ([]*models.Post, error) {
 	return []*models.Post{mockPost}, nil
 }
 
-func (m *PostModel) GetPostsForCategory(categoryIDs []int) ([]*models.Post, error) {
-	return nil, nil
+func (m *PostModel) GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*models.Post, error) {
+	return []*models.Post{mockPost}, nil
 }
 
 func (m *PostModel) GetUserPosts(userId int) ([]*models.Post, error) {

@@ -15,7 +15,7 @@
             <input type='submit' value='Filter by categories'>
         </div>
     </form>
-    <h2>Latest Posts</h2>
+    <h2>All posts</h2>
     {{if .Posts}}
      <table>
         <tr>
@@ -34,4 +34,23 @@
     {{else}}
         <p>There's nothing to see here... yet!</p>
     {{end}}
+
+       <!-- Пагинация через форму -->
+       <form method="POST" action="/">
+        <input type="hidden" name="token" value="{{.CSRFToken}}">
+        {{range .Form.Categories}}
+            <input type="hidden" name="categories" value="{{.}}">
+        {{end}}
+        <div id="pagination">
+            {{if gt .CurrentPage 1}}
+            <button type="submit" name="page" value="{{sub .CurrentPage 1}}">Previous</button>
+            {{end}}
+    
+            <span>Page {{.CurrentPage}}</span>
+    
+            {{if eq (len .Posts) .PageSize}}
+            <button type="submit" name="page" value="{{add .CurrentPage 1}}">Next</button>
+            {{end}}
+        </div>
+    </form>
 {{end}}

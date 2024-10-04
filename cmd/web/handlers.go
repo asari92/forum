@@ -15,7 +15,19 @@ func (app *application) errorHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	posts, err := app.posts.Latest()
+	// Определяем текущую страницу. По умолчанию - страница 1.
+	page := 1
+	pageSize := 10 // Количество постов на одной странице
+
+	// Проверяем, если номер страницы передан в POST-запросе.
+	// if r.Method == http.MethodPost {
+	// 	if p, err := strconv.Atoi(r.PostFormValue("page")); err == nil && p > 0 {
+	// 		page = p
+	// 	}
+	// }
+
+	// Получаем посты для нужной страницы.
+	posts, err := app.posts.GetAllPaginatedPosts(page, pageSize)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -34,6 +46,8 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	data.Posts = posts
 	data.Categories = categories
+	data.CurrentPage = page
+	data.PageSize = pageSize
 	data.Form = form
 	app.render(w, http.StatusOK, "home.html", data)
 }
@@ -45,7 +59,15 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var categoryIDs []int
+	page := 1
+	pageSize := 10
+
+	if p, err := strconv.Atoi(r.PostFormValue("page")); err == nil && p > 0 {
+		page = p
+	}
+
+	// Получаем массив категорий
+	categoryIDs := []int{}
 	for _, id := range r.PostForm["categories"] {
 		intID, err := strconv.Atoi(id)
 		if err != nil {
@@ -65,10 +87,11 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Проверка категорий
 	form.validateCategories(allCategories)
 
 	if !form.Valid() {
-		posts, err := app.posts.Latest()
+		posts, err := app.posts.GetAllPaginatedPosts(page, pageSize)
 		if err != nil {
 			app.serverError(w, err)
 			return
@@ -76,13 +99,15 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 		data := app.newTemplateData(r)
 		data.Posts = posts
 		data.Categories = allCategories
+		data.CurrentPage = page
+		data.PageSize = pageSize
 		data.Form = form
 		app.render(w, http.StatusUnprocessableEntity, "home.html", data)
 		return
 	}
 
 	// Логика фильтрации постов по категориям
-	posts, err := app.posts.GetPostsForCategory(form.Categories)
+	posts, err := app.posts.GetPaginatedPostsByCategory(form.Categories, page, pageSize)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -91,10 +116,81 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	data.Posts = posts
 	data.Categories = allCategories
+	data.CurrentPage = page
+	data.PageSize = pageSize
 	data.Form = form
 
 	app.render(w, http.StatusOK, "home.html", data)
 }
+
+// func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
+// 	err := r.ParseForm()
+// 	if err != nil {
+// 		app.clientError(w, http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	page := 1
+// 	pageSize := 10
+
+// 	if p, err := strconv.Atoi(r.PostFormValue("page")); err == nil && p > 0 {
+// 		page = p
+// 	}
+
+// 	var categoryIDs []int
+// 	for _, id := range r.PostForm["categories"] {
+// 		intID, err := strconv.Atoi(id)
+// 		if err != nil {
+// 			app.clientError(w, http.StatusBadRequest)
+// 			return
+// 		}
+// 		categoryIDs = append(categoryIDs, intID)
+// 	}
+
+// 	form := postCreateForm{
+// 		Categories: categoryIDs,
+// 	}
+
+// 	allCategories, err := app.categories.GetAll()
+// 	if err != nil {
+// 		app.serverError(w, err)
+// 		return
+// 	}
+
+// 	form.validateCategories(allCategories)
+
+// 	if !form.Valid() {
+// 		posts, err := app.posts.GetAllPaginatedPosts(page, pageSize)
+// 		if err != nil {
+// 			app.serverError(w, err)
+// 			return
+// 		}
+// 		data := app.newTemplateData(r)
+// 		data.Posts = posts
+// 		data.Categories = allCategories
+// 		data.CurrentPage = page
+// 		data.PageSize = pageSize
+// 		data.Form = form
+// 		app.render(w, http.StatusUnprocessableEntity, "home.html", data)
+// 		return
+// 	}
+
+// 	// Логика фильтрации постов по категориям
+// 	posts, err := app.posts.GetPaginatedPostsByCategory(form.Categories, page, pageSize)
+// 	if err != nil {
+// 		app.serverError(w, err)
+// 		return
+// 	}
+
+// 	data := app.newTemplateData(r)
+// 	data.Posts = posts
+// 	data.Categories = allCategories
+// 	data.CurrentPage = page
+// 	data.PageSize = pageSize
+// 	data.Form = form
+
+// 	app.render(w, http.StatusOK, "home.html", data)
+// }
 
 func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	postID, err := strconv.Atoi(r.PathValue("id"))
@@ -503,7 +599,6 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 	err = sess.Delete(CsrfTokenSessionKey)
 	if err != nil {
 		app.logger.Error("Session error during delete csrfToken", "error", err)
-
 	}
 
 	err = sess.Set(FlashSessionKey, "Your log in was successful.")
