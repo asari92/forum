@@ -457,6 +457,21 @@ footer {
     cursor: pointer;
 }
 
+.post-title {
+    font-size: 2em;                    /* Крупный размер шрифта */
+    font-weight: bold;                 /* Жирный шрифт для акцента */
+    color: #000;                       /* Черный цвет текста */
+    padding-bottom: 5px;
+    border-bottom: 2px solid #ddd;     /* Светлая граница снизу для акцента */
+    margin: 15px 0;
+    text-align: left;                  /* Выровнен по левому краю */
+}
+
+.post-title:hover {
+    color: #333;                       /* Темный оттенок при наведении */
+}
+
+
 .comment-submit-btn:hover {
     background-color: #0056b3;
 }
@@ -523,4 +538,27 @@ footer {
 
 .comment-submit-btn:hover {
     background-color: #0056b3;
+}
+
+.post-content {
+    background-color: #fff;             /* Светлый фон */
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;             /* Светлая граница для отделения */
+    font-size: 1em;
+    line-height: 1.6;
+    color: #000;                        /* Черный цвет текста */
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.post-content pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.post-content code {
+    color:black;                     /* Цвет для выделения кода */
+    font-weight: bold;
 }

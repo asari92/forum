@@ -4,8 +4,11 @@
 <div class='snippet'>
     {{with .Post}}
     <div class='metadata'>
-        <h2 class="post-title">{{.Title}}</h2>
-        <span class="post-id">#{{.ID}}</span>   
+        <span>{{.UserName}}</span>   
+        <time class="timezone" data-time="{{.Created}}"></time>
+        <br>
+        <h1 class="post-title">{{.Title}}</h1>
+
     </div>
     <div class="post-content">
         <pre><code>{{.Content}}</code></pre>
@@ -36,19 +39,16 @@
                 <span class="icon {{if and .ReactionData.UserReaction (not .ReactionData.UserReaction.IsLike)}}icon-dislike-active{{else}}icon-dislike{{end}}">{{.ReactionData.Dislikes}} 👎</span>
             </button>
         </form>
-    </div>
-</div>
 
-<!-- Комментарии -->
-<div class="comments-section">
-    <h3>Comments</h3>
+
     {{with .Comments}}
     <ul class="comment-list">
+        <h3> Comments</h3>
         {{range .}}
         <li class="comment">
             <div class="comment-metadata">
                 <strong>{{.UserName}}</strong>
-                <time class="comment-time" data-time="{{.Created}}"></time>
+                <time class="comment-time timezone" data-time="{{.Created}}"></time>
             </div>
             <div class="comment-content">{{.Content}}</div>
         </li>

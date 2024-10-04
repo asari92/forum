@@ -9,7 +9,7 @@ for (var i = 0; i < navLinks.length; i++) {
 
 
     document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.comment-time').forEach(function(timeElement) {
+        document.querySelectorAll('.timezone').forEach(function(timeElement) {
             const dateTimeString = timeElement.getAttribute('data-time'); // Получаем дату из data-time
             const dateTime = new Date(dateTimeString); // Создаем объект Date
 

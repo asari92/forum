@@ -26,7 +26,7 @@
         {{range .Posts}}
         <tr>
             <td><a href='/post/view/{{.ID}}'>{{.Title}}</a></td>
-            <td>{{humanDate .Created}}</td>
+            <td>{{.Created}}</td>
             <td>#{{.ID}}</td>
         </tr>
         {{end}}

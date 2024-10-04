@@ -4,7 +4,6 @@ import (
 	"html/template"
 	"io/fs"
 	"path/filepath"
-	"time"
 
 	"forum/internal/models"
 	"forum/ui"
@@ -30,10 +29,6 @@ type templateData struct {
 	ReactionData    *ReactionData
 }
 
-func humanDate(t time.Time) string {
-	return t.Format("02 Jan 2006 at 15:04")
-}
-
 func contains(s []int, e int) bool {
 	for _, a := range s {
 		if a == e {
@@ -44,8 +39,7 @@ func contains(s []int, e int) bool {
 }
 
 var functions = template.FuncMap{
-	"humanDate": humanDate,
-	"contains":  contains,
+	"contains": contains,
 }
 
 func newTemplateCache() (map[string]*template.Template, error) {

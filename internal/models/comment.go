@@ -44,25 +44,23 @@ func (c *CommentModel) GetComments(postID int) ([]*Comment, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close() // Не забудьте закрыть rows
+	defer rows.Close()
 
 	var comments []*Comment
 	for rows.Next() {
 		comment := &Comment{}
 		var created string
 
-		// Сканируем данные в comment и created
 		if err := rows.Scan(&comment.PostID, &comment.UserName, &comment.Content, &created); err != nil {
 			return nil, err
 		}
 
-		// Парсим дату из текстового формата
 		commentTime, err := time.Parse("2006-01-02 15:04:05", created)
 		if err != nil {
 			return nil, err
 		}
 
-		comment.Created = commentTime.Format(time.RFC3339) // Форматируем в RFC3339
+		comment.Created = commentTime.Format(time.RFC3339)
 		comments = append(comments, comment)
 	}
 
