@@ -10,12 +10,12 @@ type CommentModelInterface interface {
 }
 
 type Comment struct {
-	ID      int
-	PostID  int
-	UserID  int
+	ID       int
+	PostID   int
+	UserID   int
 	UserName string
-	Content string
-	Created string
+	Content  string
+	Created  string
 }
 
 type CommentModel struct {
@@ -31,14 +31,13 @@ func (c *CommentModel) InsertComment(postID, userID int, content string) error {
 	}
 
 	return nil
-
 }
 
 func (c *CommentModel) GetComments(postID int) ([]*Comment, error) {
-	stmt := `SELECT post_id, username, content, comments.created
+	stmt := `SELECT post_id, username, content, comments.created  ///df
 	FROM comments INNER JOIN users ON users.id = comments.user_id
 	WHERE post_id = ?
-	ORDER BY created DESC`
+	ORDER BY comments.created DESC`
 	comments := []*Comment{}
 	rows, err := c.DB.Query(stmt, postID)
 	if err != nil {
@@ -50,7 +49,6 @@ func (c *CommentModel) GetComments(postID int) ([]*Comment, error) {
 		if err != nil {
 			return nil, err
 		} else {
-
 			comments = append(comments, comment)
 		}
 	}
