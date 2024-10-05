@@ -48,7 +48,7 @@
     
             <span>Page {{.CurrentPage}}</span>
     
-            {{if eq (len .Posts) .PageSize}}
+            {{if .HasNextPage}}
             <button type="submit" name="page" value="{{add .CurrentPage 1}}">Next</button>
             {{end}}
         </div>

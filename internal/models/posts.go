@@ -191,8 +191,8 @@ func (m *PostModel) GetPaginatedPostsByCategory(categoryIDs []int, page, pageSiz
         ORDER BY p.created DESC
 		LIMIT ? OFFSET ?`, strings.Join(placeholders, ", "))
 
-	// Добавляем количество категорий в аргументы запроса
-	args = append(args, len(categoryIDs), pageSize, offset)
+	// Добавляем в аргументы запроса: количество категорий; запрашиваем на одну запись больше, чем pageSize, чтобы проверить наличие следующей страницы; смещение
+	args = append(args, len(categoryIDs), pageSize+1, offset)
 
 	rows, err := m.DB.Query(stmt, args...)
 	if err != nil {
@@ -307,7 +307,7 @@ func (m *PostModel) GetAllPaginatedPosts(page, pageSize int) ([]*Post, error) {
              ORDER BY created DESC
              LIMIT ? OFFSET ?`
 
-	rows, err := m.DB.Query(stmt, pageSize, offset)
+	rows, err := m.DB.Query(stmt, pageSize+1, offset) // Лимит на одну запись больше
 	if err != nil {
 		return nil, err
 	}

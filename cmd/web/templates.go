@@ -31,6 +31,7 @@ type templateData struct {
 	ReactionData    *ReactionData
 	CurrentPage     int
 	PageSize        int
+	HasNextPage     bool
 }
 
 func humanDate(t time.Time) string {

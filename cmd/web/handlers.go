@@ -19,18 +19,19 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	page := 1
 	pageSize := 10 // Количество постов на одной странице
 
-	// Проверяем, если номер страницы передан в POST-запросе.
-	// if r.Method == http.MethodPost {
-	// 	if p, err := strconv.Atoi(r.PostFormValue("page")); err == nil && p > 0 {
-	// 		page = p
-	// 	}
-	// }
-
 	// Получаем посты для нужной страницы.
 	posts, err := app.posts.GetAllPaginatedPosts(page, pageSize)
 	if err != nil {
 		app.serverError(w, err)
 		return
+	}
+
+	// Проверяем, есть ли следующая страница
+	hasNextPage := len(posts) > pageSize
+
+	// Если постов больше, чем pageSize, обрезаем список до pageSize
+	if hasNextPage {
+		posts = posts[:pageSize]
 	}
 
 	categories, err := app.categories.GetAll()
@@ -48,6 +49,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	data.Categories = categories
 	data.CurrentPage = page
 	data.PageSize = pageSize
+	data.HasNextPage = hasNextPage
 	data.Form = form
 	app.render(w, http.StatusOK, "home.html", data)
 }
@@ -96,21 +98,39 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 			app.serverError(w, err)
 			return
 		}
+
+		// Проверяем, есть ли следующая страница
+		hasNextPage := len(posts) > pageSize
+
+		// Если постов больше, чем pageSize, обрезаем список до pageSize
+		if hasNextPage {
+			posts = posts[:pageSize]
+		}
+
 		data := app.newTemplateData(r)
 		data.Posts = posts
 		data.Categories = allCategories
 		data.CurrentPage = page
 		data.PageSize = pageSize
+		data.HasNextPage = hasNextPage
 		data.Form = form
 		app.render(w, http.StatusUnprocessableEntity, "home.html", data)
 		return
 	}
 
-	// Логика фильтрации постов по категориям
+	// Получаем посты с пагинацией и на одну запись больше
 	posts, err := app.posts.GetPaginatedPostsByCategory(form.Categories, page, pageSize)
 	if err != nil {
 		app.serverError(w, err)
 		return
+	}
+
+	// Проверяем, есть ли следующая страница
+	hasNextPage := len(posts) > pageSize
+
+	// Если постов больше, чем pageSize, обрезаем список до pageSize
+	if hasNextPage {
+		posts = posts[:pageSize]
 	}
 
 	data := app.newTemplateData(r)
@@ -118,6 +138,7 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	data.Categories = allCategories
 	data.CurrentPage = page
 	data.PageSize = pageSize
+	data.HasNextPage = hasNextPage
 	data.Form = form
 
 	app.render(w, http.StatusOK, "home.html", data)

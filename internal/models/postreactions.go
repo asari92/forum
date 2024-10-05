@@ -58,3 +58,4 @@ func (m *PostReactionModel) GetReactionsCount(postID int) (likes int, dislikes i
 	err = row.Scan(&likes, &dislikes)
 	return
 }
+ 
