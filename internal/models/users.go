@@ -23,7 +23,7 @@ type User struct {
 	Username       string
 	Email          string
 	HashedPassword []byte
-	Created        time.Time
+	Created        string
 }
 
 type UserModel struct {
@@ -104,10 +104,11 @@ func (m *UserModel) Get(id int) (*User, error) {
 		}
 	}
 
-	u.Created, err = time.Parse("2006-01-02 15:04:05", created)
+	userTime, err := time.Parse("2006-01-02 15:04:05", created)
 	if err != nil {
 		return nil, err
 	}
+	u.Created = userTime.Format(time.RFC3339)
 
 	return u, nil
 }
