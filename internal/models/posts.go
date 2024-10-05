@@ -12,8 +12,8 @@ type PostModelInterface interface {
 	InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error)
 	Get(id int) (*Post, error)
 	GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*Post, error)
-	GetUserPosts(userId int) ([]*Post, error)
-	GetUserLikedPosts(userId int) ([]*Post, error)
+	GetUserPaginatedPosts(userId, page, pageSize int) ([]*Post, error)
+	GetUserLikedPaginatedPosts(userId, page, pageSize int) ([]*Post, error)
 	GetAllPaginatedPosts(page, pageSize int) ([]*Post, error)
 }
 
@@ -28,23 +28,6 @@ type Post struct {
 type PostModel struct {
 	DB *sql.DB
 }
-
-// func (m *PostModel) Insert(title string, content string, userID int) (int, error) {
-// 	stmt := `INSERT INTO posts (title, content, user_id, created)
-//     VALUES(?, ?, ?, datetime('now'))`
-
-// 	result, err := m.DB.Exec(stmt, title, content, userID)
-// 	if err != nil {
-// 		return 0, err
-// 	}
-
-// 	id, err := result.LastInsertId()
-// 	if err != nil {
-// 		return 0, err
-// 	}
-
-// 	return int(id), nil
-// }
 
 func (m *PostModel) InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error) {
 	// Начинаем транзакцию
@@ -226,12 +209,16 @@ func (m *PostModel) GetPaginatedPostsByCategory(categoryIDs []int, page, pageSiz
 	return posts, nil
 }
 
-func (m *PostModel) GetUserPosts(userId int) ([]*Post, error) {
+func (m *PostModel) GetUserPaginatedPosts(userId, page, pageSize int) ([]*Post, error) {
+	offset := (page - 1) * pageSize
+
 	stmt := `SELECT id, title, content, user_id, created FROM posts
 	WHERE user_id = ?
-    ORDER BY id DESC`
+    ORDER BY id DESC
+	LIMIT ? OFFSET ?`
 
-	rows, err := m.DB.Query(stmt, userId)
+	// запрашиваем на одну запись больше, чем pageSize
+	rows, err := m.DB.Query(stmt, userId, pageSize+1, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -262,14 +249,17 @@ func (m *PostModel) GetUserPosts(userId int) ([]*Post, error) {
 	return posts, nil
 }
 
-func (m *PostModel) GetUserLikedPosts(userId int) ([]*Post, error) {
+func (m *PostModel) GetUserLikedPaginatedPosts(userId, page, pageSize int) ([]*Post, error) {
+	offset := (page - 1) * pageSize
+
 	stmt := `SELECT id, title, content, p.user_id, created 
 	FROM posts p
 	INNER JOIN post_reactions pr ON p.id = pr.post_id
 	WHERE pr.user_id = ? AND pr.is_like = true
-    ORDER BY id DESC`
+    ORDER BY id DESC
+	LIMIT ? OFFSET ?`
 
-	rows, err := m.DB.Query(stmt, userId)
+	rows, err := m.DB.Query(stmt, userId, pageSize+1, offset)
 	if err != nil {
 		return nil, err
 	}

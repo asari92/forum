@@ -1,7 +1,7 @@
-{{define "title"}}Posts by {{.User.Username}}{{end}}
+{{define "title"}}{{.Header}}{{end}}
 
 {{define "main"}}
-    <h2>Posts by {{.User.Username}}</h2>
+    <h2>{{.Header}}</h2>
     {{if .Posts}}
      <table>
         <tr>
@@ -20,4 +20,7 @@
     {{else}}
         <p>There's nothing to see here... yet!</p>
     {{end}}
+
+    <!-- Включаем частичный шаблон пагинации -->
+    {{template "pagination" .}}
 {{end}}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"forum/internal/models"
 	"forum/internal/validator"
@@ -12,6 +13,12 @@ import (
 
 func (app *application) errorHandler(w http.ResponseWriter, r *http.Request) {
 	app.notFound(w) // Use the notFound() helper
+}
+
+type pagination struct {
+	CurrentPage      int
+	HasNextPage      bool
+	PaginationAction string
 }
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -47,9 +54,12 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	data.Posts = posts
 	data.Categories = categories
-	data.CurrentPage = page
-	data.PageSize = pageSize
-	data.HasNextPage = hasNextPage
+	data.Header = "All posts"
+	data.Pagination = pagination{
+		CurrentPage:      page,
+		HasNextPage:      hasNextPage,
+		PaginationAction: "/", // Маршрут для пагинации
+	}
 	data.Form = form
 	app.render(w, http.StatusOK, "home.html", data)
 }
@@ -92,6 +102,11 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	// Проверка категорий
 	form.validateCategories(allCategories)
 
+	data := app.newTemplateData(r)
+	data.Categories = allCategories
+	data.Form = form
+	data.Header = "All posts"
+
 	if !form.Valid() {
 		posts, err := app.posts.GetAllPaginatedPosts(page, pageSize)
 		if err != nil {
@@ -107,13 +122,13 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 			posts = posts[:pageSize]
 		}
 
-		data := app.newTemplateData(r)
 		data.Posts = posts
-		data.Categories = allCategories
-		data.CurrentPage = page
-		data.PageSize = pageSize
-		data.HasNextPage = hasNextPage
-		data.Form = form
+		data.Pagination = pagination{
+			CurrentPage:      page,
+			HasNextPage:      hasNextPage,
+			PaginationAction: "/", // Маршрут для пагинации
+		}
+
 		app.render(w, http.StatusUnprocessableEntity, "home.html", data)
 		return
 	}
@@ -133,85 +148,30 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 		posts = posts[:pageSize]
 	}
 
-	data := app.newTemplateData(r)
+	// Собираем названия категорий, совпадающие с выбранными categoryIDs
+	var filteredCategoryNames []string
+	for _, category := range allCategories {
+		for _, selectedID := range categoryIDs {
+			if category.ID == selectedID {
+				filteredCategoryNames = append(filteredCategoryNames, category.Name)
+			}
+		}
+	}
+
+	// Если категории выбраны, создаем строку заголовка с их названиями
+	if len(filteredCategoryNames) > 0 {
+		data.Header = fmt.Sprintf("Posts filtered by: %s", strings.Join(filteredCategoryNames, ", "))
+	}
+
 	data.Posts = posts
-	data.Categories = allCategories
-	data.CurrentPage = page
-	data.PageSize = pageSize
-	data.HasNextPage = hasNextPage
-	data.Form = form
+	data.Pagination = pagination{
+		CurrentPage:      page,
+		HasNextPage:      hasNextPage,
+		PaginationAction: "/", // Маршрут для пагинации
+	}
 
 	app.render(w, http.StatusOK, "home.html", data)
 }
-
-// func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
-// 	err := r.ParseForm()
-// 	if err != nil {
-// 		app.clientError(w, http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	page := 1
-// 	pageSize := 10
-
-// 	if p, err := strconv.Atoi(r.PostFormValue("page")); err == nil && p > 0 {
-// 		page = p
-// 	}
-
-// 	var categoryIDs []int
-// 	for _, id := range r.PostForm["categories"] {
-// 		intID, err := strconv.Atoi(id)
-// 		if err != nil {
-// 			app.clientError(w, http.StatusBadRequest)
-// 			return
-// 		}
-// 		categoryIDs = append(categoryIDs, intID)
-// 	}
-
-// 	form := postCreateForm{
-// 		Categories: categoryIDs,
-// 	}
-
-// 	allCategories, err := app.categories.GetAll()
-// 	if err != nil {
-// 		app.serverError(w, err)
-// 		return
-// 	}
-
-// 	form.validateCategories(allCategories)
-
-// 	if !form.Valid() {
-// 		posts, err := app.posts.GetAllPaginatedPosts(page, pageSize)
-// 		if err != nil {
-// 			app.serverError(w, err)
-// 			return
-// 		}
-// 		data := app.newTemplateData(r)
-// 		data.Posts = posts
-// 		data.Categories = allCategories
-// 		data.CurrentPage = page
-// 		data.PageSize = pageSize
-// 		data.Form = form
-// 		app.render(w, http.StatusUnprocessableEntity, "home.html", data)
-// 		return
-// 	}
-
-// 	// Логика фильтрации постов по категориям
-// 	posts, err := app.posts.GetPaginatedPostsByCategory(form.Categories, page, pageSize)
-// 	if err != nil {
-// 		app.serverError(w, err)
-// 		return
-// 	}
-
-// 	data := app.newTemplateData(r)
-// 	data.Posts = posts
-// 	data.Categories = allCategories
-// 	data.CurrentPage = page
-// 	data.PageSize = pageSize
-// 	data.Form = form
-
-// 	app.render(w, http.StatusOK, "home.html", data)
-// }
 
 func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	postID, err := strconv.Atoi(r.PathValue("id"))
@@ -311,13 +271,26 @@ func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) userPostsView(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
 	userId, err := strconv.Atoi(r.PathValue("userId"))
 	if err != nil || userId < 1 {
 		app.notFound(w)
 		return
 	}
 
-	posts, err := app.posts.GetUserPosts(userId)
+	page := 1
+	pageSize := 10
+
+	if p, err := strconv.Atoi(r.PostFormValue("page")); err == nil && p > 0 {
+		page = p
+	}
+
+	posts, err := app.posts.GetUserPaginatedPosts(userId, page, pageSize)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -338,9 +311,20 @@ func (app *application) userPostsView(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	hasNextPage := len(posts) > pageSize
+
+	if hasNextPage {
+		posts = posts[:pageSize]
+	}
+
 	data := app.newTemplateData(r)
 	data.Posts = posts
-	data.User = user
+	data.Header = fmt.Sprintf("Posts by %s", user.Username)
+	data.Pagination = pagination{
+		CurrentPage:      page,
+		HasNextPage:      hasNextPage,
+		PaginationAction: fmt.Sprintf("/user/%d/posts", userId), // Маршрут для пагинации
+	}
 	app.render(w, http.StatusOK, "user_posts.html", data)
 }
 
@@ -351,7 +335,20 @@ func (app *application) userLikedPostsView(w http.ResponseWriter, r *http.Reques
 		app.serverError(w, errors.New("get userID in userLikedPostsView"))
 	}
 
-	posts, err := app.posts.GetUserLikedPosts(userID)
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	page := 1
+	pageSize := 10
+
+	if p, err := strconv.Atoi(r.PostFormValue("page")); err == nil && p > 0 {
+		page = p
+	}
+
+	posts, err := app.posts.GetUserLikedPaginatedPosts(userID, page, pageSize)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -363,9 +360,20 @@ func (app *application) userLikedPostsView(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	hasNextPage := len(posts) > pageSize
+
+	if hasNextPage {
+		posts = posts[:pageSize]
+	}
+
 	data := app.newTemplateData(r)
 	data.Posts = posts
-	data.User = user
+	data.Header = fmt.Sprintf("Posts liked by %s", user.Username)
+	data.Pagination = pagination{
+		CurrentPage:      page,
+		HasNextPage:      hasNextPage,
+		PaginationAction: "/user/liked", // Маршрут для пагинации
+	}
 	app.render(w, http.StatusOK, "user_posts.html", data)
 }
 

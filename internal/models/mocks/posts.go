@@ -37,7 +37,7 @@ func (m *PostModel) GetPaginatedPostsByCategory(categoryIDs []int, page, pageSiz
 	return []*models.Post{mockPost}, nil
 }
 
-func (m *PostModel) GetUserPosts(userId int) ([]*models.Post, error) {
+func (m *PostModel) GetUserPaginatedPosts(userId, page, pageSize int) ([]*models.Post, error) {
 	switch userId {
 	case 1:
 		return []*models.Post{mockPost}, nil
@@ -46,7 +46,7 @@ func (m *PostModel) GetUserPosts(userId int) ([]*models.Post, error) {
 	}
 }
 
-func (m *PostModel) GetUserLikedPosts(userId int) ([]*models.Post, error) {
+func (m *PostModel) GetUserLikedPaginatedPosts(userId, page, pageSize int) ([]*models.Post, error) {
 	switch userId {
 	case 1:
 		return []*models.Post{mockPost}, nil

@@ -29,9 +29,8 @@ type templateData struct {
 	IsAuthenticated bool
 	User            *models.User
 	ReactionData    *ReactionData
-	CurrentPage     int
-	PageSize        int
-	HasNextPage     bool
+	Header          string
+	Pagination      any
 }
 
 func humanDate(t time.Time) string {
