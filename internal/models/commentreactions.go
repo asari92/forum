@@ -81,6 +81,9 @@ func (c *CommentReactionModel) GetUserReaction(userID, commentID int) (*CommentR
 	commentReaction := &CommentReaction{}
 	err := row.Scan(&commentReaction.IsLike)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return commentReaction, nil

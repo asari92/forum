@@ -158,11 +158,6 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
 	data := app.newTemplateData(r)
 	data.Post = post
 	data.Categories = categories
@@ -716,6 +711,7 @@ func (app *application) commentCreate(w http.ResponseWriter, r *http.Request) {
 // /comment/reaction
 func (app *application) commentReaction(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
+	fmt.Println("start")
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
@@ -726,6 +722,36 @@ func (app *application) commentReaction(w http.ResponseWriter, r *http.Request) 
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
-	// sess := app.SessionFromContext(r)
-	// userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+	isLike := r.PostForm.Get("is_like")
+	reaction := isLike == "true"
+	var commentReaction *models.CommentReaction
+	sess := app.SessionFromContext(r)
+	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if ok && userID != 0 {
+		commentReaction, err = app.commentReactions.GetUserReaction(userID, commentID)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+	}
+
+	fmt.Println("pppp")
+	if reaction == commentReaction.IsLike {
+		err = app.commentReactions.RemoveReaction(userID, commentID)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		} else {
+			err = app.commentReactions.AddReaction(userID, commentID, reaction)
+			if err != nil {
+
+				app.serverError(w, err)
+				return
+			}
+		}
+	}
+
+	fmt.Println("end")
+	http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+
 }
