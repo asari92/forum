@@ -26,14 +26,16 @@
             </div>
         </form>
     </div>
-
+    {{$CSRFToken := .CSRFToken}}
     <!-- Лайки и дизлайки -->
     <div class='reaction-buttons'>
+        
+
         <form method="POST" action="/post/view/{{.Post.ID}}">
             <input type="hidden" name="token" value="{{.CSRFToken}}">
             <input type="hidden" name="post_id" value="{{.Post.ID}}">
             <button type="submit" name="is_like" value="true" class="like-button">
-                <span class="icon {{if and .ReactionData.UserReaction .ReactionData.UserReaction.IsLike}}icon-like-active{{else}}icon-like{{end}}">{{.ReactionData.Likes}} 👍</span>
+                <span class="icon {{if and .ReactionData.UserReaction .ReactionData.UserReaction.IsLike}}icon-like-active{{else}}icon-like{{end}}">{{.ReactionData.Likes}} 👍</span> 
             </button>
             <button type="submit" name="is_like" value="false" class="dislike-button">
                 <span class="icon {{if and .ReactionData.UserReaction (not .ReactionData.UserReaction.IsLike)}}icon-dislike-active{{else}}icon-dislike{{end}}">{{.ReactionData.Dislikes}} 👎</span>
@@ -52,8 +54,10 @@
             </div>
             <div class="comment-content">{{.Content}}</div>
             <form method="POST" action="/comment/reaction">
-                <input type="hidden" name="token" value="{{.CSRFToken}}">
-            <input type="hidden" name="post_id" value="{{.Post.ID}}">
+            <input type="hidden" name="token" value="{{$CSRFToken}}">
+            <input type="hidden" name="post_id" value="{{.ID}}">
+            <button type="submit" name="is_like" value="true">{{.Like}}👍</button>
+            <button type="submit" name="is_like" value="false">{{.Dislike}}👎</button>
             </form>
         </li>
         {{else}}

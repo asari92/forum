@@ -16,6 +16,8 @@ type Comment struct {
 	UserID   int
 	UserName string
 	Content  string
+	Like int
+	Dislike int
 	Created  string
 }
 

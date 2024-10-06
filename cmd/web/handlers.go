@@ -696,3 +696,21 @@ func (app *application) commentCreate(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/post/view/%s", r.PostForm.Get("postID")), http.StatusSeeOther)
 
 }
+
+
+//      /comment/reaction
+func (app *application) commentReaction(w http.ResponseWriter, r * http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	commentID, err := strconv.Atoi(r.PostForm.Get("comment_id"))
+	if err != nil || commentID < 1 {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+	// sess := app.SessionFromContext(r)
+	// userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+}
