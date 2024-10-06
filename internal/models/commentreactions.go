@@ -50,6 +50,9 @@ func (c *CommentReactionModel) GetLikesCount(commentID int) (int, error) {
 	row := c.DB.QueryRow(stmt, commentID)
 	err := row.Scan(&likes)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil
+		}
 		return 0, err
 	}
 	return likes, nil
@@ -62,6 +65,9 @@ func (c *CommentReactionModel) GetDislikesCount(commentID int) (int, error) {
 	row := c.DB.QueryRow(stmt, commentID)
 	err := row.Scan(&dislikes)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil
+		}
 		return 0, err
 	}
 

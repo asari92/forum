@@ -140,8 +140,24 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+	//continue
+	for _, val := range comments {
+		like, err := app.commentReactions.GetLikesCount(val.ID)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		val.Like = like
+		dislike, err := app.commentReactions.GetDislikesCount(val.ID)
+		if err != nil {
+			app.serverError(w, err)
+			return
 
-	
+		}
+		val.Dislike = dislike
+
+	}
+
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -697,9 +713,8 @@ func (app *application) commentCreate(w http.ResponseWriter, r *http.Request) {
 
 }
 
-
-//      /comment/reaction
-func (app *application) commentReaction(w http.ResponseWriter, r * http.Request) {
+// /comment/reaction
+func (app *application) commentReaction(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
