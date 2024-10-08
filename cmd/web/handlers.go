@@ -135,10 +135,22 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	comments, err := app.comments.GetComments(postID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
 
 	data := app.newTemplateData(r)
 	data.Post = post
 	data.Categories = categories
+	data.Comments = comments
 	data.ReactionData.Likes = likes
 	data.ReactionData.Dislikes = dislikes
 	if userReaction != nil {
@@ -651,4 +663,36 @@ func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 	sess.Set("flash", "Your password has been updated!")
 
 	http.Redirect(w, r, "/account/view", http.StatusSeeOther)
+}
+
+func (app *application) commentCreate(w http.ResponseWriter, r *http.Request) {
+
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		app.serverError(w, errors.New("get userID in commentCreate"))
+		return
+	}
+	postID, err := strconv.Atoi(r.PostForm.Get("postID"))
+	if err != nil || postID < 1 {
+		app.notFound(w)
+		return
+	}
+
+	content := r.PostForm.Get("content")
+	err = app.comments.InsertComment(postID, userId, content)
+	if err != nil {
+		app.serverError(w, err)
+		return
+
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/post/view/%s", r.PostForm.Get("postID")), http.StatusSeeOther)
+
 }

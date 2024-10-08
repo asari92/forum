@@ -4,7 +4,6 @@ import (
 	"html/template"
 	"io/fs"
 	"path/filepath"
-	"time"
 
 	"forum/internal/models"
 	"forum/ui"
@@ -22,15 +21,12 @@ type templateData struct {
 	CSRFToken       string
 	Post            *models.Post
 	Posts           []*models.Post
+	Comments        []*models.Comment
 	Form            any
 	Flash           string
 	IsAuthenticated bool
 	User            *models.User
 	ReactionData    *ReactionData
-}
-
-func humanDate(t time.Time) string {
-	return t.Format("02 Jan 2006 at 15:04")
 }
 
 func contains(s []int, e int) bool {
@@ -43,8 +39,7 @@ func contains(s []int, e int) bool {
 }
 
 var functions = template.FuncMap{
-	"humanDate": humanDate,
-	"contains":  contains,
+	"contains": contains,
 }
 
 func newTemplateCache() (map[string]*template.Template, error) {

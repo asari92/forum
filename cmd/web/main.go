@@ -26,6 +26,7 @@ type application struct {
 	logger         *slog.Logger
 	users          models.UserModelInterface
 	posts          models.PostModelInterface
+	comments       models.CommentModelInterface
 	postReactions  models.PostReactionModelInterface
 	categories     models.CategoryModelInterface
 	templateCache  map[string]*template.Template
@@ -41,7 +42,7 @@ func main() {
 	// Инициализация нового логгера slog
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource: true,            // Включить вывод источника вызова (файл и строка)
-		Level:     slog.LevelDebug, //задан дебаг уровень, можно поменять на инфо чтобы убрать лишнюю инфу
+		Level:     slog.LevelDebug, // задан дебаг уровень, можно поменять на инфо чтобы убрать лишнюю инфу
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 			if a.Key == slog.TimeKey {
 				// Устанавливаем формат времени на "2006-01-02 15:04:05"
@@ -84,6 +85,7 @@ func main() {
 		logger:         logger,
 		users:          &models.UserModel{DB: db},
 		posts:          &models.PostModel{DB: db},
+		comments:       &models.CommentModel{DB: db},
 		postReactions:  &models.PostReactionModel{DB: db},
 		categories:     &models.CategoryModel{DB: db},
 		templateCache:  templateCache,

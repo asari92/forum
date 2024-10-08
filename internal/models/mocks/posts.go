@@ -11,7 +11,7 @@ var mockPost = &models.Post{
 	Title:   "An old silent pond",
 	Content: "An old silent pond...",
 	UserID:  1,
-	Created: time.Now(),
+	Created: time.Now().Format("2006-01-02 15:04:05"),
 }
 
 type PostModel struct{}
