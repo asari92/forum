@@ -140,7 +140,7 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-	//continue
+	// continue
 	for _, val := range comments {
 		like, err := app.commentReactions.GetLikesCount(val.ID)
 		if err != nil {
@@ -148,11 +148,11 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		val.Like = like
+		app.logger.Debug("comment likes count", like)
 		dislike, err := app.commentReactions.GetDislikesCount(val.ID)
 		if err != nil {
 			app.serverError(w, err)
 			return
-
 		}
 		val.Dislike = dislike
 
@@ -178,14 +178,15 @@ func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postID, err := strconv.Atoi(r.PostForm.Get("post_id"))
+	postID, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || postID < 1 {
 		app.notFound(w)
 		return
 	}
 
 	comment := r.PostForm.Get("comment_content")
-	isLike := r.PostForm.Get("post_is_like")
+	postIsLike := r.PostForm.Get("post_is_like")
+	commentIsLike := r.PostForm.Get("comment_is_like")
 
 	sess := app.SessionFromContext(r)
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
@@ -201,9 +202,9 @@ func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
 			return
 
 		}
-	} else {
+	} else if postIsLike != "" {
 		// Преобразуем isLike в bool
-		like := isLike == "true"
+		like := postIsLike == "true"
 
 		var userReaction *models.PostReaction
 		userReaction, err = app.postReactions.GetUserReaction(userID, postID) // Получите реакцию пользователя
@@ -221,6 +222,81 @@ func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
 		} else {
 			err = app.postReactions.AddReaction(userID, postID, like)
 			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+		}
+	} else if commentIsLike != "" {
+		commentID, err := strconv.Atoi(r.PostForm.Get("comment_id"))
+		if err != nil || commentID < 1 {
+			app.clientError(w, http.StatusBadRequest)
+			return
+		}
+
+		reaction := commentIsLike == "true"
+		var commentReaction *models.CommentReaction
+
+		commentReaction, err = app.commentReactions.GetUserReaction(userID, commentID)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+
+		if commentReaction != nil && reaction == commentReaction.IsLike {
+			err = app.commentReactions.RemoveReaction(userID, commentID)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+		} else {
+			err = app.commentReactions.AddReaction(userID, commentID, reaction)
+			if err != nil {
+
+				app.serverError(w, err)
+				return
+			}
+		}
+
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+}
+
+// /comment/reaction
+func (app *application) commentReaction(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	commentID, err := strconv.Atoi(r.PostForm.Get("comment_id"))
+	if err != nil || commentID < 1 {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+	isLike := r.PostForm.Get("is_like")
+	reaction := isLike == "true"
+	var commentReaction *models.CommentReaction
+	sess := app.SessionFromContext(r)
+	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if ok && userID != 0 {
+		commentReaction, err = app.commentReactions.GetUserReaction(userID, commentID)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+	}
+
+	if reaction == commentReaction.IsLike {
+		err = app.commentReactions.RemoveReaction(userID, commentID)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		} else {
+			err = app.commentReactions.AddReaction(userID, commentID, reaction)
+			if err != nil {
+
 				app.serverError(w, err)
 				return
 			}
@@ -693,53 +769,3 @@ func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 
 	http.Redirect(w, r, "/account/view", http.StatusSeeOther)
 }
-
-// /comment/reaction
-func (app *application) commentReaction(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	fmt.Println("start")
-	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
-		return
-	}
-
-	commentID, err := strconv.Atoi(r.PostForm.Get("comment_id"))
-	if err != nil || commentID < 1 {
-		app.clientError(w, http.StatusBadRequest)
-		return
-	}
-	isLike := r.PostForm.Get("is_like")
-	reaction := isLike == "true"
-	var commentReaction *models.CommentReaction
-	sess := app.SessionFromContext(r)
-	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
-	if ok && userID != 0 {
-		commentReaction, err = app.commentReactions.GetUserReaction(userID, commentID)
-		if err != nil {
-			app.serverError(w, err)
-			return
-		}
-	}
-
-	fmt.Println("pppp")
-	if reaction == commentReaction.IsLike {
-		err = app.commentReactions.RemoveReaction(userID, commentID)
-		if err != nil {
-			app.serverError(w, err)
-			return
-		} else {
-			err = app.commentReactions.AddReaction(userID, commentID, reaction)
-			if err != nil {
-
-				app.serverError(w, err)
-				return
-			}
-		}
-	}
-
-	fmt.Println("end")
-	http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-
-}
-
-
