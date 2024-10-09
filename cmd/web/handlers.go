@@ -141,12 +141,6 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
 	data := app.newTemplateData(r)
 	data.Post = post
 	data.Categories = categories
@@ -173,32 +167,46 @@ func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isLike := r.PostForm.Get("is_like")
-	// Преобразуем isLike в bool
-	like := isLike == "true"
+	comment := r.PostForm.Get("comment_content")
+	isLike := r.PostForm.Get("post_is_like")
 
 	sess := app.SessionFromContext(r)
-	var userReaction *models.PostReaction
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
-	if ok && userID != 0 {
+	if !ok || userID < 1 {
+		app.serverError(w, errors.New("get userID in postReaction"))
+		return
+	}
+
+	if comment != "" {
+		err = app.comments.InsertComment(postID, userID, comment)
+		if err != nil {
+			app.serverError(w, err)
+			return
+
+		}
+	} else {
+		// Преобразуем isLike в bool
+		like := isLike == "true"
+
+		var userReaction *models.PostReaction
 		userReaction, err = app.postReactions.GetUserReaction(userID, postID) // Получите реакцию пользователя
 		if err != nil {
 			app.serverError(w, err)
 			return
 		}
-	}
 
-	if userReaction != nil && userReaction.IsLike == like {
-		err = app.postReactions.RemoveReaction(userID, postID)
-		if err != nil {
-			app.serverError(w, err)
-			return
-		}
-	} else {
-		err = app.postReactions.AddReaction(userID, postID, like)
-		if err != nil {
-			app.serverError(w, err)
-			return
+		if userReaction != nil && userReaction.IsLike == like {
+			err = app.postReactions.RemoveReaction(userID, postID)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+		} else {
+			err = app.postReactions.AddReaction(userID, postID, like)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
 		}
 	}
 
@@ -387,6 +395,9 @@ func (form *postCreateForm) validateCategories(allCategories []*models.Category)
 }
 
 func (app *application) userSignupView(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	sess.Set(RedirectPathAfterLoginSessionKey, r.Referer())
+
 	data := app.newTemplateData(r)
 	data.Form = signupForm{}
 	app.render(w, http.StatusOK, "signup.html", data)
@@ -463,6 +474,9 @@ type userLoginForm struct {
 }
 
 func (app *application) userLoginView(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	sess.Set(RedirectPathAfterLoginSessionKey, r.Referer())
+
 	data := app.newTemplateData(r)
 	data.Form = userLoginForm{}
 
@@ -515,7 +529,6 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 	err = sess.Delete(CsrfTokenSessionKey)
 	if err != nil {
 		app.logger.Error("Session error during delete csrfToken", "error", err)
-
 	}
 
 	err = sess.Set(FlashSessionKey, "Your log in was successful.")
@@ -530,15 +543,14 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 	}
 
-	redirctUrl := "/post/create"
-
+	redirectUrl := "/"
 	path, ok := sess.Get(RedirectPathAfterLoginSessionKey).(string)
 	if ok {
 		err = sess.Delete(RedirectPathAfterLoginSessionKey)
 		if err != nil {
 			app.logger.Error("Session error during delete redirectPath", "error", err)
 		}
-		redirctUrl = path
+		redirectUrl = path
 	}
 
 	err = app.sessionManager.RenewToken(w, r)
@@ -547,7 +559,7 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, redirctUrl, http.StatusSeeOther)
+	http.Redirect(w, r, redirectUrl, http.StatusSeeOther)
 }
 
 func (app *application) userLogout(w http.ResponseWriter, r *http.Request) {
@@ -663,36 +675,4 @@ func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 	sess.Set("flash", "Your password has been updated!")
 
 	http.Redirect(w, r, "/account/view", http.StatusSeeOther)
-}
-
-func (app *application) commentCreate(w http.ResponseWriter, r *http.Request) {
-
-	err := r.ParseForm()
-	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
-		return
-	}
-
-	sess := app.SessionFromContext(r)
-	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
-	if !ok || userId < 1 {
-		app.serverError(w, errors.New("get userID in commentCreate"))
-		return
-	}
-	postID, err := strconv.Atoi(r.PostForm.Get("postID"))
-	if err != nil || postID < 1 {
-		app.notFound(w)
-		return
-	}
-
-	content := r.PostForm.Get("content")
-	err = app.comments.InsertComment(postID, userId, content)
-	if err != nil {
-		app.serverError(w, err)
-		return
-
-	}
-
-	http.Redirect(w, r, fmt.Sprintf("/post/view/%s", r.PostForm.Get("postID")), http.StatusSeeOther)
-
 }
