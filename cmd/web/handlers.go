@@ -141,12 +141,6 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
 	data := app.newTemplateData(r)
 	data.Post = post
 	data.Categories = categories
@@ -173,32 +167,44 @@ func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isLike := r.PostForm.Get("is_like")
-	// Преобразуем isLike в bool
-	like := isLike == "true"
+	comment := r.PostForm.Get("comment_content")
+	isLike := r.PostForm.Get("post_is_like")
 
 	sess := app.SessionFromContext(r)
-	var userReaction *models.PostReaction
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
-	if ok && userID != 0 {
-		userReaction, err = app.postReactions.GetUserReaction(userID, postID) // Получите реакцию пользователя
-		if err != nil {
-			app.serverError(w, err)
-			return
-		}
-	}
 
-	if userReaction != nil && userReaction.IsLike == like {
-		err = app.postReactions.RemoveReaction(userID, postID)
+	if comment != "" {
+		err = app.comments.InsertComment(postID, userID, comment)
 		if err != nil {
 			app.serverError(w, err)
 			return
+
 		}
 	} else {
-		err = app.postReactions.AddReaction(userID, postID, like)
-		if err != nil {
-			app.serverError(w, err)
-			return
+		// Преобразуем isLike в bool
+		like := isLike == "true"
+
+		var userReaction *models.PostReaction
+		if ok && userID != 0 {
+			userReaction, err = app.postReactions.GetUserReaction(userID, postID) // Получите реакцию пользователя
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+		}
+
+		if userReaction != nil && userReaction.IsLike == like {
+			err = app.postReactions.RemoveReaction(userID, postID)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+		} else {
+			err = app.postReactions.AddReaction(userID, postID, like)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
 		}
 	}
 
@@ -515,7 +521,6 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 	err = sess.Delete(CsrfTokenSessionKey)
 	if err != nil {
 		app.logger.Error("Session error during delete csrfToken", "error", err)
-
 	}
 
 	err = sess.Set(FlashSessionKey, "Your log in was successful.")
@@ -666,7 +671,6 @@ func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 }
 
 func (app *application) commentCreate(w http.ResponseWriter, r *http.Request) {
-
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
@@ -680,6 +684,7 @@ func (app *application) commentCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	postID, err := strconv.Atoi(r.PostForm.Get("postID"))
+
 	if err != nil || postID < 1 {
 		app.notFound(w)
 		return
@@ -694,5 +699,4 @@ func (app *application) commentCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/post/view/%s", r.PostForm.Get("postID")), http.StatusSeeOther)
-
 }
