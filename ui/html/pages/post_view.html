@@ -60,6 +60,7 @@
 </div>
 
 
+{{if .IsAuthenticated}}
 <!-- Форма для создания комментария -->
 <div class="comment-section">
     <h3>Leave a Comment</h3>
@@ -70,8 +71,9 @@
         <button type="submit" class="comment-submit-btn">Submit</button>
     </form>
 </div>
-
-
-
+{{else}}
+            <p>You must <a href="/user/signup">signup</a> or 
+                <a href="/user/login">login</a> to leave a comment</p>
+            {{end}}
 {{end}}
 
