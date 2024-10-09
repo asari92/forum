@@ -34,10 +34,10 @@
         <form method="POST" action="/post/view/{{.Post.ID}}">
             <input type="hidden" name="token" value="{{.CSRFToken}}">
             <input type="hidden" name="post_id" value="{{.Post.ID}}">
-            <button type="submit" name="is_like" value="true" class="like-button">
-                <span class="icon {{if and .ReactionData.UserReaction .ReactionData.UserReaction.IsLike}}icon-like-active{{else}}icon-like{{end}}">{{.ReactionData.Likes}} 👍</span> 
+            <button type="submit" name="post_is_like" value="true" class="like-button">
+                <span class="icon {{if and .ReactionData.UserReaction .ReactionData.UserReaction.IsLike}}icon-like-active{{else}}icon-like{{end}}">{{.ReactionData.Likes}} 👍</span>
             </button>
-            <button type="submit" name="is_like" value="false" class="dislike-button">
+            <button type="submit" name="post_is_like" value="false" class="dislike-button">
                 <span class="icon {{if and .ReactionData.UserReaction (not .ReactionData.UserReaction.IsLike)}}icon-dislike-active{{else}}icon-dislike{{end}}">{{.ReactionData.Dislikes}} 👎</span>
             </button>
         </form>
@@ -67,16 +67,20 @@
     {{end}}
 </div>
 
-<!-- Форма для создания комментария -->
-<div class="comment-section">
-    <h3>Leave a Comment</h3>
-    <form method="POST" action="/comment/create" class="comment-form">
-        <input type="hidden" name="token" value="{{.CSRFToken}}">
-        <input type="hidden" name="postID" value="{{.Post.ID}}">
-        <textarea name="content" placeholder="Write your comment here..." required class="comment-input"></textarea>
-        <button type="submit" class="comment-submit-btn">Submit</button>
-    </form>
-</div>
 
-
+    {{if .IsAuthenticated}}
+    <!-- Форма для создания комментария -->
+    <div class="comment-section">
+        <h3>Leave a Comment</h3>
+        <form method="POST" action="/post/view/{{.Post.ID}}" class="comment-form">
+            <input type="hidden" name="token" value="{{.CSRFToken}}">
+            <input type="hidden" name="post_id" value="{{.Post.ID}}">
+            <textarea name="comment_content" placeholder="Write your comment here..." required class="comment-input"></textarea>
+            <button type="submit" class="comment-submit-btn">Submit</button>
+        </form>
+    </div>
+    {{else}}
+        <p>You must <a href="/user/signup">signup</a> or <a href="/user/login">login</a> to leave a comment</p>
+    {{end}}
 {{end}}
+

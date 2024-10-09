@@ -58,7 +58,7 @@ func (app *application) routes() http.Handler {
 	mux.Handle("POST /comment/reaction", protected.ThenFunc(app.commentReaction))
 	mux.Handle("GET /post/create", protected.ThenFunc(app.postCreateView))
 	mux.Handle("POST /post/create", protected.ThenFunc(app.postCreate))
-	mux.Handle("POST /comment/create", protected.ThenFunc(app.commentCreate))
+	// mux.Handle("POST /comment/create", protected.ThenFunc(app.commentCreate))
 	mux.Handle("GET /account/view", protected.ThenFunc(app.accountView))
 	mux.Handle("GET /user/liked", protected.ThenFunc(app.userLikedPostsView))
 	mux.Handle("GET /account/password/update", protected.ThenFunc(app.accountPasswordUpdateView))
