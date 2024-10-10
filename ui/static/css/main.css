@@ -317,15 +317,12 @@ footer {
     cursor: pointer;
 }
 
-.icon-like {
-    color: gray; /* Цвет для неактивной иконки лайка */
-}
 
 .icon-like-active {
     color: blue; /* Цвет для активной иконки лайка */
 }
 
-.icon-dislike {
+.icon-neutral {
     color: gray; /* Цвет для неактивной иконки дизлайка */
 }
 

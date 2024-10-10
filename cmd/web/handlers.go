@@ -241,9 +241,7 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	data.Comments = comments
 	data.ReactionData.Likes = likes
 	data.ReactionData.Dislikes = dislikes
-	if userReaction != nil {
-		data.ReactionData.UserReaction = userReaction
-	}
+	data.ReactionData.UserReaction = userReaction
 
 	app.render(w, http.StatusOK, "post_view.html", data)
 }
