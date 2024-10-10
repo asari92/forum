@@ -16,6 +16,8 @@ type Comment struct {
 	UserID   int
 	UserName string
 	Content  string
+	Like     int
+	Dislike  int
 	Created  string
 }
 
@@ -35,7 +37,7 @@ func (c *CommentModel) InsertComment(postID, userID int, content string) error {
 }
 
 func (c *CommentModel) GetComments(postID int) ([]*Comment, error) {
-	stmt := `SELECT post_id, username, content, comments.created  
+	stmt := `SELECT comments.id, post_id, username, content, comments.created  
 	FROM comments INNER JOIN users ON users.id = comments.user_id
 	WHERE post_id = ?
 	ORDER BY comments.created DESC`
@@ -51,7 +53,7 @@ func (c *CommentModel) GetComments(postID int) ([]*Comment, error) {
 		comment := &Comment{}
 		var created string
 
-		if err := rows.Scan(&comment.PostID, &comment.UserName, &comment.Content, &created); err != nil {
+		if err := rows.Scan(&comment.ID, &comment.PostID, &comment.UserName, &comment.Content, &created); err != nil {
 			return nil, err
 		}
 
