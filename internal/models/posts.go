@@ -11,10 +11,10 @@ import (
 type PostModelInterface interface {
 	InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error)
 	Get(id int) (*Post, error)
-	GetPostsForCategory(categoryIDs []int) ([]*Post, error)
-	GetUserPosts(userId int) ([]*Post, error)
-	GetUserLikedPosts(userId int) ([]*Post, error)
-	Latest() ([]*Post, error)
+	GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*Post, error)
+	GetUserPaginatedPosts(userId, page, pageSize int) ([]*Post, error)
+	GetUserLikedPaginatedPosts(userId, page, pageSize int) ([]*Post, error)
+	GetAllPaginatedPosts(page, pageSize int) ([]*Post, error)
 }
 
 type Post struct {
@@ -157,12 +157,72 @@ func (m *PostModel) GetPostsForCategory(categoryIDs []int) ([]*Post, error) {
 	return posts, nil
 }
 
-func (m *PostModel) GetUserPosts(userId int) ([]*Post, error) {
+// Получение постов по категориям с пагинацией
+func (m *PostModel) GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*Post, error) {
+	placeholders := make([]string, len(categoryIDs))
+	args := make([]interface{}, len(categoryIDs))
+	offset := (page - 1) * pageSize
+
+	for i, id := range categoryIDs {
+		placeholders[i] = "?" // Placeholder для каждого ID категории
+		args[i] = id          // Аргумент для SQL-запроса
+	}
+
+	stmt := fmt.Sprintf(`
+        SELECT p.id, p.title, p.content, p.user_id, p.created 
+        FROM posts p
+        INNER JOIN post_categories pc ON p.id = pc.post_id
+        WHERE pc.category_id IN (%s)
+        GROUP BY p.id
+        HAVING COUNT(DISTINCT pc.category_id) = ?
+        ORDER BY p.created DESC
+		LIMIT ? OFFSET ?`, strings.Join(placeholders, ", "))
+
+	// Добавляем в аргументы запроса: количество категорий; запрашиваем на одну запись больше, чем pageSize, чтобы проверить наличие следующей страницы; смещение
+	args = append(args, len(categoryIDs), pageSize+1, offset)
+
+	rows, err := m.DB.Query(stmt, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	posts := []*Post{}
+	var created string
+
+	// Обрабатываем строки результата запроса.
+	for rows.Next() {
+		p := &Post{}
+		err = rows.Scan(&p.ID, &p.Title, &p.Content, &p.UserID, &created)
+		if err != nil {
+			return nil, err
+		}
+
+		postTime, err := time.Parse("2006-01-02 15:04:05", created)
+		if err != nil {
+			return nil, err
+		}
+		p.Created = postTime.Format(time.RFC3339)
+
+		posts = append(posts, p)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return posts, nil
+}
+
+func (m *PostModel) GetUserPaginatedPosts(userId, page, pageSize int) ([]*Post, error) {
+	offset := (page - 1) * pageSize
+
 	stmt := `SELECT id, title, content, user_id, created FROM posts
 	WHERE user_id = ?
-    ORDER BY id DESC`
+    ORDER BY id DESC
+	LIMIT ? OFFSET ?`
 
-	rows, err := m.DB.Query(stmt, userId)
+	// запрашиваем на одну запись больше, чем pageSize
+	rows, err := m.DB.Query(stmt, userId, pageSize+1, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -193,14 +253,17 @@ func (m *PostModel) GetUserPosts(userId int) ([]*Post, error) {
 	return posts, nil
 }
 
-func (m *PostModel) GetUserLikedPosts(userId int) ([]*Post, error) {
+func (m *PostModel) GetUserLikedPaginatedPosts(userId, page, pageSize int) ([]*Post, error) {
+	offset := (page - 1) * pageSize
+
 	stmt := `SELECT id, title, content, p.user_id, created 
 	FROM posts p
 	INNER JOIN post_reactions pr ON p.id = pr.post_id
 	WHERE pr.user_id = ? AND pr.is_like = true
-    ORDER BY id DESC`
+    ORDER BY id DESC
+	LIMIT ? OFFSET ?`
 
-	rows, err := m.DB.Query(stmt, userId)
+	rows, err := m.DB.Query(stmt, userId, pageSize+1, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -232,11 +295,14 @@ func (m *PostModel) GetUserLikedPosts(userId int) ([]*Post, error) {
 	return posts, nil
 }
 
-func (m *PostModel) Latest() ([]*Post, error) {
-	stmt := `SELECT id, title, content, user_id, created FROM posts
-    ORDER BY id DESC LIMIT 10`
+func (m *PostModel) GetAllPaginatedPosts(page, pageSize int) ([]*Post, error) {
+	offset := (page - 1) * pageSize // Вычисляем смещение для текущей страницы
 
-	rows, err := m.DB.Query(stmt)
+	stmt := `SELECT id, title, content, user_id, created FROM posts
+             ORDER BY created DESC
+             LIMIT ? OFFSET ?`
+
+	rows, err := m.DB.Query(stmt, pageSize+1, offset) // Лимит на одну запись больше
 	if err != nil {
 		return nil, err
 	}

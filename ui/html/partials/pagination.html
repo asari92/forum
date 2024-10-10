@@ -1,0 +1,21 @@
+{{define "pagination"}}
+<form method="POST" action="{{.Pagination.PaginationAction}}">
+    <input type="hidden" name="token" value="{{.CSRFToken}}">
+    {{if .Form}}
+        {{range .Form.Categories}}
+        <input type="hidden" name="categories" value="{{.}}">
+        {{end}}
+    {{end}}
+    <div id="pagination">
+        {{if gt .Pagination.CurrentPage 1}}
+        <button type="submit" name="page" value="{{sub .Pagination.CurrentPage 1}}">Previous</button>
+        {{end}}
+
+        <span>Page {{.Pagination.CurrentPage}}</span>
+
+        {{if .Pagination.HasNextPage}}
+        <button type="submit" name="page" value="{{add .Pagination.CurrentPage 1}}">Next</button>
+        {{end}}
+    </div>
+</form>
+{{end}}

@@ -4,6 +4,8 @@ import (
 	"html/template"
 	"io/fs"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"forum/internal/models"
 	"forum/ui"
@@ -27,6 +29,8 @@ type templateData struct {
 	IsAuthenticated bool
 	User            *models.User
 	ReactionData    *ReactionData
+	Header          string
+	Pagination      any
 }
 
 func contains(s []int, e int) bool {
@@ -38,8 +42,19 @@ func contains(s []int, e int) bool {
 	return false
 }
 
+func join(items []int, sep rune) string {
+	strItems := make([]string, len(items))
+	for i, item := range items {
+		strItems[i] = strconv.Itoa(item)
+	}
+	return strings.Join(strItems, string(sep))
+}
+
 var functions = template.FuncMap{
 	"contains": contains,
+	"add":      func(a, b int) int { return a + b },
+	"sub":      func(a, b int) int { return a - b },
+	"join":     join,
 }
 
 func newTemplateCache() (map[string]*template.Template, error) {

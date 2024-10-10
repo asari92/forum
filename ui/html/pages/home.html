@@ -15,7 +15,7 @@
             <input type='submit' value='Filter by categories'>
         </div>
     </form>
-    <h2>Latest Posts</h2>
+    <h2>{{.Header}}</h2>
     {{if .Posts}}
      <table>
         <tr>
@@ -35,4 +35,7 @@
     {{else}}
         <p>There's nothing to see here... yet!</p>
     {{end}}
+
+    <!-- Включаем частичный шаблон пагинации -->
+    {{template "pagination" .}}
 {{end}}
