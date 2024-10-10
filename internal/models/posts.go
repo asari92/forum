@@ -198,11 +198,11 @@ func (m *PostModel) GetPaginatedPostsByCategory(categoryIDs []int, page, pageSiz
 			return nil, err
 		}
 
-		// Преобразуем строку даты в тип time.Time.
-		p.Created, err = time.Parse("2006-01-02 15:04:05", created)
+		postTime, err := time.Parse("2006-01-02 15:04:05", created)
 		if err != nil {
 			return nil, err
 		}
+		p.Created = postTime.Format(time.RFC3339)
 
 		posts = append(posts, p)
 	}

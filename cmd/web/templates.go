@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"forum/internal/models"
 	"forum/ui"
@@ -30,10 +29,8 @@ type templateData struct {
 	IsAuthenticated bool
 	User            *models.User
 	ReactionData    *ReactionData
-}
-
-func humanDate(t time.Time) string {
-	return t.Format("02 Jan 2006 at 15:04")
+	Header          string
+	Pagination      any
 }
 
 func contains(s []int, e int) bool {
@@ -54,11 +51,10 @@ func join(items []int, sep rune) string {
 }
 
 var functions = template.FuncMap{
-	"humanDate": humanDate,
-	"contains":  contains,
-	"add":       func(a, b int) int { return a + b },
-	"sub":       func(a, b int) int { return a - b },
-	"join":      join,
+	"contains": contains,
+	"add":      func(a, b int) int { return a + b },
+	"sub":      func(a, b int) int { return a - b },
+	"join":     join,
 }
 
 func newTemplateCache() (map[string]*template.Template, error) {

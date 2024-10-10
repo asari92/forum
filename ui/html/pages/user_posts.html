@@ -12,7 +12,7 @@
         {{range .Posts}}
         <tr>
             <td><a href='/post/view/{{.ID}}'>{{.Title}}</a></td>
-            <time class="timezone" data-time="{{.Created}}"></time>
+            <td><time class="timezone" data-time="{{.Created}}"></time></td>
             <td>#{{.ID}}</td>
         </tr>
         {{end}}
