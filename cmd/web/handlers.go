@@ -613,8 +613,10 @@ func (form *postCreateForm) validateCategories(allCategories []*models.Category)
 }
 
 func (app *application) userSignupView(w http.ResponseWriter, r *http.Request) {
-	sess := app.SessionFromContext(r)
-	sess.Set(RedirectPathAfterLoginSessionKey, r.Referer())
+	if !strings.Contains(r.Referer(), "/user/signup") && !strings.Contains(r.Referer(), "/user/login") {
+		sess := app.SessionFromContext(r)
+		sess.Set(RedirectPathAfterLoginSessionKey, r.Referer())
+	}
 
 	data := app.newTemplateData(r)
 	data.Form = signupForm{}
@@ -692,8 +694,10 @@ type userLoginForm struct {
 }
 
 func (app *application) userLoginView(w http.ResponseWriter, r *http.Request) {
-	sess := app.SessionFromContext(r)
-	sess.Set(RedirectPathAfterLoginSessionKey, r.Referer())
+	if !strings.Contains(r.Referer(), "/user/signup") && !strings.Contains(r.Referer(), "/user/login") {
+		sess := app.SessionFromContext(r)
+		sess.Set(RedirectPathAfterLoginSessionKey, r.Referer())
+	}
 
 	data := app.newTemplateData(r)
 	data.Form = userLoginForm{}
