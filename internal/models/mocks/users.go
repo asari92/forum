@@ -40,7 +40,7 @@ func (m *UserModel) Get(id int) (*models.User, error) {
 			ID:       1,
 			Username: "Alice",
 			Email:    "alice@example.com",
-			Created:  time.Now(),
+			Created:  time.Now().Format("2006-01-02 15:04:05"),
 		}
 
 		return u, nil
@@ -50,13 +50,13 @@ func (m *UserModel) Get(id int) (*models.User, error) {
 }
 
 func (m *UserModel) PasswordUpdate(id int, currentPassword, newPassword string) error {
-    if id == 1 {
-        if currentPassword != "pa$$word" {
-            return models.ErrInvalidCredentials
-        }
+	if id == 1 {
+		if currentPassword != "pa$$word" {
+			return models.ErrInvalidCredentials
+		}
 
-        return nil
-    }
+		return nil
+	}
 
-    return models.ErrNoRecord
+	return models.ErrNoRecord
 }

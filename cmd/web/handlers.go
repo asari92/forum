@@ -212,10 +212,33 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	comments, err := app.comments.GetComments(postID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	// continue
+	for _, val := range comments {
+		like, err := app.commentReactions.GetLikesCount(val.ID)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		val.Like = like
+		app.logger.Debug("comment likes count", like)
+		dislike, err := app.commentReactions.GetDislikesCount(val.ID)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		val.Dislike = dislike
+
+	}
 
 	data := app.newTemplateData(r)
 	data.Post = post
 	data.Categories = categories
+	data.Comments = comments
 	data.ReactionData.Likes = likes
 	data.ReactionData.Dislikes = dislikes
 	if userReaction != nil {
@@ -232,38 +255,128 @@ func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postID, err := strconv.Atoi(r.PostForm.Get("post_id"))
+	postID, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || postID < 1 {
 		app.notFound(w)
 		return
 	}
 
-	isLike := r.PostForm.Get("is_like")
-	// Преобразуем isLike в bool
-	like := isLike == "true"
+	comment := r.PostForm.Get("comment_content")
+	postIsLike := r.PostForm.Get("post_is_like")
+	commentIsLike := r.PostForm.Get("comment_is_like")
 
 	sess := app.SessionFromContext(r)
-	var userReaction *models.PostReaction
+	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userID < 1 {
+		app.serverError(w, errors.New("get userID in postReaction"))
+		return
+	}
+
+	if comment != "" {
+		err = app.comments.InsertComment(postID, userID, comment)
+		if err != nil {
+			app.serverError(w, err)
+			return
+
+		}
+	} else if postIsLike != "" {
+		// Преобразуем isLike в bool
+		like := postIsLike == "true"
+
+		var userReaction *models.PostReaction
+		userReaction, err = app.postReactions.GetUserReaction(userID, postID) // Получите реакцию пользователя
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+
+		if userReaction != nil && userReaction.IsLike == like {
+			err = app.postReactions.RemoveReaction(userID, postID)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+		} else {
+			err = app.postReactions.AddReaction(userID, postID, like)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+		}
+	} else if commentIsLike != "" {
+		commentID, err := strconv.Atoi(r.PostForm.Get("comment_id"))
+		if err != nil || commentID < 1 {
+			app.clientError(w, http.StatusBadRequest)
+			return
+		}
+
+		reaction := commentIsLike == "true"
+		var commentReaction *models.CommentReaction
+
+		commentReaction, err = app.commentReactions.GetUserReaction(userID, commentID)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+
+		if commentReaction != nil && reaction == commentReaction.IsLike {
+			err = app.commentReactions.RemoveReaction(userID, commentID)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+		} else {
+			err = app.commentReactions.AddReaction(userID, commentID, reaction)
+			if err != nil {
+
+				app.serverError(w, err)
+				return
+			}
+		}
+
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+}
+
+// /comment/reaction
+func (app *application) commentReaction(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	commentID, err := strconv.Atoi(r.PostForm.Get("comment_id"))
+	if err != nil || commentID < 1 {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+	isLike := r.PostForm.Get("is_like")
+	reaction := isLike == "true"
+	var commentReaction *models.CommentReaction
+	sess := app.SessionFromContext(r)
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if ok && userID != 0 {
-		userReaction, err = app.postReactions.GetUserReaction(userID, postID) // Получите реакцию пользователя
+		commentReaction, err = app.commentReactions.GetUserReaction(userID, commentID)
 		if err != nil {
 			app.serverError(w, err)
 			return
 		}
 	}
 
-	if userReaction != nil && userReaction.IsLike == like {
-		err = app.postReactions.RemoveReaction(userID, postID)
+	if reaction == commentReaction.IsLike {
+		err = app.commentReactions.RemoveReaction(userID, commentID)
 		if err != nil {
 			app.serverError(w, err)
 			return
-		}
-	} else {
-		err = app.postReactions.AddReaction(userID, postID, like)
-		if err != nil {
-			app.serverError(w, err)
-			return
+		} else {
+			err = app.commentReactions.AddReaction(userID, commentID, reaction)
+			if err != nil {
+
+				app.serverError(w, err)
+				return
+			}
 		}
 	}
 
@@ -500,6 +613,9 @@ func (form *postCreateForm) validateCategories(allCategories []*models.Category)
 }
 
 func (app *application) userSignupView(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	sess.Set(RedirectPathAfterLoginSessionKey, r.Referer())
+
 	data := app.newTemplateData(r)
 	data.Form = signupForm{}
 	app.render(w, http.StatusOK, "signup.html", data)
@@ -576,6 +692,9 @@ type userLoginForm struct {
 }
 
 func (app *application) userLoginView(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	sess.Set(RedirectPathAfterLoginSessionKey, r.Referer())
+
 	data := app.newTemplateData(r)
 	data.Form = userLoginForm{}
 
@@ -642,15 +761,14 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 	}
 
-	redirctUrl := "/post/create"
-
+	redirectUrl := "/"
 	path, ok := sess.Get(RedirectPathAfterLoginSessionKey).(string)
 	if ok {
 		err = sess.Delete(RedirectPathAfterLoginSessionKey)
 		if err != nil {
 			app.logger.Error("Session error during delete redirectPath", "error", err)
 		}
-		redirctUrl = path
+		redirectUrl = path
 	}
 
 	err = app.sessionManager.RenewToken(w, r)
@@ -659,7 +777,7 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, redirctUrl, http.StatusSeeOther)
+	http.Redirect(w, r, redirectUrl, http.StatusSeeOther)
 }
 
 func (app *application) userLogout(w http.ResponseWriter, r *http.Request) {

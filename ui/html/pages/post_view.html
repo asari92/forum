@@ -4,41 +4,83 @@
 <div class='snippet'>
     {{with .Post}}
     <div class='metadata'>
-        <strong>{{.Title}}</strong>
-        <span>#{{.ID}}</span>
+        <span>{{.UserName}}</span>   
+        <time class="timezone" data-time="{{.Created}}"></time>
+        <br>
+        <h1 class="post-title">{{.Title}}</h1>
+
     </div>
-    <pre><code>{{.Content}}</code></pre>
+    <div class="post-content">
+        <pre><code>{{.Content}}</code></pre>
+    </div>
     {{end}}
-    <div class='metadata'>
+
+    <div class="metadata">
         <form method="POST" action="/">
             <input type="hidden" name="token" value="{{.CSRFToken}}">
             <strong>Categories: </strong>
-            <!-- Динамическое отображение категорий -->
-            {{range .Categories}}
-            <div>
+            <div class="categories">
+                {{range .Categories}}
                 <button type="submit" name="categories" value="{{.ID}}" class="category-link">{{.Name}}</button>
+                {{end}}
             </div>
-            {{end}}
         </form>
     </div>
-    {{with .Post}}
-    <div class='metadata'>
-        <time>UserID: {{.UserID}}</time>
-        <time>Created: {{humanDate .Created}}</time>
-    </div>
-    {{end}}
-    <div class='metadata'>
+    {{$CSRFToken := .CSRFToken}}
+    <!-- Лайки и дизлайки -->
+    <div class='reaction-buttons'>
+        
+
         <form method="POST" action="/post/view/{{.Post.ID}}">
             <input type="hidden" name="token" value="{{.CSRFToken}}">
-            <input type="hidden" name="post_id" value="{{.Post.ID}}">
-            <!-- Отображение иконок для лайка и дизлайка -->
-            <button type="submit" name="is_like" value="true" class="like-button">
-                <span class="icon {{if and .ReactionData.UserReaction .ReactionData.UserReaction.IsLike}}icon-like-active{{else}}icon-like{{end}}">{{.ReactionData.Likes}}👍</span>
+            <button type="submit" name="post_is_like" value="true" class="like-button">
+                <span class="icon {{if and .ReactionData.UserReaction .ReactionData.UserReaction.IsLike}}icon-like-active{{else}}icon-like{{end}}">{{.ReactionData.Likes}} 👍</span>
             </button>
-            <button type="submit" name="is_like" value="false" class="dislike-button">
-                <span class="icon {{if and .ReactionData.UserReaction (not .ReactionData.UserReaction.IsLike)}}icon-dislike-active{{else}}icon-dislike{{end}}">{{.ReactionData.Dislikes}}👎</span>
+            <button type="submit" name="post_is_like" value="false" class="dislike-button">
+                <span class="icon {{if and .ReactionData.UserReaction (not .ReactionData.UserReaction.IsLike)}}icon-dislike-active{{else}}icon-dislike{{end}}">{{.ReactionData.Dislikes}} 👎</span>
             </button>
         </form>
-    </div>    
+
+
+    {{with .Comments}}
+    <ul class="comment-list">
+        <h3> Comments</h3>
+        {{range .}}
+        <li class="comment">
+            <div class="comment-metadata">
+                <strong>{{.UserName}}</strong>
+                <time class="comment-time timezone" data-time="{{.Created}}"></time>
+            </div>
+            <div class="comment-content">{{.Content}}</div>
+            <form method="POST" action="/post/view/{{.PostID}}">
+            <input type="hidden" name="token" value="{{$CSRFToken}}">
+            <input type="hidden" name="comment_id" value="{{.ID}}">
+            
+            <button type="submit" name="comment_is_like" value="true">{{.Like}}👍</button>
+            <button type="submit" name="comment_is_like" value="false">{{.Dislike}}👎</button>
+            </form>
+        </li>
+        {{else}}
+        <p class="no-comments">No comments yet. Be the first to comment!</p>
+        {{end}}
+    </ul>
+    {{end}}
 </div>
+
+
+    {{if .IsAuthenticated}}
+    <!-- Форма для создания комментария -->
+    <div class="comment-section">
+        <h3>Leave a Comment</h3>
+        <form method="POST" action="/post/view/{{.Post.ID}}" class="comment-form">
+            <input type="hidden" name="token" value="{{.CSRFToken}}">
+            <input type="hidden" name="post_id" value="{{.Post.ID}}">
+            <textarea name="comment_content" placeholder="Write your comment here..." required class="comment-input"></textarea>
+            <button type="submit" class="comment-submit-btn">Submit</button>
+        </form>
+    </div>
+    {{else}}
+        <p>You must <a href="/user/signup">signup</a> or <a href="/user/login">login</a> to leave a comment</p>
+    {{end}}
 {{end}}
+

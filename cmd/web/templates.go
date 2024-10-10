@@ -24,13 +24,12 @@ type templateData struct {
 	CSRFToken       string
 	Post            *models.Post
 	Posts           []*models.Post
+	Comments        []*models.Comment
 	Form            any
 	Flash           string
 	IsAuthenticated bool
 	User            *models.User
 	ReactionData    *ReactionData
-	Header          string
-	Pagination      any
 }
 
 func humanDate(t time.Time) string {

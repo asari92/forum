@@ -18,11 +18,12 @@ type PostModelInterface interface {
 }
 
 type Post struct {
-	ID      int
-	Title   string
-	Content string
-	UserID  int
-	Created time.Time
+	ID       int
+	Title    string
+	Content  string
+	UserID   int
+	UserName string
+	Created  string
 }
 
 type PostModel struct {
@@ -74,16 +75,17 @@ func (m *PostModel) InsertPostWithCategories(title, content string, userID int, 
 	return int(postID), nil
 }
 
-func (m *PostModel) Get(id int) (*Post, error) {
-	stmt := `SELECT id, title, content, user_id, created FROM posts
-    WHERE id = ?`
+func (m *PostModel) Get(postID int) (*Post, error) {
+	stmt := `SELECT posts.id, username, title, content, user_id, posts.created 
+	FROM posts INNER JOIN users ON users.id = posts.user_id
+    WHERE posts.id = ?`
 
-	row := m.DB.QueryRow(stmt, id)
+	row := m.DB.QueryRow(stmt, postID)
 
 	p := &Post{}
 	var created string
 
-	err := row.Scan(&p.ID, &p.Title, &p.Content, &p.UserID, &created)
+	err := row.Scan(&p.ID, &p.UserName, &p.Title, &p.Content, &p.UserID, &created)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
@@ -92,10 +94,11 @@ func (m *PostModel) Get(id int) (*Post, error) {
 		}
 	}
 
-	p.Created, err = time.Parse("2006-01-02 15:04:05", created)
+	postTime, err := time.Parse("2006-01-02 15:04:05", created)
 	if err != nil {
 		return nil, err
 	}
+	p.Created = postTime.Format(time.RFC3339)
 
 	return p, nil
 }
@@ -139,10 +142,11 @@ func (m *PostModel) GetPostsForCategory(categoryIDs []int) ([]*Post, error) {
 		}
 
 		// Преобразуем строку даты в тип time.Time.
-		p.Created, err = time.Parse("2006-01-02 15:04:05", created)
+		postTime, err := time.Parse("2006-01-02 15:04:05", created)
 		if err != nil {
 			return nil, err
 		}
+		p.Created = postTime.Format(time.RFC3339)
 
 		posts = append(posts, p)
 	}
@@ -234,11 +238,11 @@ func (m *PostModel) GetUserPaginatedPosts(userId, page, pageSize int) ([]*Post, 
 			return nil, err
 		}
 
-		p.Created, err = time.Parse("2006-01-02 15:04:05", created)
+		postTime, err := time.Parse("2006-01-02 15:04:05", created)
 		if err != nil {
 			return nil, err
 		}
-
+		p.Created = postTime.Format(time.RFC3339)
 		posts = append(posts, p)
 	}
 
@@ -275,10 +279,11 @@ func (m *PostModel) GetUserLikedPaginatedPosts(userId, page, pageSize int) ([]*P
 			return nil, err
 		}
 
-		p.Created, err = time.Parse("2006-01-02 15:04:05", created)
+		postTime, err := time.Parse("2006-01-02 15:04:05", created)
 		if err != nil {
 			return nil, err
 		}
+		p.Created = postTime.Format(time.RFC3339)
 
 		posts = append(posts, p)
 	}
@@ -313,10 +318,11 @@ func (m *PostModel) GetAllPaginatedPosts(page, pageSize int) ([]*Post, error) {
 			return nil, err
 		}
 
-		p.Created, err = time.Parse("2006-01-02 15:04:05", created)
+		postTime, err := time.Parse("2006-01-02 15:04:05", created)
 		if err != nil {
 			return nil, err
 		}
+		p.Created = postTime.Format(time.RFC3339)
 
 		posts = append(posts, p)
 	}
