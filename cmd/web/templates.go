@@ -17,6 +17,17 @@ type ReactionData struct {
 	UserReaction *models.PostReaction
 }
 
+func (rd *ReactionData) GetUserReaction() int {
+	if rd.UserReaction != nil {
+		if rd.UserReaction.IsLike {
+			return 1
+		} else {
+			return -1
+		}
+	}
+	return 0
+}
+
 type templateData struct {
 	CurrentYear     int
 	Categories      []*models.Category

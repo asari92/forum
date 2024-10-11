@@ -33,12 +33,49 @@
 
         <form method="POST" action="/post/view/{{.Post.ID}}">
             <input type="hidden" name="token" value="{{.CSRFToken}}">
+            {{if eq .ReactionData.GetUserReaction 1}}
+            <!-- Кнопка лайка -->
             <button type="submit" name="post_is_like" value="true" class="like-button">
-                <span class="icon {{if and .ReactionData.UserReaction .ReactionData.UserReaction.IsLike}}icon-like-active{{else}}icon-like{{end}}">{{.ReactionData.Likes}} 👍</span>
+                <span class="icon icon-like-active">
+                    {{.ReactionData.Likes}} 👍
+                </span>
             </button>
+            
+            <!-- Кнопка дизлайка -->
             <button type="submit" name="post_is_like" value="false" class="dislike-button">
-                <span class="icon {{if and .ReactionData.UserReaction (not .ReactionData.UserReaction.IsLike)}}icon-dislike-active{{else}}icon-dislike{{end}}">{{.ReactionData.Dislikes}} 👎</span>
+                <span class="icon icon-neutral">
+                    {{.ReactionData.Dislikes}} 👎🏿
+                </span>
             </button>
+            {{else if eq .ReactionData.GetUserReaction -1}}
+            <!-- Кнопка лайка -->
+            <button type="submit" name="post_is_like" value="true" class="like-button">
+                <span class="icon icon-neutral">
+                    {{.ReactionData.Likes}} 👍🏿
+                </span>
+            </button>
+            
+            <!-- Кнопка дизлайка -->
+            <button type="submit" name="post_is_like" value="false" class="dislike-button">
+                <span class="icon icon-dislike-active">
+                    {{.ReactionData.Dislikes}} 👎
+                </span>
+            </button>
+            {{else}}
+            <!-- Кнопка лайка -->
+            <button type="submit" name="post_is_like" value="true" class="like-button">
+                <span class="icon icon-neutral">
+                    {{.ReactionData.Likes}} 👍🏿
+                </span>
+            </button>
+            
+            <!-- Кнопка дизлайка -->
+            <button type="submit" name="post_is_like" value="false" class="dislike-button">
+                <span class="icon icon-neutral">
+                    {{.ReactionData.Dislikes}} 👎🏿
+                </span>
+            </button>
+            {{end}}
         </form>
 
 
@@ -55,9 +92,46 @@
             <form method="POST" action="/post/view/{{.PostID}}">
             <input type="hidden" name="token" value="{{$CSRFToken}}">
             <input type="hidden" name="comment_id" value="{{.ID}}">
+            {{if eq .UserReaction 1}}
+            <button type="submit" name="comment_is_like" value="true">
+                <span class="icon icon-like-active">
+                    {{.Like}} 👍
+                </span>    
+            </button>
+            <button type="submit" name="comment_is_like" value="false">
+                <span class="icon icon-neutral">
+                    {{.Dislike}} 👎🏿
+                </span>    
+            </button>
+
+            {{else if eq .UserReaction -1}}
+            <button type="submit" name="comment_is_like" value="true">
+                <span class="icon icon-neutral">
+                    {{.Like}} 👍🏿
+                </span>    
+            </button>
+            <button type="submit" name="comment_is_like" value="false">
+                <span class="icon icon-dislike-active">
+                    {{.Dislike}} 👎
+                </span>    
+            </button>
+            {{else}}
+            <button type="submit" name="comment_is_like" value="true">
+                <span class="icon icon-neutral">
+                    {{.Like}} 👍🏿
+                </span>    
+            </button>
+            <button type="submit" name="comment_is_like" value="false">
+                <span class="icon icon-neutral">
+                    {{.Dislike}} 👎🏿
+                </span>    
+            </button>
+
+ 
+
+            {{end}}
+
             
-            <button type="submit" name="comment_is_like" value="true">{{.Like}}👍</button>
-            <button type="submit" name="comment_is_like" value="false">{{.Dislike}}👎</button>
             </form>
         </li>
         {{else}}
