@@ -219,6 +219,23 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	}
 	// continue
 	for _, val := range comments {
+		userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+		if ok && userID != 0 {
+			userReaction, err := app.commentReactions.GetUserReaction(userID, val.ID)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+			if userReaction != nil {
+				if userReaction.IsLike {
+					val.UserReaction = 1
+				} else if !userReaction.IsLike {
+					val.UserReaction = -1
+				}
+			}
+
+		}
+
 		like, err := app.commentReactions.GetLikesCount(val.ID)
 		if err != nil {
 			app.serverError(w, err)
