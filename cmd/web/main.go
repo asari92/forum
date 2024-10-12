@@ -125,7 +125,6 @@ func main() {
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 		},
 	}
-
 	srv := &http.Server{
 		Addr:         *addr,
 		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),

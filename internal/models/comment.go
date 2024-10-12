@@ -11,15 +11,15 @@ type CommentModelInterface interface {
 }
 
 type Comment struct {
-	ID       int
-	PostID   int
-	UserID   int
-	UserName string
-	Content  string
+	ID           int
+	PostID       int
+	UserID       int
+	UserName     string
+	Content      string
 	UserReaction int
-	Like     int
-	Dislike  int
-	Created  string
+	Like         int
+	Dislike      int
+	Created      string
 }
 
 type CommentModel struct {
@@ -39,7 +39,7 @@ func (c *CommentModel) InsertComment(postID, userID int, content string) error {
 
 func (c *CommentModel) GetComments(postID int) ([]*Comment, error) {
 	stmt := `SELECT comments.id, post_id, username, content, comments.created  
-	FROM comments INNER JOIN users ON users.id = comments.user_id
+	FROM comments LEFT JOIN users ON users.id = comments.user_id
 	WHERE post_id = ?
 	ORDER BY comments.created DESC`
 
@@ -53,9 +53,15 @@ func (c *CommentModel) GetComments(postID int) ([]*Comment, error) {
 	for rows.Next() {
 		comment := &Comment{}
 		var created string
+		var username sql.NullString
 
-		if err := rows.Scan(&comment.ID, &comment.PostID, &comment.UserName, &comment.Content, &created); err != nil {
+		if err := rows.Scan(&comment.ID, &comment.PostID, &username, &comment.Content, &created); err != nil {
 			return nil, err
+		}
+		if username.Valid {
+			comment.UserName = username.String
+		} else {
+			comment.UserName = "Deleted User"
 		}
 
 		commentTime, err := time.Parse("2006-01-02 15:04:05", created)

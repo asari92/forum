@@ -1,5 +1,5 @@
 -- Включить проверку внешних ключей
-PRAGMA foreign_keys = ON;
+-- PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS categories(
   id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 

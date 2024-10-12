@@ -101,7 +101,7 @@ func (m *PostModel) Get(postID int) (*Post, error) {
 	}
 	p.Created = postTime.Format(time.RFC3339)
 
-	err = m.DB.QueryRow(`SELECT users.id,username FROM posts 
+	err = m.DB.QueryRow(`SELECT username FROM posts 
 	INNER JOIN users ON users.id = posts.user_id
 	WHERE posts.id = ?`, postID).Scan(&p.UserName)
 	if err != nil {
@@ -112,7 +112,6 @@ func (m *PostModel) Get(postID int) (*Post, error) {
 			return nil, err
 		}
 	}
-	fmt.Println(p)
 
 	return p, nil
 }
