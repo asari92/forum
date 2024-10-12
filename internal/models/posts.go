@@ -77,16 +77,17 @@ func (m *PostModel) InsertPostWithCategories(title, content string, userID int, 
 
 func (m *PostModel) Get(postID int) (*Post, error) {
 
-	stmt := `SELECT id,title, content, created 
-	FROM posts 
-    WHERE id = ?`
+	stmt := `SELECT posts.id,title,username,content, posts.created 
+	FROM posts LEFT JOIN users ON posts.user_id = users.id
+    WHERE posts.id = ?`
 
 	row := m.DB.QueryRow(stmt, postID)
 
 	p := &Post{}
 	var created string
+	var username sql.NullString
 
-	err := row.Scan(&p.ID, &p.Title, &p.Content, &created)
+	err := row.Scan(&p.ID, &p.Title, &username, &p.Content, &created)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
@@ -95,23 +96,17 @@ func (m *PostModel) Get(postID int) (*Post, error) {
 		}
 	}
 
+	if username.Valid {
+		p.UserName = username.String
+	} else {
+		p.UserName = "Deleted User"
+	}
+
 	postTime, err := time.Parse("2006-01-02 15:04:05", created)
 	if err != nil {
 		return nil, err
 	}
 	p.Created = postTime.Format(time.RFC3339)
-
-	err = m.DB.QueryRow(`SELECT username FROM posts 
-	INNER JOIN users ON users.id = posts.user_id
-	WHERE posts.id = ?`, postID).Scan(&p.UserName)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			p.UserName = "Deleted User"
-			return p, nil
-		} else {
-			return nil, err
-		}
-	}
 
 	return p, nil
 }
