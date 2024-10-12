@@ -184,10 +184,11 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
 			app.notFound(w)
+			return
 		} else {
 			app.serverError(w, err)
+			return
 		}
-		return
 	}
 
 	categories, err := app.categories.GetCategoriesForPost(postID)

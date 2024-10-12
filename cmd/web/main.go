@@ -92,7 +92,7 @@ func main() {
 		categories:       &models.CategoryModel{DB: db},
 		templateCache:    templateCache,
 		sessionManager:   sessionManager,
-	} 
+	}
 
 	// Чтение встроенных TLS-ключей из файловой системы
 	certPEM, err := fs.ReadFile(tlsecurity.Files, "cert.pem")

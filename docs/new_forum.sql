@@ -1,4 +1,4 @@
- -- Включить проверку внешних ключей
+-- Включить проверку внешних ключей
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS categories(
