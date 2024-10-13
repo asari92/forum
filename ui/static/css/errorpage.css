@@ -1,0 +1,61 @@
+body {
+    background-color: #2e2e2e; /* Темный фон */
+    margin: 0;
+    padding: 0;
+    font-family: "Montserrat", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    text-align: center;
+    color: #f0f0f0; /* Светлый текст */
+}
+
+.container h2 {
+    font-size: 24px;
+    margin: 20px 0;
+    font-weight: 400;
+}
+
+.container h1 {
+    font-size: 100px; 
+    margin: 0;
+    font-weight: 900;
+    letter-spacing: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.container a {
+    font-size: 18px;
+    text-decoration: none;
+    background: #6c757d; /* Темный серый фон кнопки */
+    color: #f0f0f0;
+    padding: 12px 24px;
+    display: inline-block;
+    border-radius: 25px;
+    text-transform: uppercase;
+    transition: background 0.4s;
+}
+
+.container a:hover {
+    background: #5a6268; /* Более темный серый при наведении */
+}
+
+@media (max-width: 768px) {
+    .container h1 {
+        font-size: 60px; 
+    }
+}
+
+@media (max-width: 480px) {
+    .container h2 {
+        font-size: 18px; 
+    }
+    .container a {
+        font-size: 14px;
+        padding: 8px 16px;
+    }
+}

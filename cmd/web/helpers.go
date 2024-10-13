@@ -12,7 +12,40 @@ import (
 	"time"
 )
 
-func (app *application) serverError(w http.ResponseWriter, err error) {
+func (app *application) renderErrorPage(w http.ResponseWriter, statuscode int) {
+
+	data := &templateData{
+		AppError: AppError{StatusCode: statuscode, Message: http.StatusText(statuscode)},
+	}
+
+	ts, ok := app.templateCache["errorpage.html"]
+	if !ok {
+		err := fmt.Errorf("the template %s does not exist", "errorpage.html")
+		app.serverErrorLogging(err)
+		app.serverError(w)
+		return
+	}
+	buf := new(bytes.Buffer)
+
+	err := ts.Execute(buf, data)
+	if err != nil {
+		app.serverErrorLogging(err)
+		app.serverError(w)
+
+		return
+	}
+
+	w.WriteHeader(statuscode)
+
+	if _, err := buf.WriteTo(w); err != nil {
+		app.serverErrorLogging(err)
+		app.serverError(w)
+
+		return
+	}
+}
+
+func (app *application) serverErrorLogging(err error) {
 	_, path, line, _ := runtime.Caller(1)
 
 	app.logger.Error("Server error occurred",
@@ -20,24 +53,21 @@ func (app *application) serverError(w http.ResponseWriter, err error) {
 		path, line,
 		// "stack_trace", string(debug.Stack()), // Включение стека
 	)
+}
+
+func (app *application) serverError(w http.ResponseWriter) {
 
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
-func (app *application) clientError(w http.ResponseWriter, status int) {
-	http.Error(w, http.StatusText(status), status)
-}
 
-func (app *application) notFound(w http.ResponseWriter) {
-	app.clientError(w, http.StatusNotFound)
-}
 
-func (app *application) render(w http.ResponseWriter, status int, page string, data *templateData) {
+func (app *application) render(w http.ResponseWriter, status int, page string, data *templateData) error {
 	ts, ok := app.templateCache[page]
 	if !ok {
 		err := fmt.Errorf("the template %s does not exist", page)
-		app.serverError(w, err)
-		return
+
+		return err
 	}
 
 	// Initialize a new buffer.
@@ -48,8 +78,8 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 	// and then return.
 	err := ts.ExecuteTemplate(buf, "base", data)
 	if err != nil {
-		app.serverError(w, err)
-		return
+
+		return err
 	}
 
 	// If the template is written to the buffer without any errors, we are safe
@@ -60,6 +90,7 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 	// is another time where we pass our http.ResponseWriter to a function that
 	// takes an io.Writer.
 	buf.WriteTo(w)
+	return nil
 }
 
 func (app *application) SessionFromContext(r *http.Request) session.Session {

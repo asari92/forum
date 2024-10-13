@@ -70,7 +70,9 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				w.Header().Set("Connection", "close")
-				app.serverError(w, fmt.Errorf("%s", err))
+				app.serverErrorLogging(fmt.Errorf("%s", err))
+				app.renderErrorPage(w, http.StatusInternalServerError)
+				return
 			}
 		}()
 
@@ -87,7 +89,8 @@ func (app *application) verifyCSRF(next http.Handler) http.Handler {
 			if !ok || sessionToken == "" {
 				sessionToken = app.generateCSRFToken()
 				if err := sess.Set(CsrfTokenSessionKey, sessionToken); err != nil {
-					app.serverError(w, err)
+					app.serverErrorLogging(err)
+					app.renderErrorPage(w, http.StatusInternalServerError)
 					return
 				}
 			}
@@ -124,7 +127,8 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 		if !ok || token == "" {
 			token = app.generateCSRFToken()
 			if err := sess.Set(CsrfTokenSessionKey, token); err != nil {
-				app.serverError(w, err)
+				app.serverErrorLogging(err)
+				app.renderErrorPage(w, http.StatusInternalServerError)
 				return
 			}
 		}
@@ -160,7 +164,10 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 
 		exists, err := app.users.Exists(id)
 		if err != nil {
-			app.serverError(w, err)
+			app.serverErrorLogging(err)
+			app.renderErrorPage(w, http.StatusInternalServerError)
+			return
+
 			return
 		}
 
