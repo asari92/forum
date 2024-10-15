@@ -4,82 +4,64 @@ import (
 	"bytes"
 	"crypto/md5"
 	"fmt"
-	"forum/internal/models"
-	"forum/internal/session"
 	"io"
 	"net/http"
-	"runtime"
 	"time"
+
+	"forum/internal/models"
+	"forum/internal/session"
 )
 
-func (app *application) renderErrorPage(w http.ResponseWriter, statuscode int) {
+const Errorpage = "errorpage.html"
 
-	data := &templateData{
-		AppError: AppError{StatusCode: statuscode, Message: http.StatusText(statuscode)},
-	}
+// func (app *application) serverErrorLogging(err error) {
+// 	_, path, line, _ := runtime.Caller(1)
 
-	ts, ok := app.templateCache["errorpage.html"]
-	if !ok {
-		err := fmt.Errorf("the template %s does not exist", "errorpage.html")
-		app.serverErrorLogging(err)
-		app.serverError(w)
-		return
-	}
-	buf := new(bytes.Buffer)
-
-	err := ts.Execute(buf, data)
-	if err != nil {
-		app.serverErrorLogging(err)
-		app.serverError(w)
-
-		return
-	}
-
-	w.WriteHeader(statuscode)
-
-	if _, err := buf.WriteTo(w); err != nil {
-		app.serverErrorLogging(err)
-		app.serverError(w)
-
-		return
-	}
-}
-
-func (app *application) serverErrorLogging(err error) {
-	_, path, line, _ := runtime.Caller(1)
-
-	app.logger.Error("Server error occurred",
-		"error", err,
-		path, line,
-		// "stack_trace", string(debug.Stack()), // Включение стека
-	)
-}
+// 	app.logger.Error("Server error occurred",
+// 		"error", err,
+// 		path, line,
+// 		// "stack_trace", string(debug.Stack()), // Включение стека
+// 	)
+// }
 
 func (app *application) serverError(w http.ResponseWriter) {
-
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
-
-
-func (app *application) render(w http.ResponseWriter, status int, page string, data *templateData) error {
+func (app *application) render(w http.ResponseWriter, status int, page string, data *templateData) {
 	ts, ok := app.templateCache[page]
 	if !ok {
 		err := fmt.Errorf("the template %s does not exist", page)
-
-		return err
+		app.logger.Error("Server error occured", "render error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
 	}
 
 	// Initialize a new buffer.
 	buf := new(bytes.Buffer)
 
-	// Write the template to the buffer, instead of straight to the
-	// http.ResponseWriter. If there's an error, call our serverError() helper
-	// and then return.
-	err := ts.ExecuteTemplate(buf, "base", data)
-	if err != nil {
+	if page == Errorpage {
+		data := &templateData{
+			AppError: AppError{StatusCode: status, Message: http.StatusText(status)},
+		}
+		err := ts.Execute(buf, data)
+		if err != nil {
+			app.logger.Error("Server error occured", "render error", err)
+			app.serverError(w)
+			return
 
-		return err
+		}
+
+	} else {
+		// Write the template to the buffer, instead of straight to the
+		// http.ResponseWriter. If there's an error, call our serverError() helper
+		// and then return.
+		err := ts.ExecuteTemplate(buf, "base", data)
+		if err != nil {
+			app.logger.Error("Server error occured", "render error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			return
+		}
 	}
 
 	// If the template is written to the buffer without any errors, we are safe
@@ -90,7 +72,6 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 	// is another time where we pass our http.ResponseWriter to a function that
 	// takes an io.Writer.
 	buf.WriteTo(w)
-	return nil
 }
 
 func (app *application) SessionFromContext(r *http.Request) session.Session {

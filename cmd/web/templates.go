@@ -12,7 +12,7 @@ import (
 )
 
 type AppError struct {
-	Message string
+	Message    string
 	StatusCode int
 }
 
@@ -34,7 +34,7 @@ func (rd *ReactionData) GetUserReaction() int {
 }
 
 type templateData struct {
-	AppError AppError
+	AppError        AppError
 	CurrentYear     int
 	Categories      []*models.Category
 	CSRFToken       string
@@ -98,13 +98,6 @@ func newTemplateCache() (map[string]*template.Template, error) {
 
 		cache[name] = ts
 	}
-	errorPage := "html/pages/errorpage.html"
-	name := filepath.Base(errorPage)
-	ts, err := template.New(name).ParseFS(ui.Files, errorPage)
-	if err != nil {
-		return nil, err
-	}
-	cache[name] = ts
 
 	return cache, nil
 }
