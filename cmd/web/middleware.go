@@ -168,8 +168,6 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 			app.logger.Error("user exists", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
-
-			return
 		}
 
 		if exists {
