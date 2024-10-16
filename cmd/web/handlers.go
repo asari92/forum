@@ -477,7 +477,6 @@ func (app *application) userPostsView(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	data.Posts = posts
 	data.Header = fmt.Sprintf("Posts by %s", user.Username)
-	fmt.Println(data.Header)
 	data.Pagination = pagination{
 		CurrentPage:      page,
 		HasNextPage:      hasNextPage,
