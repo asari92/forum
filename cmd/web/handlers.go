@@ -12,7 +12,7 @@ import (
 )
 
 func (app *application) errorHandler(w http.ResponseWriter, r *http.Request) {
-	app.notFound(w) // Use the notFound() helper
+	app.render(w, http.StatusNotFound, Errorpage, nil)
 }
 
 type pagination struct {
@@ -29,7 +29,8 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	// Получаем посты для нужной страницы.
 	posts, err := app.posts.GetAllPaginatedPosts(page, pageSize)
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("get all paginated posts", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
@@ -43,7 +44,8 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	categories, err := app.categories.GetAll()
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("get all categories", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
@@ -67,7 +69,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 
@@ -83,7 +85,7 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	for _, id := range r.PostForm["categories"] {
 		intID, err := strconv.Atoi(id)
 		if err != nil {
-			app.clientError(w, http.StatusBadRequest)
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
 			return
 		}
 		categoryIDs = append(categoryIDs, intID)
@@ -95,7 +97,8 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 
 	allCategories, err := app.categories.GetAll()
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("get all categories", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
@@ -110,7 +113,8 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	if !form.Valid() {
 		posts, err := app.posts.GetAllPaginatedPosts(page, pageSize)
 		if err != nil {
-			app.serverError(w, err)
+			app.logger.Error("get all posts", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 		}
 
@@ -136,7 +140,8 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	// Получаем посты с пагинацией и на одну запись больше
 	posts, err := app.posts.GetPaginatedPostsByCategory(form.Categories, page, pageSize)
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("get paginated posts by category", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
@@ -176,30 +181,33 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	postID, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || postID < 1 {
-		app.notFound(w)
+		app.render(w, http.StatusNotFound, Errorpage, nil)
 		return
 	}
 
 	post, err := app.posts.Get(postID)
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
-			app.notFound(w)
+			app.render(w, http.StatusNotFound, Errorpage, nil)
 			return
 		} else {
-			app.serverError(w, err)
+			app.logger.Error("get post from database", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 		}
 	}
 
 	categories, err := app.categories.GetCategoriesForPost(postID)
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("get categories for post", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
 	likes, dislikes, err := app.postReactions.GetReactionsCount(postID)
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("get likes and dislikes count for post", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
@@ -209,13 +217,15 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	if ok && userID != 0 {
 		userReaction, err = app.postReactions.GetUserReaction(userID, postID) // Получите реакцию пользователя
 		if err != nil {
-			app.serverError(w, err)
+			app.logger.Error("get post user reaction", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 		}
 	}
 	comments, err := app.comments.GetComments(postID)
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("get comments from database", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 	// continue
@@ -224,14 +234,14 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 		if ok && userID != 0 {
 			userReaction, err := app.commentReactions.GetUserReaction(userID, val.ID)
 			if err != nil {
-				app.serverError(w, err)
+				app.logger.Error("get comment user reaction", "error", err)
+				app.render(w, http.StatusInternalServerError, Errorpage, nil)
 				return
 
 			}
 			if userReaction != nil {
 				if userReaction.IsLike {
 					val.UserReaction = 1
-
 				} else {
 					val.UserReaction = -1
 				}
@@ -241,14 +251,16 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 
 		like, err := app.commentReactions.GetLikesCount(val.ID)
 		if err != nil {
-			app.serverError(w, err)
+			app.logger.Error("get comment likes count", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 		}
 		val.Like = like
-		app.logger.Debug("comment likes count", like)
+		app.logger.Debug("comment likes count", "like:", like)
 		dislike, err := app.commentReactions.GetDislikesCount(val.ID)
 		if err != nil {
-			app.serverError(w, err)
+			app.logger.Error("get comment dislike count", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 		}
 		val.Dislike = dislike
@@ -269,13 +281,13 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 
 	postID, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || postID < 1 {
-		app.notFound(w)
+		app.render(w, http.StatusNotFound, Errorpage, nil)
 		return
 	}
 
@@ -286,14 +298,17 @@ func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
 	sess := app.SessionFromContext(r)
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if !ok || userID < 1 {
-		app.serverError(w, errors.New("get userID in postReaction"))
+		err = errors.New("get userID in postReaction")
+		app.logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
 	if comment != "" {
 		err = app.comments.InsertComment(postID, userID, comment)
 		if err != nil {
-			app.serverError(w, err)
+			app.logger.Error("insert comment to database", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 
 		}
@@ -304,27 +319,30 @@ func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
 		var userReaction *models.PostReaction
 		userReaction, err = app.postReactions.GetUserReaction(userID, postID) // Получите реакцию пользователя
 		if err != nil {
-			app.serverError(w, err)
+			app.logger.Error("get post user reaction", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 		}
 
 		if userReaction != nil && userReaction.IsLike == like {
 			err = app.postReactions.RemoveReaction(userID, postID)
 			if err != nil {
-				app.serverError(w, err)
+				app.logger.Error("remove post reaction", "error", err)
+				app.render(w, http.StatusInternalServerError, Errorpage, nil)
 				return
 			}
 		} else {
 			err = app.postReactions.AddReaction(userID, postID, like)
 			if err != nil {
-				app.serverError(w, err)
+				app.logger.Error("add post reaction", "error", err)
+				app.render(w, http.StatusInternalServerError, Errorpage, nil)
 				return
 			}
 		}
 	} else if commentIsLike != "" {
 		commentID, err := strconv.Atoi(r.PostForm.Get("comment_id"))
 		if err != nil || commentID < 1 {
-			app.clientError(w, http.StatusBadRequest)
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
 			return
 		}
 
@@ -333,21 +351,24 @@ func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
 
 		commentReaction, err = app.commentReactions.GetUserReaction(userID, commentID)
 		if err != nil {
-			app.serverError(w, err)
+			app.logger.Error("get user comment reaction", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 		}
 
 		if commentReaction != nil && reaction == commentReaction.IsLike {
 			err = app.commentReactions.RemoveReaction(userID, commentID)
 			if err != nil {
-				app.serverError(w, err)
+				app.logger.Error("remove comment reaction", "error", err)
+				app.render(w, http.StatusInternalServerError, Errorpage, nil)
 				return
 			}
 		} else {
 			err = app.commentReactions.AddReaction(userID, commentID, reaction)
 			if err != nil {
 
-				app.serverError(w, err)
+				app.logger.Error("add comment reaction", "error", err)
+				app.render(w, http.StatusInternalServerError, Errorpage, nil)
 				return
 			}
 		}
@@ -361,13 +382,13 @@ func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
 func (app *application) commentReaction(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 
 	commentID, err := strconv.Atoi(r.PostForm.Get("comment_id"))
 	if err != nil || commentID < 1 {
-		app.clientError(w, http.StatusBadRequest)
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 	isLike := r.PostForm.Get("is_like")
@@ -378,7 +399,8 @@ func (app *application) commentReaction(w http.ResponseWriter, r *http.Request) 
 	if ok && userID != 0 {
 		commentReaction, err = app.commentReactions.GetUserReaction(userID, commentID)
 		if err != nil {
-			app.serverError(w, err)
+			app.logger.Error("get user reaction", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 		}
 	}
@@ -386,13 +408,15 @@ func (app *application) commentReaction(w http.ResponseWriter, r *http.Request) 
 	if reaction == commentReaction.IsLike {
 		err = app.commentReactions.RemoveReaction(userID, commentID)
 		if err != nil {
-			app.serverError(w, err)
+			app.logger.Error("remove reaction", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 		} else {
 			err = app.commentReactions.AddReaction(userID, commentID, reaction)
 			if err != nil {
 
-				app.serverError(w, err)
+				app.logger.Error("Add Reaction", "error", err)
+				app.render(w, http.StatusInternalServerError, Errorpage, nil)
 				return
 			}
 		}
@@ -404,13 +428,13 @@ func (app *application) commentReaction(w http.ResponseWriter, r *http.Request) 
 func (app *application) userPostsView(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 
 	userId, err := strconv.Atoi(r.PathValue("userId"))
 	if err != nil || userId < 1 {
-		app.notFound(w)
+		app.render(w, http.StatusNotFound, Errorpage, nil)
 		return
 	}
 
@@ -423,7 +447,8 @@ func (app *application) userPostsView(w http.ResponseWriter, r *http.Request) {
 
 	posts, err := app.posts.GetUserPaginatedPosts(userId, page, pageSize)
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("get user posts", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
@@ -431,13 +456,14 @@ func (app *application) userPostsView(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
 			if len(posts) == 0 {
-				app.notFound(w)
+				app.render(w, http.StatusNotFound, Errorpage, nil)
 				return
 			} else {
 				user = &models.User{Username: "Deleted User", ID: userId}
 			}
 		} else {
-			app.serverError(w, err)
+			app.logger.Error("get user query error", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 		}
 	}
@@ -463,12 +489,15 @@ func (app *application) userLikedPostsView(w http.ResponseWriter, r *http.Reques
 	sess := app.SessionFromContext(r)
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if !ok || userID < 1 {
-		app.serverError(w, errors.New("get userID in userLikedPostsView"))
+		err := errors.New("get userID in userLikedPostsView")
+		app.logger.Error("get userid", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 
@@ -481,13 +510,15 @@ func (app *application) userLikedPostsView(w http.ResponseWriter, r *http.Reques
 
 	posts, err := app.posts.GetUserLikedPaginatedPosts(userID, page, pageSize)
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("get user liked posts", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
 	user, err := app.users.Get(userID)
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("get user", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
@@ -511,7 +542,8 @@ func (app *application) userLikedPostsView(w http.ResponseWriter, r *http.Reques
 func (app *application) postCreateView(w http.ResponseWriter, r *http.Request) {
 	categories, err := app.categories.GetAll()
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("get all categories", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
@@ -535,7 +567,7 @@ type postCreateForm struct {
 func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 
@@ -543,7 +575,7 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	for _, id := range r.PostForm["categories"] {
 		intID, err := strconv.Atoi(id)
 		if err != nil {
-			app.clientError(w, http.StatusBadRequest)
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
 			return
 		}
 		categoryIDs = append(categoryIDs, intID)
@@ -562,7 +594,8 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 
 	allCategories, err := app.categories.GetAll()
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("get all categories", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
@@ -583,12 +616,16 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	sess := app.SessionFromContext(r)
 	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if !ok || userId < 1 {
-		app.serverError(w, errors.New("get userID in postCreate"))
+		err = errors.New("get userID in postCreate")
+		app.logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
 	}
 
 	postId, err := app.posts.InsertPostWithCategories(form.Title, form.Content, userId, form.Categories)
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("insert post and categories", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
@@ -651,7 +688,7 @@ type signupForm struct {
 func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 	form := signupForm{
@@ -686,7 +723,9 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 			data.Form = form
 			app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
 		} else {
-			app.serverError(w, err)
+			app.logger.Error("insert user credentials", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+
 		}
 		return
 	}
@@ -699,7 +738,9 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 
 	err = sess.Set(FlashSessionKey, "Your signup was successful. Please log in.")
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("set flashsessionkey", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
 	}
 
 	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
@@ -726,7 +767,7 @@ func (app *application) userLoginView(w http.ResponseWriter, r *http.Request) {
 func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 	form := userLoginForm{
@@ -759,7 +800,9 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 			data.Form = form
 			app.render(w, http.StatusUnprocessableEntity, "login.html", data)
 		} else {
-			app.serverError(w, err)
+			app.logger.Error("get id Authenticate user", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			return
 		}
 		return
 	}
@@ -773,14 +816,18 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 
 	err = sess.Set(FlashSessionKey, "Your log in was successful.")
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("Set FlashSessionKey", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
 	}
 
 	// Add the ID of the current user to the session, so that they are now
 	// 'logged in'.
 	err = sess.Set(AuthUserIDSessionKey, id)
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("set AuthUserIDSessionKey", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
 	}
 
 	redirectUrl := "/"
@@ -795,7 +842,8 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 
 	err = app.sessionManager.RenewToken(w, r)
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("renewtoken", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
@@ -812,7 +860,8 @@ func (app *application) userLogout(w http.ResponseWriter, r *http.Request) {
 
 	err = app.sessionManager.RenewToken(w, r)
 	if err != nil {
-		app.serverError(w, err)
+		app.logger.Error("renewtoken", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
@@ -832,7 +881,10 @@ func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
 	sess := app.SessionFromContext(r)
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if !ok || userID < 1 {
-		app.serverError(w, errors.New("get userID in accountView"))
+		err := errors.New("get userID in accountView")
+		app.logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
 	}
 
 	user, err := app.users.Get(userID)
@@ -840,7 +892,9 @@ func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, models.ErrNoRecord) {
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 		} else {
-			app.serverError(w, err)
+			app.logger.Error("get user from db", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+
 		}
 		return
 	}
@@ -868,7 +922,7 @@ func (app *application) accountPasswordUpdateView(w http.ResponseWriter, r *http
 func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 	form := accountPasswordUpdateForm{
@@ -894,20 +948,22 @@ func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 	sess := app.SessionFromContext(r)
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if !ok || userID < 1 {
-		app.serverError(w, errors.New("get userID in accountPasswordUpdate"))
+		err = errors.New("get userID in accountPasswordUpdate")
+		app.logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
 	}
 
 	err = app.users.PasswordUpdate(userID, form.CurrentPassword, form.NewPassword)
 	if err != nil {
 		if errors.Is(err, models.ErrInvalidCredentials) {
 			form.AddFieldError("currentPassword", "Current password is incorrect")
-
 			data := app.newTemplateData(r)
 			data.Form = form
-
 			app.render(w, http.StatusUnprocessableEntity, "password.html", data)
 		} else {
-			app.serverError(w, err)
+			app.logger.Error("password update", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		}
 		return
 	}

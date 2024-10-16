@@ -11,6 +11,11 @@ import (
 	"forum/ui"
 )
 
+type AppError struct {
+	Message    string
+	StatusCode int
+}
+
 type ReactionData struct {
 	Likes        int
 	Dislikes     int
@@ -29,6 +34,7 @@ func (rd *ReactionData) GetUserReaction() int {
 }
 
 type templateData struct {
+	AppError        AppError
 	CurrentYear     int
 	Categories      []*models.Category
 	CSRFToken       string
