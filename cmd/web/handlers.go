@@ -256,7 +256,7 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		val.Like = like
-		app.logger.Debug("comment likes count", like)
+		app.logger.Debug("comment likes count", "like:", like)
 		dislike, err := app.commentReactions.GetDislikesCount(val.ID)
 		if err != nil {
 			app.logger.Error("get comment dislike count", "error", err)
@@ -477,12 +477,13 @@ func (app *application) userPostsView(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	data.Posts = posts
 	data.Header = fmt.Sprintf("Posts by %s", user.Username)
+	fmt.Println(data.Header)
 	data.Pagination = pagination{
 		CurrentPage:      page,
 		HasNextPage:      hasNextPage,
 		PaginationAction: fmt.Sprintf("/user/%d/posts", userId), // Маршрут для пагинации
 	}
-	app.render(w, http.StatusOK, "user_posts.html", nil)
+	app.render(w, http.StatusOK, "user_posts.html", data)
 }
 
 func (app *application) userLikedPostsView(w http.ResponseWriter, r *http.Request) {
