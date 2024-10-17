@@ -41,7 +41,7 @@ func (app *application) routes() http.Handler {
 
 	dynamic := New(app.verifyCSRF, app.sessionMiddleware, app.authenticate)
 
-	mux.Handle("GET /", dynamic.ThenFunc(app.errorHandler))
+	mux.Handle("/", dynamic.ThenFunc(app.errorHandler))
 	mux.Handle("GET /{$}", dynamic.ThenFunc(app.home))
 	mux.Handle("POST /", dynamic.ThenFunc(app.filterPosts))
 	mux.Handle("GET /post/view/{id}", dynamic.ThenFunc(app.postView))
