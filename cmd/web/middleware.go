@@ -85,6 +85,7 @@ func (app *application) verifyCSRF(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Проверяем (все) запросы которые могут изменить данные
 		if r.Method == http.MethodPost {
+			
 			sess := app.sessionManager.SessionStart(w, r)
 			sessionToken, ok := sess.Get(CsrfTokenSessionKey).(string)
 			if !ok || sessionToken == "" {
