@@ -12,18 +12,18 @@ import (
 	"forum/internal/session"
 )
 
-
 var RequestPaths = map[string]bool{
-    "/about": true,
-	"/user/login":true, 
-	"/user/signup":true,
-	"/post/create":true,
-	"/account/view":true, 
-	"/user/liked":true, 
-	"/account/password/update":true, 
-	"/user/logout":true,
+	"/":                        true,
+	"/ping":                    true,
+	"/about":                   true,
+	"/user/login":              true,
+	"/user/signup":             true,
+	"/post/create":             true,
+	"/account/view":            true,
+	"/user/liked":              true,
+	"/account/password/update": true,
+	"/user/logout":             true,
 }
-
 
 const Errorpage = "errorpage.html"
 
