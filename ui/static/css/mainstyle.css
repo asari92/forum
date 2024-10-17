@@ -355,21 +355,6 @@ footer {
     cursor: pointer;
 }
 
-.icon-like {
-    color: gray; /* Цвет для неактивной иконки лайка */
-}
-
-.icon-like-active {
-    color: blue; /* Цвет для активной иконки лайка */
-}
-
-.icon-dislike {
-    color: gray; /* Цвет для неактивной иконки дизлайка */
-}
-
-.icon-dislike-active {
-    color: red; /* Цвет для активной иконки дизлайка */
-}
 
 /* Кнопки реакций */
 .reaction-buttons button {
@@ -398,15 +383,27 @@ footer {
     cursor: pointer; /* Указывает на то, что это кнопка */
     color: inherit; 
 }
-.reaction-buttons button span {
-    color: #333; /* Темный цвет текста */
+
+.icon-neutral {
+    color: rgb(3, 3, 3); /* Цвет для неактивной иконки лайка */
+}
+
+.icon-like-active {
+    color: blue; /* Цвет для активной иконки лайка */
+}
+
+
+
+.icon-dislike-active {
+    color: red; /* Цвет для активной иконки дизлайка */
 }
 
 
 p {
-    font-size: 16px;
-    color: #333;             /* Темный цвет текста */
-    margin-top: 15px;        /* Добавить отступ сверху */
+    font-size: 18px;            /* Увеличить размер шрифта */
+    color: rgb(253, 253, 253);                /* Черный цвет текста для лучшей видимости */
+    margin-top: 15px;           /* Добавить отступ сверху */
+    font-weight: bold;          /* Сделать текст жирным */
 }
 
 a {
