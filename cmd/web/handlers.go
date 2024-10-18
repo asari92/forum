@@ -12,6 +12,11 @@ import (
 )
 
 func (app *application) errorHandler(w http.ResponseWriter, r *http.Request) {
+	if RequestPaths[r.URL.Path] {
+		app.render(w, http.StatusMethodNotAllowed, Errorpage, nil)
+		return
+	}
+
 	app.render(w, http.StatusNotFound, Errorpage, nil)
 }
 
@@ -67,6 +72,10 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		app.render(w, http.StatusNotFound, Errorpage, nil)
+		return
+	}
 	err := r.ParseForm()
 	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)

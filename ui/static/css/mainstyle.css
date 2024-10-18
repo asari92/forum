@@ -1,0 +1,620 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-size: 18px;
+    font-family: "Ubuntu Mono", monospace;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    line-height: 1.5;
+    background-color: #2D2D2D; /* Темный фон */
+    color: #EAEAEA; /* Светлый цвет текста */
+    overflow-y: scroll;
+}
+
+header, nav, main, footer {
+    padding: 2px calc((100% - 800px) / 2) 0;
+}
+
+main {
+    margin-top: 54px;
+    margin-bottom: 54px;
+    min-height: calc(100vh - 345px);
+    overflow: auto;
+    background-color: #1E1E1E; /* Фон для основного содержимого */
+    color: #EAEAEA; /* Цвет текста */
+}
+
+h1 a {
+    font-size: 36px;
+    font-weight: bold;
+    background-repeat: no-repeat;
+    background-position: 0px 0px;
+    height: 36px;
+    padding-left: 50px;
+    position: relative;
+    color: #EAEAEA; /* Цвет текста заголовка */
+}
+
+h1 a:hover {
+    color: #0e050969; /* Цвет при наведении (золотистый) */
+}
+
+h1 a:hover {
+    text-decoration: none;
+    color: #0e050969; /* Цвет при наведении (золотистый) */
+}
+
+h2 {
+    font-size: 22px;
+    margin-bottom: 40px;
+    position: relative;
+    top: -3px; /* Подвинем чуть меньше вверх */
+    color: #EAEAEA; /* Цвет заголовка h2 */
+}
+
+
+a {
+    color: #3b31cb; /* Цвет ссылок */
+    text-decoration: none;
+}
+
+a:hover {
+    color: #3b31cb; /* Цвет ссылок при наведении */
+    text-decoration: underline;
+}
+
+
+textarea, input:not([type="submit"]) {
+    font-size: 18px;
+    font-family: "Ubuntu Mono", monospace;
+    background-color: #1E1E1E; /* Темный фон */
+    color: #283466; /* Светлый цвет текста */
+    border: 1px solid #4A4A4A; /* Тонкий серый бордер */
+}
+
+header {
+    background-size: 100% 6px;
+    background-repeat: no-repeat;
+    border-bottom: 1px solid #3E3E3E; /* Более темный бордер */
+    overflow: auto;
+    padding-top: 33px;
+    padding-bottom: 27px;
+    text-align: center;
+    color: #ffffff;                     /* Цвет текста белый для контраста */
+}
+
+header a {
+    color: #EAEAEA; /* Светлый цвет для ссылок в заголовке */
+    text-decoration: none;
+}
+
+
+/* Навигация */
+nav {
+    border-bottom: 1px solid #D0D5DB; /* Уменьшен светлый цвет */
+    padding-top: 20px; /* Увеличен верхний отступ */
+    padding-bottom: 20px; /* Увеличен нижний отступ */
+    background: #F2F4F6; /* Уменьшен светлый цвет */
+    height: 60px;
+    color: #4B4F54; /* Уменьшен темный цвет */
+}
+
+/* Ссылки в навигации */
+nav a {
+    margin-right: 2em; /* Увеличен правый отступ */
+    display: inline-block;
+    transition: color 0.2s; /* Добавлен эффект перехода */
+}
+
+nav a:hover {
+    color: #007BFF; /* Изменен цвет при наведении */
+}
+
+/* Остальные стили остаются без изменений */
+nav form {
+    display: inline-block;
+    margin-left: 2em; /* Увеличен левый отступ */
+}
+
+nav div {
+    width: 50%;
+    float: left;
+}
+
+nav div:last-child {
+    text-align: right;
+}
+
+nav div:last-child a {
+    margin-left: 1.5em;
+    margin-right: 0;
+}
+
+nav a.live {
+    color: #2C3E50; /* Уменьшен цвет для активной ссылки */
+    cursor: default;
+}
+
+nav a.live:hover {
+    text-decoration: none;
+}
+
+nav a.live:after {
+    content: '';
+    display: block;
+    position: relative;
+    left: calc(50% - 7px);
+    top: 9px;
+    width: 14px;
+    height: 14px;
+    background: #F2F4F6; /* Уменьшен светлый цвет */
+    border-left: 1px solid #D0D5DB; /* Уменьшен светлый цвет */
+    border-bottom: 1px solid #D0D5DB; /* Уменьшен светлый цвет */
+    transform: rotate(45deg); /* Упрощена трансформация */
+}
+
+/* Кнопки */
+a.button, input[type="submit"] {
+    background-color: #402abf; /* Уменьшен зеленый цвет */
+    border-radius: 4px; /* Увеличен радиус границы */
+    color: #FFFFFF;
+    padding: 16px 26px; /* Уменьшены отступы */
+    border: none;
+    display: inline-block;
+    margin-top: 16px; /* Уменьшен верхний отступ */
+    font-weight: 700;
+    transition: background-color 0.2s; /* Добавлен эффект перехода */
+}
+
+a.button:hover, input[type="submit"]:hover {
+    background-color: #402abf; /* Уменьшен зеленый цвет */
+    color: #FFFFFF;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+/* Формы */
+form div {
+    margin-bottom: 18px;
+}
+
+form div:last-child {
+    border-top: 1px dashed #D0D5DB; /* Уменьшен светлый цвет */
+}
+
+form input[type="radio"] {
+    margin-left: 18px;
+}
+
+form input[type="text"], form input[type="password"], form input[type="email"] {
+    padding: 0.75em 18px;
+    width: 100%;
+}
+
+form input[type=text], form input[type="password"], form input[type="email"], textarea {
+    color: #4B4F54; /* Уменьшен темный цвет */
+    background: #FFFFFF;
+    border: 1px solid #D0D5DB; /* Уменьшен светлый цвет */
+    border-radius: 4px; /* Увеличен радиус границы */
+}
+
+/* Ошибки */
+.error {
+    color: #C0392B;
+    font-weight: bold;
+    display: block;
+}
+
+.error + textarea, .error + input {
+    border-color: #C0392B !important;
+    border-width: 2px !important;
+}
+
+/* Текстовые области */
+textarea {
+    padding: 18px;
+    width: 100%;
+    height: 266px;
+}
+
+/* Кнопки */
+button {
+    background: none;
+    padding: 0;
+    border: none;
+    color: #402abf; /* Уменьшен цвет */
+    text-decoration: none;
+}
+
+button:hover {
+    color: #402abf; /* Уменьшен цвет */
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Кодовые сниппеты */
+.snippet {
+    background-color: #FFFFFF;
+    border: 1px solid #D0D5DB; /* Уменьшен светлый цвет */
+    border-radius: 4px; /* Увеличен радиус границы */
+}
+
+.snippet pre {
+    padding: 18px;
+    border-top: 1px solid #D0D5DB; /* Уменьшен светлый цвет */
+    border-bottom: 1px solid #D0D5DB; /* Уменьшен светлый цвет */
+}
+
+.snippet .metadata {
+    background-color: #F2F4F6; /* Уменьшен светлый цвет */
+    color: #4B4F54; /* Уменьшен темный цвет */
+    padding: 0.75em 18px;
+    overflow: auto;
+}
+
+.snippet .metadata span {
+    float: right;
+}
+
+.snippet .metadata strong {
+    color: #2C3E50; /* Уменьшен темный цвет */
+}
+
+.snippet .metadata time {
+    display: inline-block;
+}
+
+.snippet .metadata time:first-child {
+    float: left;
+}
+
+.snippet .metadata time:last-child {
+    float: right;
+}
+
+/* Сообщения */
+div.flash {
+    color: #FFFFFF;
+    font-weight: bold;
+    background-color: #34495E;
+    padding: 18px;
+    margin-bottom: 36px;
+    text-align: center;
+}
+
+div.error {
+    color: #FFFFFF;
+    background-color: #C0392B;
+    padding: 18px;
+    margin-bottom: 36px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Таблицы */
+table {
+    background: white;
+    border: 1px solid #D0D5DB; /* Уменьшен светлый цвет */
+    border-collapse: collapse;
+    width: 100%;
+}
+
+td, th {
+    text-align: left;
+    padding: 9px 18px;
+}
+
+th {
+    color: #000; /* Явно задаем черный цвет для текста заголовков */
+}
+.timezone {
+    display: inline; /* Убедись, что элемент отображается */
+    visibility: visible; /* Убедись, что элемент виден */
+    color: inherit; /* Применить цвет текста от родителя */
+}
+
+
+.timezone {
+    color: #000; /* Временно сделай цвет ярко-красным для видимости */
+}
+
+
+th:last-child, td:last-child {
+    text-align: right;
+    color: #4B4F54; /* Уменьшен темный цвет */
+}
+
+/* tr {
+    border-bottom: 1px solid #D0D5DB;
+}
+
+tr:nth-child(2n) {
+    background-color: #F2F4F6; 
+} */
+
+/* Футер */
+footer {
+    border-top: 1px solid #D0D5DB; /* Уменьшен светлый цвет */
+    padding-top: 20px; /* Увеличен верхний отступ */
+    padding-bottom: 20px; /* Увеличен нижний отступ */
+    background: #F2F4F6; /* Уменьшен светлый цвет */
+    height: 60px;
+    color: #4B4F54; /* Уменьшен темный цвет */
+    text-align: center;
+}
+
+/* Иконки */
+.icon {
+    font-size: 24px;
+    cursor: pointer;
+}
+
+
+/* Кнопки реакций */
+.reaction-buttons button {
+    outline: none;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: inherit;
+    padding: 0; /* Убирает любые отступы */
+    margin: 0; /* Убедитесь, что отступы отсутствуют */
+    font: inherit;
+}
+
+/* Убираем изменения при наведении, фокусе и нажатии */
+.reaction-buttons button:focus,
+.reaction-buttons button:hover,
+.reaction-buttons button:active {
+    outline: none; /* Убирает черточку при фокусе */
+    background: transparent; /* Убирает фон при наведении */
+    border: none; /* Убирает границу при наведении */
+    color: inherit; /* Сохраняет цвет текста при наведении */
+}
+
+.reaction-buttons button {
+    all: unset; /* Обнуляет все стили */
+    cursor: pointer; /* Указывает на то, что это кнопка */
+    color: inherit; 
+}
+
+.icon-neutral {
+    color: rgb(3, 3, 3); /* Цвет для неактивной иконки лайка */
+}
+
+.icon-like-active {
+    color: blue; /* Цвет для активной иконки лайка */
+}
+
+
+
+.icon-dislike-active {
+    color: red; /* Цвет для активной иконки дизлайка */
+}
+
+
+p {
+    font-size: 18px;            /* Увеличить размер шрифта */
+    color: rgb(253, 253, 253);                /* Черный цвет текста для лучшей видимости */
+    margin-top: 15px;           /* Добавить отступ сверху */
+    font-weight: bold;          /* Сделать текст жирным */
+}
+
+a {
+    color: #402abf;          /* Синий цвет для ссылок */
+    text-decoration: none;   /* Убрать подчеркивание, если нужно */
+}
+
+a:hover {
+    text-decoration: underline; /* Подчеркивание при наведении */
+}
+
+.post-content {
+    background-color: #f8f9fa;             /* Светлый фон с легким оттенком серого */
+    padding: 20px;                         /* Увеличен отступ */
+    border-radius: 10px;                   /* Увеличен радиус границы */
+    border: 1px solid #ccc;                /* Легкая граница для отделения */
+    font-size: 1em;
+    line-height: 1.7;                      /* Увеличена высота строки */
+    color: #333;                           /* Темный цвет текста */
+    overflow-x: auto;
+    margin-bottom: 25px;                   /* Увеличен нижний отступ */
+}
+
+.post-content pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.post-content code {
+    color: #0c0b0b;                        /* Изменен цвет для выделения кода */
+    font-weight: bold;
+}
+.no-comments {
+    font-size: 16px;
+    color: #333;             /* Темный цвет текста */
+    margin-top: 15px;        /* Добавить отступ сверху */
+}
+
+.comment-section {
+    margin-top: 25px;                     /* Увеличен верхний отступ */
+}
+
+.comment-form {
+    display: flex;
+    flex-direction: column;
+    margin-top: 15px;                     /* Увеличен верхний отступ */
+}
+
+.comment-input {
+    padding: 12px;                        /* Увеличен отступ */
+    width: 100%;
+    min-height: 100px;                    /* Увеличена минимальная высота */
+    border-radius: 5px;
+    border: 1px solid #ccc;               /* Легкая граница */
+    margin-bottom: 15px;                  /* Увеличен нижний отступ */
+    resize: vertical;
+}
+
+.comment-submit-btn {
+    background-color: #402abf;            /* Изменен цвет кнопки на зеленый */
+    color: white;
+    border: none;
+    padding: 12px 22px;                   /* Увеличены отступы */
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;    /* Добавлен эффект перехода */
+}
+
+.comment-submit-btn:hover {
+    background-color: #402abf;            /* Темнее зеленый цвет при наведении */
+}
+
+.comments-section {
+    margin-top: 25px;                     /* Увеличен верхний отступ */
+    padding: 15px;                        /* Увеличены внутренние отступы */
+    background-color: #f1f1f1;            /* Светло-серый фон */
+    border-radius: 5px;
+}
+
+.comment-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.comment {
+    padding: 12px;                        /* Увеличен отступ */
+    border-bottom: 1px solid #ddd;        /* Легкая граница снизу */
+}
+
+.comment:last-child {
+    border-bottom: none;                  /* Удалить границу для последнего комментария */
+}
+
+.comment-metadata {
+    font-size: 0.9em;
+    color: #666;                          /* Уменьшен цвет для метаданных */
+    margin-bottom: 5px;
+}
+
+.comment-content {
+    font-size: 1em;
+    color: #444;                          /* Увеличен темный цвет текста */
+}
+
+.comment-section h3 {
+    margin-bottom: 15px;                  /* Увеличен нижний отступ */
+    color: #333;                          /* Темный цвет заголовка */
+}
+
+.comment-input {
+    resize: vertical;
+    padding: 12px;                       /* Увеличен отступ */
+    margin-bottom: 15px;                 /* Увеличен нижний отступ */
+    border: 1px solid #ccc;              /* Легкая граница */
+    border-radius: 5px;
+    min-height: 100px;                   /* Увеличена минимальная высота */
+}
+
+.comment-submit-btn {
+    align-self: flex-end;
+    padding: 12px 22px;                  /* Увеличены отступы */
+    background-color: #007BFF;           /* Синий цвет для кнопки */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;    /* Добавлен эффект перехода */
+}
+
+.comment-submit-btn:hover {
+    background-color: #0056b3;           /* Темнее синий цвет при наведении */
+}
+
+.post-title {
+    font-size: 2.5em;                     /* Увеличен размер шрифта */
+    font-weight: bold;                    /* Жирный шрифт для акцента */
+    color: #000;                          /* Черный цвет текста */
+    padding-bottom: 10px;                 /* Увеличен нижний отступ */
+    border-bottom: 2px solid #ccc;        /* Легкая граница снизу для акцента */
+    margin: 20px 0;                       /* Увеличены отступы */
+    text-align: left;                     /* Выровнен по левому краю */
+}
+
+.post-title:hover {
+    color: #555;                          /* Более темный оттенок при наведении */
+}
+
+.comments-section {
+    border-top: 1px solid #ddd;          /* Легкая граница сверху */
+    padding-top: 25px;                   /* Увеличены верхние отступы */
+}
+
+.comment-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.comment {
+    border: 1px solid #e0e0e0;            /* Увеличена граница */
+    border-radius: 5px;
+    padding: 12px;                       /* Увеличен отступ */
+    margin: 12px 0;                      /* Увеличен отступ сверху и снизу */
+    background-color: #f9f9f9;           /* Светло-серый фон */
+    transition: background-color 0.3s;    /* Добавлен эффект перехода */
+}
+
+.comment:hover {
+    background-color: #f1f1f1;           /* Темный фон при наведении */
+}
+
+.comment-metadata {
+    display: flex;
+    justify-content: space-between;       /* Выравнивание метаданных */
+    align-items: center;
+}
+
+.comment-time {
+    font-size: 0.85em;                    /* Увеличен размер шрифта */
+    color: #666;                          /* Цвет метаданных */
+}
+
+.no-comments {
+    font-style: italic;
+    color: #999;                         /* Уменьшен цвет текста для отсутствия комментариев */
+}
+
+.comment-input {
+    width: 100%;
+    height: 100px;                       /* Увеличена высота */
+    border-radius: 5px;
+    border: 1px solid #ccc;              /* Легкая граница */
+    padding: 12px;                       /* Увеличен отступ */
+    resize: none;                        /* Отключен изменяемый размер */
+    margin-bottom: 15px;                 /* Увеличен нижний отступ */
+}
+h3 {
+    color: #333; /* Темный цвет текста */
+    margin-left: 16px;
+}
+
+.comment-submit-btn {
+    background-color: #007BFF;            /* Синий цвет кнопки */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 12px 20px;                   /* Увеличены отступы */
+    cursor: pointer;
+    transition: background-color 0.3s;    /* Добавлен эффект перехода */
+}
+
+.comment-submit-btn:hover {
+    background-color: #0056b3;           /* Темнее синий цвет при наведении */
+}
