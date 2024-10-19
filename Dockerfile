@@ -26,12 +26,8 @@ WORKDIR /app
 # Копируем бинарник из стадии сборки
 COPY --from=builder /app/main .
 
-# Копируем SQL-скрипты в контейнер
-COPY ./docs/new_forum.sql ./docs/testdata.sql /app/docs/
+# Копируем SQL-скрипт new_forum.sql
+COPY ./docs/new_forum.sql  /app/docs/
 
-# Инициализируем базу данных
-RUN sqlite3 forum.db < /app/docs/new_forum.sql && \
-    sqlite3 forum.db < /app/docs/testdata.sql
-
-# Запускаем приложение
-CMD ["./main"]
+# Запускаем приложение и инициализируем базу данных
+CMD ["sh", "-c", "sqlite3 forum.db < /app/docs/new_forum.sql && ./main"]
