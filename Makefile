@@ -17,3 +17,15 @@ generateCerts:
 # Команда для полной инициализации проекта
 init: generateCerts #initDB 
 	@echo "Initialization complete!"
+
+
+IMAGE_NAME=forum
+
+# Сборка образа
+build:
+	docker build -t $(IMAGE_NAME) .
+
+# Запуск контейнера
+run:
+    docker run --rm -p 8080:8080 $(IMAGE_NAME)
+
