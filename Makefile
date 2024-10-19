@@ -1,10 +1,10 @@
 # Инициализация базы данных
-# initDB:
-# 	# Создание базы данных и выполнение начального скрипта
-# 	sqlite3 forum.db < ./docs/new_forum.sql
+initDB:
+	# Создание базы данных и выполнение начального скрипта
+	sqlite3 forum.db < ./docs/new_forum.sql
 	
-# 	# Включение поддержки внешних ключей и выполнение тестовых данных
-# 	sqlite3 forum.db < ./docs/testdata.sql
+	# Включение поддержки внешних ключей и выполнение тестовых данных
+	sqlite3 forum.db < ./docs/testdata.sql
 
 # Генерация самоподписанных сертификатов
 generateCerts:
@@ -15,7 +15,7 @@ generateCerts:
 	openssl req -x509 -newkey rsa:4096 -keyout tls/key.pem -out tls/cert.pem -days 365 -nodes -subj "/CN=localhost"
 
 # Команда для полной инициализации проекта
-init: generateCerts #initDB 
+init: generateCerts initDB
 	@echo "Initialization complete!"
 
 IMAGE_NAME=forum
