@@ -18,7 +18,6 @@ generateCerts:
 init: generateCerts #initDB 
 	@echo "Initialization complete!"
 
-
 IMAGE_NAME=forum
 
 # Сборка образа
@@ -27,5 +26,4 @@ build:
 
 # Запуск контейнера
 run:
-    docker run --rm -p 8080:8080 $(IMAGE_NAME)
-
+	@docker run --rm -p 4000:4000 $(IMAGE_NAME)
