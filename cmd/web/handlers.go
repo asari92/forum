@@ -573,6 +573,8 @@ type postCreateForm struct {
 	validator.Validator
 }
 
+
+
 func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
