@@ -16,7 +16,9 @@ import (
 	"time"
 
 	"forum/docs"
+	"forum/repositories"
 	tlsecurity "forum/tls"
+	"forum/usecases"
 
 	// Go вызывает функцию init() внутри этого пакета.
 	_ "forum/internal/memory"
@@ -29,7 +31,7 @@ import (
 type application struct {
 	logger           *slog.Logger
 	users            models.UserModelInterface
-	posts            models.PostModelInterface
+	posts            *usecases.PostUseCase
 	comments         models.CommentModelInterface
 	postReactions    models.PostReactionModelInterface
 	commentReactions models.CommentReactionModelInterface
@@ -86,10 +88,14 @@ func main() {
 
 	go sessionManager.GC()
 
+	// Инициализация PostRepository и PostUseCase
+	// postRepo := repositories.PostRepository{DB: db}
+	// postUseCase := usecases.PostUseCase{PostRepo: &postRepo}
+
 	app := &application{
 		logger:           logger,
 		users:            &models.UserModel{DB: db},
-		posts:            &models.PostModel{DB: db},
+		posts:            usecases.NewPostUseCase(&repositories.PostRepository{DB: db}),
 		comments:         &models.CommentModel{DB: db},
 		postReactions:    &models.PostReactionModel{DB: db},
 		commentReactions: &models.CommentReactionModel{DB: db},
