@@ -11,7 +11,7 @@ type UserRepository interface {
 	Authenticate(email, password string) (int, error)
 	Exists(id int) (bool, error)
 	Get(id int) (*entities.User, error)
-	PasswordUpdate(id int, currentPassword, newPassword string) error
+	UpdatePassword(id int, currentPassword, newPassword string) error
 }
 
 type UserUseCase struct {
@@ -24,7 +24,7 @@ func NewUserUseCase(userRepo UserRepository) *UserUseCase {
 	}
 }
 
-func (u *UserUseCase) Register(username, email, password string) error {
+func (u *UserUseCase) Insert(username, email, password string) error {
 	// Валидация данных
 	if username == "" || email == "" || password == "" {
 		return errors.New("fields can't be empty")
@@ -32,7 +32,7 @@ func (u *UserUseCase) Register(username, email, password string) error {
 	return u.UserRepo.Insert(username, email, password)
 }
 
-func (u *UserUseCase) Login(email, password string) (int, error) {
+func (u *UserUseCase) Authenticate(email, password string) (int, error) {
 	// Валидация данных
 	if email == "" || password == "" {
 		return 0, errors.New("fields can't be empty")
@@ -49,5 +49,5 @@ func (u *UserUseCase) GetUserByID(id int) (*entities.User, error) {
 }
 
 func (u *UserUseCase) UpdatePassword(id int, currentPassword, newPassword string) error {
-	return u.UserRepo.PasswordUpdate(id, currentPassword, newPassword)
+	return u.UserRepo.UpdatePassword(id, currentPassword, newPassword)
 }

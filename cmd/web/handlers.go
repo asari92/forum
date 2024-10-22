@@ -9,6 +9,7 @@ import (
 
 	"forum/internal/models"
 	"forum/internal/validator"
+	"forum/usecases"
 )
 
 func (app *application) errorHandler(w http.ResponseWriter, r *http.Request) {
@@ -560,7 +561,7 @@ func (app *application) postCreateView(w http.ResponseWriter, r *http.Request) {
 	data.Categories = categories
 	data.Form = postCreateForm{
 		// первая категория всегда отмечена
-		Categories: []int{models.DefaultCategory},
+		Categories: []int{usecases.DefaultCategory},
 	}
 
 	app.render(w, http.StatusOK, "create_post.html", data)
@@ -617,7 +618,7 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 		data.Categories = allCategories
 		// первая категория будет отмечена по умолчанию
 		if len(form.Categories) == 0 {
-			form.Categories = []int{models.DefaultCategory}
+			form.Categories = []int{usecases.DefaultCategory}
 		}
 		data.Form = form
 		app.render(w, http.StatusUnprocessableEntity, "create_post.html", data)

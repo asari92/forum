@@ -1,8 +1,71 @@
 package repositories
 
-import "forum/entities"
+import (
+	"database/sql"
+	"time"
 
-type CommentRepository interface {
-	InsertComment(postID, userID int, content string) error
-	GetComments(postID int) ([]*entities.Comment, error)
+	"forum/entities"
+)
+
+type CommentRepository struct {
+	DB *sql.DB
+}
+
+func NewCommentRepository(db *sql.DB) *CommentRepository {
+	return &CommentRepository{
+		DB: db,
+	}
+}
+
+func (c *CommentRepository) InsertComment(postID, userID int, content string) error {
+	stmt := `INSERT INTO comments (post_id, user_id,content, created)
+	VALUES (?,?,?, datetime('now'))`
+	_, err := c.DB.Exec(stmt, postID, userID, content)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *CommentRepository) GetComments(postID int) ([]*entities.Comment, error) {
+	stmt := `SELECT comments.id, post_id, username, content, comments.created  
+	FROM comments LEFT JOIN users ON users.id = comments.user_id
+	WHERE post_id = ?
+	ORDER BY comments.created DESC`
+
+	rows, err := c.DB.Query(stmt, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var comments []*entities.Comment
+	for rows.Next() {
+		comment := &entities.Comment{}
+		var created string
+		var username sql.NullString
+
+		if err := rows.Scan(&comment.ID, &comment.PostID, &username, &comment.Content, &created); err != nil {
+			return nil, err
+		}
+		if username.Valid {
+			comment.UserName = username.String
+		} else {
+			comment.UserName = "Deleted User"
+		}
+
+		commentTime, err := time.Parse("2006-01-02 15:04:05", created)
+		if err != nil {
+			return nil, err
+		}
+
+		comment.Created = commentTime.Format(time.RFC3339)
+		comments = append(comments, comment)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return comments, nil
 }

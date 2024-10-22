@@ -14,6 +14,12 @@ type PostRepository struct {
 	DB *sql.DB
 }
 
+func NewPostRepository(db *sql.DB) *PostRepository {
+	return &PostRepository{
+		DB: db,
+	}
+}
+
 func (r *PostRepository) InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error) {
 	// Начинаем транзакцию
 	tx, err := r.DB.Begin()

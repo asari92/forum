@@ -22,7 +22,6 @@ import (
 
 	// Go вызывает функцию init() внутри этого пакета.
 	_ "forum/internal/memory"
-	"forum/internal/models"
 	"forum/internal/session"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -30,12 +29,12 @@ import (
 
 type application struct {
 	logger           *slog.Logger
-	users            models.UserModelInterface
+	users            *usecases.UserUseCase
 	posts            *usecases.PostUseCase
-	comments         models.CommentModelInterface
-	postReactions    models.PostReactionModelInterface
-	commentReactions models.CommentReactionModelInterface
-	categories       models.CategoryModelInterface
+	comments         *usecases.CommentUseCase
+	categories       *usecases.CategoryUseCase
+	postReactions    *usecases.PostReactionUseCase
+	commentReactions *usecases.CommentReactionUseCase
 	templateCache    map[string]*template.Template
 	sessionManager   *session.Manager
 }
@@ -88,18 +87,14 @@ func main() {
 
 	go sessionManager.GC()
 
-	// Инициализация PostRepository и PostUseCase
-	// postRepo := repositories.PostRepository{DB: db}
-	// postUseCase := usecases.PostUseCase{PostRepo: &postRepo}
-
 	app := &application{
 		logger:           logger,
-		users:            &models.UserModel{DB: db},
-		posts:            usecases.NewPostUseCase(&repositories.PostRepository{DB: db}),
-		comments:         &models.CommentModel{DB: db},
-		postReactions:    &models.PostReactionModel{DB: db},
-		commentReactions: &models.CommentReactionModel{DB: db},
-		categories:       &models.CategoryModel{DB: db},
+		users:            usecases.NewUserUseCase(repositories.NewUserRepository(db)),
+		posts:            usecases.NewPostUseCase(repositories.NewPostRepository(db)),
+		comments:         usecases.NewCommentUseCase(repositories.NewCommentRepository(db)),
+		categories:       usecases.NewCategoryUseCase(repositories.NewCategoryRepository(db)),
+		postReactions:    usecases.NewPostReactionUseCase(repositories.NewPostReactionRepository(db)),
+		commentReactions: usecases.NewCommentReactionUseCase(repositories.NewCommentReactionRepository(db)),
 		templateCache:    templateCache,
 		sessionManager:   sessionManager,
 	}
