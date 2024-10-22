@@ -2,7 +2,7 @@ package repositories
 
 import "forum/entities"
 
-type CommentReactionModelInterface interface {
+type CommentReactionRepository interface {
 	AddReaction(userID, commentID int, isLike bool) error
 	RemoveReaction(userID, commentID int) error
 	GetLikesCount(commentID int) (int, error)

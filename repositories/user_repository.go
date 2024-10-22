@@ -2,7 +2,7 @@ package repositories
 
 import "forum/entities"
 
-type UserModelInterface interface {
+type UserRepository interface {
 	Insert(username, email, password string) error
 	Authenticate(email, password string) (int, error)
 	Exists(id int) (bool, error)

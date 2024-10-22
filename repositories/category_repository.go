@@ -2,7 +2,7 @@ package repositories
 
 import "forum/entities"
 
-type CategoryModelInterface interface {
+type CategoryModelRepository interface {
 	Insert(name string) (int, error)
 	Get(categoryId int) (*entities.Category, error)
 	GetAll() ([]*entities.Category, error)
