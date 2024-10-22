@@ -7,8 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"forum/internal/models"
+	"forum/entities"
 	"forum/internal/validator"
+	"forum/repositories"
 	"forum/usecases"
 )
 
@@ -195,9 +196,9 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := app.posts.Get(postID)
+	post, err := app.posts.GetPost(postID)
 	if err != nil {
-		if errors.Is(err, models.ErrNoRecord) {
+		if errors.Is(err, repositories.ErrNoRecord) {
 			app.render(w, http.StatusNotFound, Errorpage, nil)
 			return
 		} else {
@@ -222,7 +223,7 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sess := app.SessionFromContext(r)
-	var userReaction *models.PostReaction
+	var userReaction *entities.PostReaction
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if ok && userID != 0 {
 		userReaction, err = app.postReactions.GetUserReaction(userID, postID) // Получите реакцию пользователя
@@ -232,7 +233,7 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	comments, err := app.comments.GetComments(postID)
+	comments, err := app.comments.GetPostComments(postID)
 	if err != nil {
 		app.logger.Error("get comments from database", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -315,7 +316,7 @@ func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if comment != "" {
-		err = app.comments.InsertComment(postID, userID, comment)
+		err = app.comments.AddComment(postID, userID, comment)
 		if err != nil {
 			app.logger.Error("insert comment to database", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -326,7 +327,7 @@ func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
 		// Преобразуем isLike в bool
 		like := postIsLike == "true"
 
-		var userReaction *models.PostReaction
+		var userReaction *entities.PostReaction
 		userReaction, err = app.postReactions.GetUserReaction(userID, postID) // Получите реакцию пользователя
 		if err != nil {
 			app.logger.Error("get post user reaction", "error", err)
@@ -357,7 +358,7 @@ func (app *application) postReaction(w http.ResponseWriter, r *http.Request) {
 		}
 
 		reaction := commentIsLike == "true"
-		var commentReaction *models.CommentReaction
+		var commentReaction *entities.CommentReaction
 
 		commentReaction, err = app.commentReactions.GetUserReaction(userID, commentID)
 		if err != nil {
@@ -403,7 +404,7 @@ func (app *application) commentReaction(w http.ResponseWriter, r *http.Request) 
 	}
 	isLike := r.PostForm.Get("is_like")
 	reaction := isLike == "true"
-	var commentReaction *models.CommentReaction
+	var commentReaction *entities.CommentReaction
 	sess := app.SessionFromContext(r)
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if ok && userID != 0 {
@@ -462,14 +463,14 @@ func (app *application) userPostsView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := app.users.Get(userId)
+	user, err := app.users.GetUserByID(userId)
 	if err != nil {
-		if errors.Is(err, models.ErrNoRecord) {
+		if errors.Is(err, repositories.ErrNoRecord) {
 			if len(posts) == 0 {
 				app.render(w, http.StatusNotFound, Errorpage, nil)
 				return
 			} else {
-				user = &models.User{Username: "Deleted User", ID: userId}
+				user = &entities.User{Username: "Deleted User", ID: userId}
 			}
 		} else {
 			app.logger.Error("get user query error", "error", err)
@@ -525,7 +526,7 @@ func (app *application) userLikedPostsView(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	user, err := app.users.Get(userID)
+	user, err := app.users.GetUserByID(userID)
 	if err != nil {
 		app.logger.Error("get user", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -573,8 +574,6 @@ type postCreateForm struct {
 	Categories []int
 	validator.Validator
 }
-
-
 
 func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
@@ -634,7 +633,7 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postId, err := app.posts.InsertPostWithCategories(form.Title, form.Content, userId, form.Categories)
+	postId, err := app.posts.CreatePostWithCategories(form.Title, form.Content, userId, form.Categories)
 	if err != nil {
 		app.logger.Error("insert post and categories", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -653,7 +652,7 @@ func (app *application) postCreate(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/post/view/%d", postId), http.StatusSeeOther)
 }
 
-func (form *postCreateForm) validateCategories(allCategories []*models.Category) {
+func (form *postCreateForm) validateCategories(allCategories []*entities.Category) {
 	categoryIDs := []int{}
 	if len(form.Categories) == 0 {
 		form.AddFieldError("categories", "Need one or more category")
@@ -728,7 +727,7 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 
 	err = app.users.Insert(form.Username, form.Email, form.Password)
 	if err != nil {
-		if errors.Is(err, models.ErrDuplicateEmail) {
+		if errors.Is(err, repositories.ErrDuplicateEmail) {
 			form.AddFieldError("email", "Email address is already in use")
 
 			data := app.newTemplateData(r)
@@ -805,7 +804,7 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 	// non-field error message and re-display the login page.
 	id, err := app.users.Authenticate(form.Email, form.Password)
 	if err != nil {
-		if errors.Is(err, models.ErrInvalidCredentials) {
+		if errors.Is(err, repositories.ErrInvalidCredentials) {
 			form.AddNonFieldError("Email or password is incorrect")
 
 			data := app.newTemplateData(r)
@@ -899,9 +898,9 @@ func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := app.users.Get(userID)
+	user, err := app.users.GetUserByID(userID)
 	if err != nil {
-		if errors.Is(err, models.ErrNoRecord) {
+		if errors.Is(err, repositories.ErrNoRecord) {
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 		} else {
 			app.logger.Error("get user from db", "error", err)
@@ -966,9 +965,9 @@ func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	err = app.users.PasswordUpdate(userID, form.CurrentPassword, form.NewPassword)
+	err = app.users.UpdatePassword(userID, form.CurrentPassword, form.NewPassword)
 	if err != nil {
-		if errors.Is(err, models.ErrInvalidCredentials) {
+		if errors.Is(err, repositories.ErrInvalidCredentials) {
 			form.AddFieldError("currentPassword", "Current password is incorrect")
 			data := app.newTemplateData(r)
 			data.Form = form

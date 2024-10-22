@@ -3,7 +3,8 @@ package mocks
 import (
 	"time"
 
-	"forum/internal/models"
+	"forum/entities"
+	"forum/repositories"
 )
 
 type UserModel struct{}
@@ -11,7 +12,7 @@ type UserModel struct{}
 func (m *UserModel) Insert(name, email, password string) error {
 	switch email {
 	case "dupe@example.com":
-		return models.ErrDuplicateEmail
+		return repositories.ErrDuplicateEmail
 	default:
 		return nil
 	}
@@ -22,7 +23,7 @@ func (m *UserModel) Authenticate(email, password string) (int, error) {
 		return 1, nil
 	}
 
-	return 0, models.ErrInvalidCredentials
+	return 0, repositories.ErrInvalidCredentials
 }
 
 func (m *UserModel) Exists(id int) (bool, error) {
@@ -34,9 +35,9 @@ func (m *UserModel) Exists(id int) (bool, error) {
 	}
 }
 
-func (m *UserModel) Get(id int) (*models.User, error) {
+func (m *UserModel) Get(id int) (*entities.User, error) {
 	if id == 1 {
-		u := &models.User{
+		u := &entities.User{
 			ID:       1,
 			Username: "Alice",
 			Email:    "alice@example.com",
@@ -46,17 +47,17 @@ func (m *UserModel) Get(id int) (*models.User, error) {
 		return u, nil
 	}
 
-	return nil, models.ErrNoRecord
+	return nil, repositories.ErrNoRecord
 }
 
 func (m *UserModel) PasswordUpdate(id int, currentPassword, newPassword string) error {
 	if id == 1 {
 		if currentPassword != "pa$$word" {
-			return models.ErrInvalidCredentials
+			return repositories.ErrInvalidCredentials
 		}
 
 		return nil
 	}
 
-	return models.ErrNoRecord
+	return repositories.ErrNoRecord
 }

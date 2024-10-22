@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"forum/internal/models"
+	"forum/entities"
 	"forum/ui"
 )
 
@@ -19,7 +19,7 @@ type AppError struct {
 type ReactionData struct {
 	Likes        int
 	Dislikes     int
-	UserReaction *models.PostReaction
+	UserReaction *entities.PostReaction
 }
 
 func (rd *ReactionData) GetUserReaction() int {
@@ -36,15 +36,15 @@ func (rd *ReactionData) GetUserReaction() int {
 type templateData struct {
 	AppError        AppError
 	CurrentYear     int
-	Categories      []*models.Category
+	Categories      []*entities.Category
 	CSRFToken       string
-	Post            *models.Post
-	Posts           []*models.Post
-	Comments        []*models.Comment
+	Post            *entities.Post
+	Posts           []*entities.Post
+	Comments        []*entities.Comment
 	Form            any
 	Flash           string
 	IsAuthenticated bool
-	User            *models.User
+	User            *entities.User
 	ReactionData    *ReactionData
 	Header          string
 	Pagination      any

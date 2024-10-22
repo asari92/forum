@@ -1,9 +1,10 @@
-package models
+package usecases
 
 import (
 	"testing"
 
 	"forum/internal/assert"
+	"forum/repositories"
 )
 
 func TestUserModelExists(t *testing.T) {
@@ -32,8 +33,8 @@ func TestUserModelExists(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := newTestDB(t)
-			m := UserModel{db}
-			exists, err := m.Exists(tt.userID)
+			m := NewUserUseCase(repositories.NewUserRepository(db))
+			exists, err := m.UserExists(tt.userID)
 			assert.Equal(t, exists, tt.want)
 			assert.NilError(t, err)
 		})

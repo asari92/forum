@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"testing"
 
-	"forum/internal/models/mocks"
+	// "forum/usecases/mocks"
 	"forum/internal/session"
 )
 
@@ -54,10 +54,10 @@ func newTestApplication(t *testing.T) *application {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
 	return &application{
-		logger:         logger,
-		posts:          &mocks.PostModel{}, // Use the mock.
-		users:          &mocks.UserModel{}, // Use the mock.
-		categories:     &mocks.CategoryModel{},
+		logger: logger,
+		// posts:          &mocks.PostModel{}, // Use the mock.
+		// users:          &mocks.UserModel{}, // Use the mock.
+		// categories:     &mocks.CategoryModel{},
 		templateCache:  templateCache,
 		sessionManager: sessionManager,
 	}

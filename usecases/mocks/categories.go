@@ -1,22 +1,25 @@
 package mocks
 
-import "forum/internal/models"
+import (
+	"forum/entities"
+	"forum/repositories"
+)
 
 type CategoryModel struct{}
 
-var mockCategory = &models.Category{
+var mockCategory = &entities.Category{
 	ID:   1,
 	Name: "Test",
 }
 
-func (m *CategoryModel) GetCategoriesForPost(postId int) ([]*models.Category, error) {
-	categories := []*models.Category{}
+func (m *CategoryModel) GetCategoriesForPost(postId int) ([]*entities.Category, error) {
+	categories := []*entities.Category{}
 	switch postId {
 	case 1:
 		categories = append(categories, mockCategory)
 		return categories, nil
 	default:
-		return nil, models.ErrNoRecord
+		return nil, repositories.ErrNoRecord
 	}
 }
 
@@ -24,13 +27,13 @@ func (m *CategoryModel) Insert(name string) (int, error) {
 	return 1, nil
 }
 
-func (m *CategoryModel) Get(categoryId int) (*models.Category, error) {
-	c := &models.Category{}
+func (m *CategoryModel) Get(categoryId int) (*entities.Category, error) {
+	c := &entities.Category{}
 
 	return c, nil
 }
 
-func (m *CategoryModel) GetAll() ([]*models.Category, error) {
+func (m *CategoryModel) GetAll() ([]*entities.Category, error) {
 	return nil, nil
 }
 

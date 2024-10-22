@@ -164,7 +164,7 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		exists, err := app.users.Exists(id)
+		exists, err := app.users.UserExists(id)
 		if err != nil {
 			app.logger.Error("user exists", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
