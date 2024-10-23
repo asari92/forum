@@ -1,4 +1,4 @@
-package repositories
+package repository
 
 import (
 	"database/sql"
@@ -10,17 +10,17 @@ import (
 	"forum/entities"
 )
 
-type PostRepository struct {
+type PostSqlite3 struct {
 	DB *sql.DB
 }
 
-func NewPostRepository(db *sql.DB) *PostRepository {
-	return &PostRepository{
+func NewPostSqlite3(db *sql.DB) *PostSqlite3 {
+	return &PostSqlite3{
 		DB: db,
 	}
 }
 
-func (r *PostRepository) InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error) {
+func (r *PostSqlite3) InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error) {
 	// Начинаем транзакцию
 	tx, err := r.DB.Begin()
 	if err != nil {
@@ -65,7 +65,7 @@ func (r *PostRepository) InsertPostWithCategories(title, content string, userID 
 	return int(postID), nil
 }
 
-func (r *PostRepository) GetPost(postID int) (*entities.Post, error) {
+func (r *PostSqlite3) GetPost(postID int) (*entities.Post, error) {
 	stmt := `SELECT posts.id,title,username,content, posts.created 
 	FROM posts LEFT JOIN users ON posts.user_id = users.id
     WHERE posts.id = ?`
@@ -101,7 +101,7 @@ func (r *PostRepository) GetPost(postID int) (*entities.Post, error) {
 }
 
 // Получение постов по категориям с пагинацией
-func (r *PostRepository) GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error) {
+func (r *PostSqlite3) GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error) {
 	placeholders := make([]string, len(categoryIDs))
 	args := make([]interface{}, len(categoryIDs))
 	offset := (page - 1) * pageSize
@@ -156,7 +156,7 @@ func (r *PostRepository) GetPaginatedPostsByCategory(categoryIDs []int, page, pa
 	return posts, nil
 }
 
-func (r *PostRepository) GetUserPaginatedPosts(userId, page, pageSize int) ([]*entities.Post, error) {
+func (r *PostSqlite3) GetUserPaginatedPosts(userId, page, pageSize int) ([]*entities.Post, error) {
 	offset := (page - 1) * pageSize
 
 	stmt := `SELECT id, title, content, user_id, created FROM posts
@@ -196,7 +196,7 @@ func (r *PostRepository) GetUserPaginatedPosts(userId, page, pageSize int) ([]*e
 	return posts, nil
 }
 
-func (r *PostRepository) GetUserLikedPaginatedPosts(userId, page, pageSize int) ([]*entities.Post, error) {
+func (r *PostSqlite3) GetUserLikedPaginatedPosts(userId, page, pageSize int) ([]*entities.Post, error) {
 	offset := (page - 1) * pageSize
 
 	stmt := `SELECT id, title, content, p.user_id, created 
@@ -238,7 +238,7 @@ func (r *PostRepository) GetUserLikedPaginatedPosts(userId, page, pageSize int) 
 	return posts, nil
 }
 
-func (r *PostRepository) GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post, error) {
+func (r *PostSqlite3) GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post, error) {
 	offset := (page - 1) * pageSize // Вычисляем смещение для текущей страницы
 
 	stmt := `SELECT id, title, content, user_id, created FROM posts
@@ -278,7 +278,7 @@ func (r *PostRepository) GetAllPaginatedPosts(page, pageSize int) ([]*entities.P
 }
 
 // Удаление поста
-func (r *PostRepository) DeletePost(postID int) error {
+func (r *PostSqlite3) DeletePost(postID int) error {
 	stmt := `DELETE FROM posts WHERE id = ?`
 	_, err := r.DB.Exec(stmt, postID)
 	return err

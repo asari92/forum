@@ -1,4 +1,4 @@
-package repositories
+package repository
 
 import (
 	"database/sql"
@@ -7,17 +7,17 @@ import (
 	"forum/entities"
 )
 
-type CommentRepository struct {
+type CommentSqlite3 struct {
 	DB *sql.DB
 }
 
-func NewCommentRepository(db *sql.DB) *CommentRepository {
-	return &CommentRepository{
+func NewCommentSqlite3(db *sql.DB) *CommentSqlite3 {
+	return &CommentSqlite3{
 		DB: db,
 	}
 }
 
-func (c *CommentRepository) InsertComment(postID, userID int, content string) error {
+func (c *CommentSqlite3) InsertComment(postID, userID int, content string) error {
 	stmt := `INSERT INTO comments (post_id, user_id,content, created)
 	VALUES (?,?,?, datetime('now'))`
 	_, err := c.DB.Exec(stmt, postID, userID, content)
@@ -28,7 +28,7 @@ func (c *CommentRepository) InsertComment(postID, userID int, content string) er
 	return nil
 }
 
-func (c *CommentRepository) GetComments(postID int) ([]*entities.Comment, error) {
+func (c *CommentSqlite3) GetComments(postID int) ([]*entities.Comment, error) {
 	stmt := `SELECT comments.id, post_id, username, content, comments.created  
 	FROM comments LEFT JOIN users ON users.id = comments.user_id
 	WHERE post_id = ?

@@ -1,0 +1,73 @@
+package repository
+
+import (
+	"database/sql"
+	"forum/entities"
+)
+
+type UserRepository interface {
+	Insert(username, email, password string) error
+	Authenticate(email, password string) (int, error)
+	Exists(id int) (bool, error)
+	Get(id int) (*entities.User, error)
+	UpdatePassword(id int, currentPassword, newPassword string) error
+}
+
+type PostRepository interface {
+	InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error)
+	GetPost(postID int) (*entities.Post, error)
+	GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error)
+	GetUserPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
+	GetUserLikedPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
+	GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post, error)
+	DeletePost(postID int) error
+}
+
+type PostReactionRepository interface {
+	AddReaction(userID, postID int, isLike bool) error
+	RemoveReaction(userID, postID int) error
+	GetUserReaction(userID, postID int) (*entities.PostReaction, error)
+	GetReactionsCount(postID int) (likes int, dislikes int, err error)
+}
+
+type CommentRepository interface {
+	InsertComment(postID, userID int, content string) error
+	GetComments(postID int) ([]*entities.Comment, error)
+}
+
+type CommentReactionRepository interface {
+	AddReaction(userID, commentID int, isLike bool) error
+	RemoveReaction(userID, commentID int) error
+	GetUserReaction(userID, commentID int) (*entities.CommentReaction, error)
+	GetLikesCount(commentID int) (int, error)
+	GetDislikesCount(commentID int) (int, error)
+}
+
+type CategoryRepository interface {
+	Insert(name string) (int, error)
+	Get(categoryId int) (*entities.Category, error)
+	GetAll() ([]*entities.Category, error)
+	Delete(categoryId int) error
+	GetCategoriesForPost(postId int) ([]*entities.Category, error)
+	DeleteCategoriesForPost(postId int) error
+}
+
+type Repository struct {
+	UserRepository
+	PostRepository
+	PostReactionRepository
+	CommentRepository
+	CommentReactionRepository
+	CategoryRepository
+}
+
+func NewRepository(db *sql.DB) *Repository {
+	return &Repository{
+		UserRepository:            NewUserSqlite3(db),
+		PostRepository:            NewPostSqlite3(db),
+		PostReactionRepository:    NewPostReactionSqlite3(db),
+		CommentRepository:         NewCommentSqlite3(db),
+		CommentReactionRepository: NewCommentReactionSqlite3(db),
+		CategoryRepository:        NewCategorySqlite3(db),
+	}
+}

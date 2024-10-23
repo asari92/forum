@@ -1,19 +1,15 @@
-package usecases
+package service
 
-import "forum/entities"
-
-type PostReactionRepository interface {
-	AddReaction(userID, postID int, isLike bool) error
-	RemoveReaction(userID, postID int) error
-	GetUserReaction(userID, postID int) (*entities.PostReaction, error)
-	GetReactionsCount(postID int) (likes int, dislikes int, err error)
-}
+import (
+	"forum/entities"
+	"forum/repository"
+)
 
 type PostReactionUseCase struct {
-	PostReactionRepo PostReactionRepository
+	PostReactionRepo repository.PostReactionRepository
 }
 
-func NewPostReactionUseCase(postReactionRepo PostReactionRepository) *PostReactionUseCase {
+func NewPostReactionUseCase(postReactionRepo repository.PostReactionRepository) *PostReactionUseCase {
 	return &PostReactionUseCase{PostReactionRepo: postReactionRepo}
 }
 

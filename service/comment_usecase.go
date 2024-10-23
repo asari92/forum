@@ -1,21 +1,17 @@
-package usecases
+package service
 
 import (
 	"errors"
 
 	"forum/entities"
+	"forum/repository"
 )
 
-type CommentRepository interface {
-	InsertComment(postID, userID int, content string) error
-	GetComments(postID int) ([]*entities.Comment, error)
-}
-
 type CommentUseCase struct {
-	CommentRepo CommentRepository
+	CommentRepo repository.CommentRepository
 }
 
-func NewCommentUseCase(commentRepo CommentRepository) *CommentUseCase {
+func NewCommentUseCase(commentRepo repository.CommentRepository) *CommentUseCase {
 	return &CommentUseCase{
 		CommentRepo: commentRepo,
 	}

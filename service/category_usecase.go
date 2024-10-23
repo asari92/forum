@@ -1,27 +1,19 @@
-package usecases
+package service
 
 import (
 	"errors"
 
 	"forum/entities"
+	"forum/repository"
 )
 
 const DefaultCategory = 1
 
-type CategoryRepository interface {
-	Insert(name string) (int, error)
-	Get(categoryId int) (*entities.Category, error)
-	GetAll() ([]*entities.Category, error)
-	Delete(categoryId int) error
-	GetCategoriesForPost(postId int) ([]*entities.Category, error)
-	DeleteCategoriesForPost(postId int) error
-}
-
 type CategoryUseCase struct {
-	CategoryRepo CategoryRepository
+	CategoryRepo repository.CategoryRepository
 }
 
-func NewCategoryUseCase(categoryRepo CategoryRepository) *CategoryUseCase {
+func NewCategoryUseCase(categoryRepo repository.CategoryRepository) *CategoryUseCase {
 	return &CategoryUseCase{CategoryRepo: categoryRepo}
 }
 

@@ -1,4 +1,4 @@
-package repositories
+package repository
 
 import (
 	"database/sql"
@@ -7,15 +7,15 @@ import (
 	"forum/entities"
 )
 
-type CategoryRepository struct {
+type CategorySqlite3 struct {
 	DB *sql.DB
 }
 
-func NewCategoryRepository(db *sql.DB) *CategoryRepository {
-	return &CategoryRepository{DB: db}
+func NewCategorySqlite3(db *sql.DB) *CategorySqlite3 {
+	return &CategorySqlite3{DB: db}
 }
 
-func (r *CategoryRepository) Insert(name string) (int, error) {
+func (r *CategorySqlite3) Insert(name string) (int, error) {
 	stmt := `INSERT INTO categories (name) VALUES (?)`
 	result, err := r.DB.Exec(stmt, name)
 	if err != nil {
@@ -29,7 +29,7 @@ func (r *CategoryRepository) Insert(name string) (int, error) {
 	return int(id), nil
 }
 
-func (r *CategoryRepository) Get(categoryId int) (*entities.Category, error) {
+func (r *CategorySqlite3) Get(categoryId int) (*entities.Category, error) {
 	stmt := `SELECT id, name FROM categories WHERE id = ?`
 	row := r.DB.QueryRow(stmt, categoryId)
 	category := &entities.Category{}
@@ -44,7 +44,7 @@ func (r *CategoryRepository) Get(categoryId int) (*entities.Category, error) {
 	return category, nil
 }
 
-func (r *CategoryRepository) GetAll() ([]*entities.Category, error) {
+func (r *CategorySqlite3) GetAll() ([]*entities.Category, error) {
 	stmt := `SELECT id, name FROM categories`
 	rows, err := r.DB.Query(stmt)
 	if err != nil {
@@ -66,13 +66,13 @@ func (r *CategoryRepository) GetAll() ([]*entities.Category, error) {
 	return categories, nil
 }
 
-func (r *CategoryRepository) Delete(categoryId int) error {
+func (r *CategorySqlite3) Delete(categoryId int) error {
 	stmt := `DELETE FROM categories WHERE id = ?`
 	_, err := r.DB.Exec(stmt, categoryId)
 	return err
 }
 
-func (r *CategoryRepository) GetCategoriesForPost(postId int) ([]*entities.Category, error) {
+func (r *CategorySqlite3) GetCategoriesForPost(postId int) ([]*entities.Category, error) {
 	stmt := `SELECT c.id, c.name FROM categories c
 	         INNER JOIN post_categories pc ON c.id = pc.category_id
 	         WHERE pc.post_id = ?`
@@ -96,7 +96,7 @@ func (r *CategoryRepository) GetCategoriesForPost(postId int) ([]*entities.Categ
 	return categories, nil
 }
 
-func (r *CategoryRepository) DeleteCategoriesForPost(postId int) error {
+func (r *CategorySqlite3) DeleteCategoriesForPost(postId int) error {
 	stmt := `DELETE FROM post_categories WHERE post_id = ?`
 	_, err := r.DB.Exec(stmt, postId)
 	return err

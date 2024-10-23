@@ -1,26 +1,16 @@
-package usecases
+package service
 
 import (
 	"forum/entities"
+	"forum/repository"
 )
-
-// Интерфейс репозитория
-type PostRepository interface {
-	InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error)
-	GetPost(postID int) (*entities.Post, error)
-	GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error)
-	GetUserPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
-	GetUserLikedPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
-	GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post, error)
-	DeletePost(postID int) error
-}
 
 // Use Case структура
 type PostUseCase struct {
-	PostRepo PostRepository
+	PostRepo repository.PostRepository
 }
 
-func NewPostUseCase(postRepo PostRepository) *PostUseCase {
+func NewPostUseCase(postRepo repository.PostRepository) *PostUseCase {
 	return &PostUseCase{
 		PostRepo: postRepo,
 	}

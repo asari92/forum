@@ -1,24 +1,17 @@
-package usecases
+package service
 
 import (
 	"errors"
 
 	"forum/entities"
+	"forum/repository"
 )
 
-type UserRepository interface {
-	Insert(username, email, password string) error
-	Authenticate(email, password string) (int, error)
-	Exists(id int) (bool, error)
-	Get(id int) (*entities.User, error)
-	UpdatePassword(id int, currentPassword, newPassword string) error
-}
-
 type UserUseCase struct {
-	UserRepo UserRepository
+	UserRepo repository.UserRepository
 }
 
-func NewUserUseCase(userRepo UserRepository) *UserUseCase {
+func NewUserUseCase(userRepo repository.UserRepository) *UserUseCase {
 	return &UserUseCase{
 		UserRepo: userRepo,
 	}
