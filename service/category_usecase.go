@@ -7,8 +7,6 @@ import (
 	"forum/repository"
 )
 
-const DefaultCategory = 1
-
 type CategoryUseCase struct {
 	CategoryRepo repository.CategoryRepository
 }

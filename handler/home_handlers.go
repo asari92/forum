@@ -3,7 +3,6 @@ package handler
 import (
 	"fmt"
 	"forum/entities"
-	"forum/internal/validator"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,20 +14,15 @@ type pagination struct {
 	PaginationAction string
 }
 
-type categoryFilterForm struct {
-	Categories []int
-	validator.Validator
-}
-
-func (app *application) home(w http.ResponseWriter, r *http.Request) {
+func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 	// Определяем текущую страницу. По умолчанию - страница 1.
 	page := 1
 	pageSize := 10 // Количество постов на одной странице
 
 	// Получаем посты для нужной страницы.
-	posts, err := app.posts.GetAllPaginatedPosts(page, pageSize)
+	posts, err := app.Usecases.Post.GetAllPaginatedPosts(page, pageSize)
 	if err != nil {
-		app.logger.Error("get all paginated posts", "error", err)
+		app.Logger.Error("get all paginated posts", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
@@ -41,14 +35,14 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		posts = posts[:pageSize]
 	}
 
-	categories, err := app.categories.GetAll()
+	categories, err := app.Usecases.Category.GetAll()
 	if err != nil {
-		app.logger.Error("get all categories", "error", err)
+		app.Logger.Error("get all categories", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
-	form := categoryFilterForm{
+	form := postCreateForm{
 		Categories: []int{},
 	}
 
@@ -65,7 +59,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "home.html", data)
 }
 
-func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
+func (app *Application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		app.render(w, http.StatusNotFound, Errorpage, nil)
 		return
@@ -94,13 +88,13 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 		categoryIDs = append(categoryIDs, intID)
 	}
 
-	form := categoryFilterForm{
+	form := postCreateForm{
 		Categories: categoryIDs,
 	}
 
-	allCategories, err := app.categories.GetAll()
+	allCategories, err := app.Usecases.Category.GetAll()
 	if err != nil {
-		app.logger.Error("get all categories", "error", err)
+		app.Logger.Error("get all categories", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
@@ -114,9 +108,9 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	data.Header = "All posts"
 
 	if !form.Valid() {
-		posts, err := app.posts.GetAllPaginatedPosts(page, pageSize)
+		posts, err := app.Usecases.Post.GetAllPaginatedPosts(page, pageSize)
 		if err != nil {
-			app.logger.Error("get all posts", "error", err)
+			app.Logger.Error("get all posts", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 		}
@@ -141,9 +135,9 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Получаем посты с пагинацией и на одну запись больше
-	posts, err := app.posts.GetPaginatedPostsByCategory(form.Categories, page, pageSize)
+	posts, err := app.Usecases.Post.GetPaginatedPostsByCategory(form.Categories, page, pageSize)
 	if err != nil {
-		app.logger.Error("get paginated posts by category", "error", err)
+		app.Logger.Error("get paginated posts by category", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
@@ -181,7 +175,7 @@ func (app *application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "home.html", data)
 }
 
-func (form *categoryFilterForm) validateCategories(allCategories []*entities.Category) {
+func (form *postCreateForm) validateCategories(allCategories []*entities.Category) {
 	categoryIDs := []int{}
 	if len(form.Categories) == 0 {
 		form.AddFieldError("categories", "Need one or more category")
@@ -207,7 +201,7 @@ func (form *categoryFilterForm) validateCategories(allCategories []*entities.Cat
 	}
 }
 
-func (app *application) aboutView(w http.ResponseWriter, r *http.Request) {
+func (app *Application) aboutView(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	app.render(w, http.StatusOK, "about.html", data)
 }

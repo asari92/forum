@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"bytes"
@@ -33,9 +33,9 @@ func extractCSRFToken(t *testing.T, body string) string {
 	return html.UnescapeString(string(matches[1]))
 }
 
-func newTestApplication(t *testing.T) *application {
+func newTestApplication(t *testing.T) *Application {
 	// Create an instance of the template cache.
-	templateCache, err := newTemplateCache()
+	templateCache, err := NewTemplateCache()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,13 +53,13 @@ func newTestApplication(t *testing.T) *application {
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
-	return &application{
-		logger: logger,
+	return &Application{
+		Logger: logger,
 		// posts:          &mocks.PostModel{}, // Use the mock.
 		// users:          &mocks.UserModel{}, // Use the mock.
 		// categories:     &mocks.CategoryModel{},
-		templateCache:  templateCache,
-		sessionManager: sessionManager,
+		TemplateCache:  templateCache,
+		SessionManager: sessionManager,
 	}
 }
 

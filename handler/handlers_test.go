@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"net/http"
@@ -11,7 +11,7 @@ import (
 func TestPing(t *testing.T) {
 	app := newTestApplication(t)
 
-	ts := newTestServer(t, app.routes())
+	ts := newTestServer(t, app.Routes())
 	defer ts.Close()
 
 	code, _, body := ts.get(t, "/ping")
@@ -26,7 +26,7 @@ func TestPostView(t *testing.T) {
 	app := newTestApplication(t)
 
 	// Establish a new test server for running end-to-end tests.
-	ts := newTestServer(t, app.routes())
+	ts := newTestServer(t, app.Routes())
 	defer ts.Close()
 
 	// Set up some table-driven tests to check the responses sent by our
@@ -85,7 +85,7 @@ func TestPostView(t *testing.T) {
 
 func TestUserSignup(t *testing.T) {
 	app := newTestApplication(t)
-	ts := newTestServer(t, app.routes())
+	ts := newTestServer(t, app.Routes())
 	defer ts.Close()
 
 	const (
@@ -203,7 +203,7 @@ func TestUserSignup(t *testing.T) {
 
 func TestPostCreate(t *testing.T) {
 	app := newTestApplication(t)
-	ts := newTestServer(t, app.routes())
+	ts := newTestServer(t, app.Routes())
 	defer ts.Close()
 
 	t.Run("Unauthenticated", func(t *testing.T) {

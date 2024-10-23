@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"bytes"
@@ -26,6 +26,7 @@ var RequestPaths = map[string]bool{
 }
 
 const Errorpage = "errorpage.html"
+const DefaultCategory = 1
 
 // func (app *application) serverErrorLogging(err error) {
 // 	_, path, line, _ := runtime.Caller(1)
@@ -37,15 +38,15 @@ const Errorpage = "errorpage.html"
 // 	)
 // }
 
-func (app *application) serverError(w http.ResponseWriter) {
+func (app *Application) serverError(w http.ResponseWriter) {
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
-func (app *application) render(w http.ResponseWriter, status int, page string, data *templateData) {
-	ts, ok := app.templateCache[page]
+func (app *Application) render(w http.ResponseWriter, status int, page string, data *templateData) {
+	ts, ok := app.TemplateCache[page]
 	if !ok {
 		err := fmt.Errorf("the template %s does not exist", page)
-		app.logger.Error("Server error occured", "render error", err)
+		app.Logger.Error("Server error occured", "render error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
@@ -59,7 +60,7 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 		}
 		err := ts.Execute(buf, data)
 		if err != nil {
-			app.logger.Error("Server error occured", "render error", err)
+			app.Logger.Error("Server error occured", "render error", err)
 			app.serverError(w)
 			return
 
@@ -71,7 +72,7 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 		// and then return.
 		err := ts.ExecuteTemplate(buf, "base", data)
 		if err != nil {
-			app.logger.Error("Server error occured", "render error", err)
+			app.Logger.Error("Server error occured", "render error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 		}
@@ -87,17 +88,17 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 	buf.WriteTo(w)
 }
 
-func (app *application) SessionFromContext(r *http.Request) session.Session {
+func (app *Application) SessionFromContext(r *http.Request) session.Session {
 	return r.Context().Value(sessionContextKey).(session.Session)
 }
 
-func (app *application) newTemplateData(r *http.Request) *templateData {
+func (app *Application) newTemplateData(r *http.Request) *templateData {
 	sess := app.SessionFromContext(r)
 	flash, ok := sess.Get(FlashSessionKey).(string)
 	if ok {
 		err := sess.Delete(FlashSessionKey)
 		if err != nil {
-			app.logger.Error("Session error during delete flash", "error", err)
+			app.Logger.Error("Session error during delete flash", "error", err)
 		}
 	}
 	return &templateData{
@@ -109,7 +110,7 @@ func (app *application) newTemplateData(r *http.Request) *templateData {
 	}
 }
 
-func (app *application) isAuthenticated(r *http.Request) bool {
+func (app *Application) isAuthenticated(r *http.Request) bool {
 	isAuthenticated, ok := r.Context().Value(isAuthenticatedContextKey).(bool)
 	if !ok {
 		return false
@@ -119,7 +120,7 @@ func (app *application) isAuthenticated(r *http.Request) bool {
 }
 
 // Генерация CSRF-токена
-func (app *application) generateCSRFToken() string {
+func (app *Application) generateCSRFToken() string {
 	h := md5.New()
 	salt := "YouShallNotPass%^7&8888" // Используйте уникальную соль для своего приложения
 	io.WriteString(h, salt+time.Now().String())

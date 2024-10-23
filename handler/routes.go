@@ -30,7 +30,7 @@ func (nfs neuteredFileSystem) Open(path string) (http.File, error) {
 	return f, nil
 }
 
-func (app *application) routes() http.Handler {
+func (app *Application) Routes() http.Handler {
 	mux := http.NewServeMux()
 
 	fileServer := http.FileServer(neuteredFileSystem{http.FS(ui.Files)})

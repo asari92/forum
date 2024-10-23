@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"html/template"
@@ -74,7 +74,7 @@ var functions = template.FuncMap{
 	"join":     join,
 }
 
-func newTemplateCache() (map[string]*template.Template, error) {
+func NewTemplateCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
 
 	pages, err := fs.Glob(ui.Files, "html/pages/*.html")

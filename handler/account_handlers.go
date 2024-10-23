@@ -3,7 +3,7 @@ package handler
 import (
 	"errors"
 	"forum/internal/validator"
-	"forum/repositories"
+	"forum/repository"
 	"net/http"
 )
 
@@ -14,22 +14,22 @@ type accountPasswordUpdateForm struct {
 	validator.Validator
 }
 
-func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
+func (app *Application) accountView(w http.ResponseWriter, r *http.Request) {
 	sess := app.SessionFromContext(r)
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if !ok || userID < 1 {
 		err := errors.New("get userID in accountView")
-		app.logger.Error("get userid from session", "error", err)
+		app.Logger.Error("get userid from session", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
-	user, err := app.users.GetUserByID(userID)
+	user, err := app.Usecases.User.GetUserByID(userID)
 	if err != nil {
-		if errors.Is(err, repositories.ErrNoRecord) {
+		if errors.Is(err, repository.ErrNoRecord) {
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 		} else {
-			app.logger.Error("get user from db", "error", err)
+			app.Logger.Error("get user from db", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 
 		}
@@ -42,14 +42,14 @@ func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "account.html", data)
 }
 
-func (app *application) accountPasswordUpdateView(w http.ResponseWriter, r *http.Request) {
+func (app *Application) accountPasswordUpdateView(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	data.Form = accountPasswordUpdateForm{}
 
 	app.render(w, http.StatusOK, "password.html", data)
 }
 
-func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Request) {
+func (app *Application) accountPasswordUpdate(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
@@ -79,20 +79,20 @@ func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if !ok || userID < 1 {
 		err = errors.New("get userID in accountPasswordUpdate")
-		app.logger.Error("get userid from session", "error", err)
+		app.Logger.Error("get userid from session", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
-	err = app.users.UpdatePassword(userID, form.CurrentPassword, form.NewPassword)
+	err = app.Usecases.User.UpdatePassword(userID, form.CurrentPassword, form.NewPassword)
 	if err != nil {
-		if errors.Is(err, repositories.ErrInvalidCredentials) {
+		if errors.Is(err, repository.ErrInvalidCredentials) {
 			form.AddFieldError("currentPassword", "Current password is incorrect")
 			data := app.newTemplateData(r)
 			data.Form = form
 			app.render(w, http.StatusUnprocessableEntity, "password.html", data)
 		} else {
-			app.logger.Error("password update", "error", err)
+			app.Logger.Error("password update", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		}
 		return

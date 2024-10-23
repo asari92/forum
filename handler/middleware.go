@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"context"
@@ -52,9 +52,9 @@ func secureHeaders(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) logRequest(next http.Handler) http.Handler {
+func (app *Application) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		app.logger.Info("Received request",
+		app.Logger.Info("Received request",
 			"remote_addr", r.RemoteAddr,
 			"protocol", r.Proto,
 			"method", r.Method,
@@ -65,13 +65,13 @@ func (app *application) logRequest(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) recoverPanic(next http.Handler) http.Handler {
+func (app *Application) recoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
 				w.Header().Set("Connection", "close")
 				err = fmt.Errorf("%s", err)
-				app.logger.Error("recover panic", "error", err)
+				app.Logger.Error("recover panic", "error", err)
 				app.render(w, http.StatusInternalServerError, Errorpage, nil)
 				return
 			}
@@ -81,17 +81,17 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) verifyCSRF(next http.Handler) http.Handler {
+func (app *Application) verifyCSRF(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Проверяем (все) запросы которые могут изменить данные
 		if r.Method == http.MethodPost {
-			
-			sess := app.sessionManager.SessionStart(w, r)
+
+			sess := app.SessionManager.SessionStart(w, r)
 			sessionToken, ok := sess.Get(CsrfTokenSessionKey).(string)
 			if !ok || sessionToken == "" {
 				sessionToken = app.generateCSRFToken()
 				if err := sess.Set(CsrfTokenSessionKey, sessionToken); err != nil {
-					app.logger.Error("get csrftoken", "error", err)
+					app.Logger.Error("get csrftoken", "error", err)
 					app.render(w, http.StatusInternalServerError, Errorpage, nil)
 					return
 				}
@@ -102,7 +102,7 @@ func (app *application) verifyCSRF(next http.Handler) http.Handler {
 			ctx := context.WithValue(r.Context(), sessionContextKey, sess)
 			r = r.WithContext(ctx)
 
-			app.logger.Debug("tokens in verifyCSRF", "request", requestToken, "session", sessionToken)
+			app.Logger.Debug("tokens in verifyCSRF", "request", requestToken, "session", sessionToken)
 			if requestToken != sessionToken {
 				fmt.Println(true)
 				http.Error(w, "Invalid CSRF token", http.StatusForbidden)
@@ -115,13 +115,13 @@ func (app *application) verifyCSRF(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) sessionMiddleware(next http.Handler) http.Handler {
+func (app *Application) sessionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Извлекаем сессию из контекста
 		sess, ok := r.Context().Value(sessionContextKey).(session.Session)
 		if !ok {
-			sess = app.sessionManager.SessionStart(w, r)
-			app.logger.Debug("session in sessionMiddleware", "session", sess)
+			sess = app.SessionManager.SessionStart(w, r)
+			app.Logger.Debug("session in sessionMiddleware", "session", sess)
 		}
 
 		// Если токен уже существует в сессии, не перезаписываем его
@@ -129,7 +129,7 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 		if !ok || token == "" {
 			token = app.generateCSRFToken()
 			if err := sess.Set(CsrfTokenSessionKey, token); err != nil {
-				app.logger.Error("get csrftoken from session", "error", err)
+				app.Logger.Error("get csrftoken from session", "error", err)
 				app.render(w, http.StatusInternalServerError, Errorpage, nil)
 				return
 			}
@@ -155,7 +155,7 @@ func (app *application) sessionMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) authenticate(next http.Handler) http.Handler {
+func (app *Application) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess := app.SessionFromContext(r)
 		id, ok := sess.Get(AuthUserIDSessionKey).(int)
@@ -164,9 +164,9 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		exists, err := app.users.UserExists(id)
+		exists, err := app.Usecases.User.UserExists(id)
 		if err != nil {
-			app.logger.Error("user exists", "error", err)
+			app.Logger.Error("user exists", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 		}
@@ -180,7 +180,7 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) requireAuthentication(next http.Handler) http.Handler {
+func (app *Application) requireAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !app.isAuthenticated(r) {
 			// Add the path that the user is trying to access to their session

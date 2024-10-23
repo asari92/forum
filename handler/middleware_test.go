@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"bytes"
@@ -86,7 +86,7 @@ func TestVerifyCSRF(t *testing.T) {
 	}
 
 	// Устанавливаем фальшивую сессию с токеном
-	sess := app.sessionManager.SessionStart(rr, r)
+	sess := app.SessionManager.SessionStart(rr, r)
 	token := app.generateCSRFToken()
 	err = sess.Set(CsrfTokenSessionKey, token)
 	if err != nil {
@@ -183,7 +183,7 @@ func TestRequireAuthentication303(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	sess := app.sessionManager.SessionStart(rr, r)
+	sess := app.SessionManager.SessionStart(rr, r)
 	ctx := context.WithValue(r.Context(), sessionContextKey, sess)
 	r = r.WithContext(ctx)
 
@@ -204,7 +204,7 @@ func TestAuthenticate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sess := app.sessionManager.SessionStart(rr, r)
+	sess := app.SessionManager.SessionStart(rr, r)
 	err = sess.Set(AuthUserIDSessionKey, 1)
 	if err != nil {
 		t.Fatal(err)

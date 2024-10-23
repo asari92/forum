@@ -1,4 +1,4 @@
-package main
+package handler
 
 // Ключи для значений, хранимых в сессиях
 const (
