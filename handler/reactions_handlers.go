@@ -34,7 +34,7 @@ func (app *Application) postReaction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if comment != "" {
-		err = app.Usecases.Comment.AddComment(postID, userID, comment)
+		err = app.Service.Comment.AddComment(postID, userID, comment)
 		if err != nil {
 			app.Logger.Error("insert comment to database", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -46,7 +46,7 @@ func (app *Application) postReaction(w http.ResponseWriter, r *http.Request) {
 		like := postIsLike == "true"
 
 		var userReaction *entities.PostReaction
-		userReaction, err = app.Usecases.PostReaction.GetUserReaction(userID, postID) // Получите реакцию пользователя
+		userReaction, err = app.Service.PostReaction.GetUserReaction(userID, postID) // Получите реакцию пользователя
 		if err != nil {
 			app.Logger.Error("get post user reaction", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -54,14 +54,14 @@ func (app *Application) postReaction(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if userReaction != nil && userReaction.IsLike == like {
-			err = app.Usecases.PostReaction.RemoveReaction(userID, postID)
+			err = app.Service.PostReaction.RemoveReaction(userID, postID)
 			if err != nil {
 				app.Logger.Error("remove post reaction", "error", err)
 				app.render(w, http.StatusInternalServerError, Errorpage, nil)
 				return
 			}
 		} else {
-			err = app.Usecases.PostReaction.AddReaction(userID, postID, like)
+			err = app.Service.PostReaction.AddReaction(userID, postID, like)
 			if err != nil {
 				app.Logger.Error("add post reaction", "error", err)
 				app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -78,7 +78,7 @@ func (app *Application) postReaction(w http.ResponseWriter, r *http.Request) {
 		reaction := commentIsLike == "true"
 		var commentReaction *entities.CommentReaction
 
-		commentReaction, err = app.Usecases.CommentReaction.GetUserReaction(userID, commentID)
+		commentReaction, err = app.Service.CommentReaction.GetUserReaction(userID, commentID)
 		if err != nil {
 			app.Logger.Error("get user comment reaction", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -86,14 +86,14 @@ func (app *Application) postReaction(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if commentReaction != nil && reaction == commentReaction.IsLike {
-			err = app.Usecases.CommentReaction.RemoveReaction(userID, commentID)
+			err = app.Service.CommentReaction.RemoveReaction(userID, commentID)
 			if err != nil {
 				app.Logger.Error("remove comment reaction", "error", err)
 				app.render(w, http.StatusInternalServerError, Errorpage, nil)
 				return
 			}
 		} else {
-			err = app.Usecases.CommentReaction.AddReaction(userID, commentID, reaction)
+			err = app.Service.CommentReaction.AddReaction(userID, commentID, reaction)
 			if err != nil {
 
 				app.Logger.Error("add comment reaction", "error", err)
@@ -126,7 +126,7 @@ func (app *Application) commentReaction(w http.ResponseWriter, r *http.Request) 
 	sess := app.SessionFromContext(r)
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if ok && userID != 0 {
-		commentReaction, err = app.Usecases.CommentReaction.GetUserReaction(userID, commentID)
+		commentReaction, err = app.Service.CommentReaction.GetUserReaction(userID, commentID)
 		if err != nil {
 			app.Logger.Error("get user reaction", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -135,13 +135,13 @@ func (app *Application) commentReaction(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if reaction == commentReaction.IsLike {
-		err = app.Usecases.CommentReaction.RemoveReaction(userID, commentID)
+		err = app.Service.CommentReaction.RemoveReaction(userID, commentID)
 		if err != nil {
 			app.Logger.Error("remove reaction", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 		} else {
-			err = app.Usecases.CommentReaction.AddReaction(userID, commentID, reaction)
+			err = app.Service.CommentReaction.AddReaction(userID, commentID, reaction)
 			if err != nil {
 
 				app.Logger.Error("Add Reaction", "error", err)

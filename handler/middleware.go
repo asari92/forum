@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"forum/internal/session"
 )
@@ -164,7 +163,7 @@ func (app *Application) authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		exists, err := app.Usecases.User.UserExists(id)
+		exists, err := app.Service.User.UserExists(id)
 		if err != nil {
 			app.Logger.Error("user exists", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -198,26 +197,4 @@ func (app *Application) requireAuthentication(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-func hasAccess(role interface{}, path string) bool {
-	// Определяем доступность страниц для различных ролей
-	switch role {
-	case "admin":
-		return true // Админы имеют доступ ко всему
-	case "moderator":
-		// Модеры имеют доступ к страницам модерации
-		// if strings.HasPrefix(path, "/moderation") {
-		return true
-		// }
-	case "user":
-		// Обычные пользователи могут создавать посты, но не имеют доступа к модерации
-		if strings.HasPrefix(path, "/moderation") || strings.HasPrefix(path, "/user/signup") || strings.HasPrefix(path, "/user/login") {
-			return false
-		}
-	// Гостям доступ ограничен, они могут только просматривать
-	default:
-		return false
-	}
-	return false
 }

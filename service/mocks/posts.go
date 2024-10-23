@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"forum/entities"
-	"forum/repositories"
+	"forum/repository"
 )
 
 var mockPost = &entities.Post{
@@ -26,7 +26,7 @@ func (m *PostModel) Get(id int) (*entities.Post, error) {
 	case 1:
 		return mockPost, nil
 	default:
-		return nil, repositories.ErrNoRecord
+		return nil, repository.ErrNoRecord
 	}
 }
 
@@ -43,7 +43,7 @@ func (m *PostModel) GetUserPaginatedPosts(userId, page, pageSize int) ([]*entiti
 	case 1:
 		return []*entities.Post{mockPost}, nil
 	default:
-		return nil, repositories.ErrNoRecord
+		return nil, repository.ErrNoRecord
 	}
 }
 
@@ -52,6 +52,6 @@ func (m *PostModel) GetUserLikedPaginatedPosts(userId, page, pageSize int) ([]*e
 	case 1:
 		return []*entities.Post{mockPost}, nil
 	default:
-		return nil, repositories.ErrNoRecord
+		return nil, repository.ErrNoRecord
 	}
 }

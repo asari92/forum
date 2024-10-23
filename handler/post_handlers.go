@@ -24,7 +24,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := app.Usecases.Post.GetPost(postID)
+	post, err := app.Service.Post.GetPost(postID)
 	if err != nil {
 		if errors.Is(err, repository.ErrNoRecord) {
 			app.render(w, http.StatusNotFound, Errorpage, nil)
@@ -36,14 +36,14 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	categories, err := app.Usecases.Category.GetCategoriesForPost(postID)
+	categories, err := app.Service.Category.GetCategoriesForPost(postID)
 	if err != nil {
 		app.Logger.Error("get categories for post", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
-	likes, dislikes, err := app.Usecases.PostReaction.GetReactionsCount(postID)
+	likes, dislikes, err := app.Service.PostReaction.GetReactionsCount(postID)
 	if err != nil {
 		app.Logger.Error("get likes and dislikes count for post", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -54,14 +54,14 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	var userReaction *entities.PostReaction
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if ok && userID != 0 {
-		userReaction, err = app.Usecases.PostReaction.GetUserReaction(userID, postID) // Получите реакцию пользователя
+		userReaction, err = app.Service.PostReaction.GetUserReaction(userID, postID) // Получите реакцию пользователя
 		if err != nil {
 			app.Logger.Error("get post user reaction", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 		}
 	}
-	comments, err := app.Usecases.Comment.GetPostComments(postID)
+	comments, err := app.Service.Comment.GetPostComments(postID)
 	if err != nil {
 		app.Logger.Error("get comments from database", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -71,7 +71,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	for _, val := range comments {
 		userID, ok := sess.Get(AuthUserIDSessionKey).(int)
 		if ok && userID != 0 {
-			userReaction, err := app.Usecases.CommentReaction.GetUserReaction(userID, val.ID)
+			userReaction, err := app.Service.CommentReaction.GetUserReaction(userID, val.ID)
 			if err != nil {
 				app.Logger.Error("get comment user reaction", "error", err)
 				app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -88,7 +88,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 
 		}
 
-		like, err := app.Usecases.CommentReaction.GetLikesCount(val.ID)
+		like, err := app.Service.CommentReaction.GetLikesCount(val.ID)
 		if err != nil {
 			app.Logger.Error("get comment likes count", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -96,7 +96,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		}
 		val.Like = like
 		app.Logger.Debug("comment likes count", "like:", like)
-		dislike, err := app.Usecases.CommentReaction.GetDislikesCount(val.ID)
+		dislike, err := app.Service.CommentReaction.GetDislikesCount(val.ID)
 		if err != nil {
 			app.Logger.Error("get comment dislike count", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -118,7 +118,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) postCreateView(w http.ResponseWriter, r *http.Request) {
-	categories, err := app.Usecases.Category.GetAll()
+	categories, err := app.Service.Category.GetAll()
 	if err != nil {
 		app.Logger.Error("get all categories", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -163,7 +163,7 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
 	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
 
-	allCategories, err := app.Usecases.Category.GetAll()
+	allCategories, err := app.Service.Category.GetAll()
 	if err != nil {
 		app.Logger.Error("get all categories", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -193,7 +193,7 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postId, err := app.Usecases.Post.CreatePostWithCategories(form.Title, form.Content, userId, form.Categories)
+	postId, err := app.Service.Post.CreatePostWithCategories(form.Title, form.Content, userId, form.Categories)
 	if err != nil {
 		app.Logger.Error("insert post and categories", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -232,14 +232,14 @@ func (app *Application) userPostsView(w http.ResponseWriter, r *http.Request) {
 		page = p
 	}
 
-	posts, err := app.Usecases.Post.GetUserPaginatedPosts(userId, page, pageSize)
+	posts, err := app.Service.Post.GetUserPaginatedPosts(userId, page, pageSize)
 	if err != nil {
 		app.Logger.Error("get user posts", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
-	user, err := app.Usecases.User.GetUserByID(userId)
+	user, err := app.Service.User.GetUserByID(userId)
 	if err != nil {
 		if errors.Is(err, repository.ErrNoRecord) {
 			if len(posts) == 0 {
@@ -295,14 +295,14 @@ func (app *Application) userLikedPostsView(w http.ResponseWriter, r *http.Reques
 		page = p
 	}
 
-	posts, err := app.Usecases.Post.GetUserLikedPaginatedPosts(userID, page, pageSize)
+	posts, err := app.Service.Post.GetUserLikedPaginatedPosts(userID, page, pageSize)
 	if err != nil {
 		app.Logger.Error("get user liked posts", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
-	user, err := app.Usecases.User.GetUserByID(userID)
+	user, err := app.Service.User.GetUserByID(userID)
 	if err != nil {
 		app.Logger.Error("get user", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)

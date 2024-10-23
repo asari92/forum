@@ -24,7 +24,7 @@ func (app *Application) accountView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := app.Usecases.User.GetUserByID(userID)
+	user, err := app.Service.User.GetUserByID(userID)
 	if err != nil {
 		if errors.Is(err, repository.ErrNoRecord) {
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
@@ -84,7 +84,7 @@ func (app *Application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	err = app.Usecases.User.UpdatePassword(userID, form.CurrentPassword, form.NewPassword)
+	err = app.Service.User.UpdatePassword(userID, form.CurrentPassword, form.NewPassword)
 	if err != nil {
 		if errors.Is(err, repository.ErrInvalidCredentials) {
 			form.AddFieldError("currentPassword", "Current password is incorrect")

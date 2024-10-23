@@ -61,7 +61,7 @@ func (app *Application) userSignup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = app.Usecases.User.Insert(form.Username, form.Email, form.Password)
+	err = app.Service.User.Insert(form.Username, form.Email, form.Password)
 	if err != nil {
 		if errors.Is(err, repository.ErrDuplicateEmail) {
 			form.AddFieldError("email", "Email address is already in use")
@@ -132,7 +132,7 @@ func (app *Application) userLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Check whether the credentials are valid. If they're not, add a generic
 	// non-field error message and re-display the login page.
-	id, err := app.Usecases.User.Authenticate(form.Email, form.Password)
+	id, err := app.Service.User.Authenticate(form.Email, form.Password)
 	if err != nil {
 		if errors.Is(err, repository.ErrInvalidCredentials) {
 			form.AddNonFieldError("Email or password is incorrect")

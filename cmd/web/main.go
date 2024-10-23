@@ -1,12 +1,10 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"log/slog"
 	"os"
 
-	"forum/docs"
 	"forum/handler"
 	"forum/repository"
 	"forum/service"
@@ -39,7 +37,7 @@ func main() {
 
 	slog.SetDefault(logger)
 
-	db, err := openDB(*dsn)
+	db, err := repository.NewSqliteDB(*dsn)
 	if err != nil {
 		logger.Error("Unable to open database", "error", err)
 		os.Exit(1)
@@ -47,7 +45,7 @@ func main() {
 	defer db.Close()
 
 	// Создание таблиц и добавление тестовых данных
-	if err := initDB(db); err != nil {
+	if err := repository.InitSqliteDB(db); err != nil {
 		logger.Error("Failed to initialize database", "error", err)
 		os.Exit(1)
 	}
@@ -68,7 +66,7 @@ func main() {
 
 	app := &handler.Application{
 		Logger:         logger,
-		Usecases:       service.NewService(repository.NewRepository(db)),
+		Service:        service.NewService(repository.NewRepository(db)),
 		TemplateCache:  templateCache,
 		SessionManager: sessionManager,
 	}
@@ -77,53 +75,4 @@ func main() {
 	if err != nil {
 		logger.Error("Fatal server error", "error", err)
 	}
-}
-
-func openDB(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", dsn)
-	if err != nil {
-		return nil, err
-	}
-	if err = db.Ping(); err != nil {
-		return nil, err
-	}
-	return db, nil
-}
-
-func initDB(db *sql.DB) error {
-	// Используем встроенный файл для инициализации базы данных
-	query, err := docs.Files.ReadFile("new_forum.sql")
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(string(query))
-	if err != nil {
-		return err
-	}
-
-	// Проверка наличия данных
-	var count int
-	row := db.QueryRow("SELECT COUNT(*) FROM posts")
-	err = row.Scan(&count)
-	if err != nil {
-		return err
-	}
-
-	if count > 0 {
-		return nil // Данные уже есть, ничего не делаем
-	}
-
-	// Добавление тестовых данных
-	insertTestdataSQL, err := docs.Files.ReadFile("testdata.sql")
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(string(insertTestdataSQL))
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

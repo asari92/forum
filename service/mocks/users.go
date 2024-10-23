@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"forum/entities"
-	"forum/repositories"
+	"forum/repository"
 )
 
 type UserModel struct{}
@@ -12,7 +12,7 @@ type UserModel struct{}
 func (m *UserModel) Insert(name, email, password string) error {
 	switch email {
 	case "dupe@example.com":
-		return repositories.ErrDuplicateEmail
+		return repository.ErrDuplicateEmail
 	default:
 		return nil
 	}
@@ -23,7 +23,7 @@ func (m *UserModel) Authenticate(email, password string) (int, error) {
 		return 1, nil
 	}
 
-	return 0, repositories.ErrInvalidCredentials
+	return 0, repository.ErrInvalidCredentials
 }
 
 func (m *UserModel) Exists(id int) (bool, error) {
@@ -47,17 +47,17 @@ func (m *UserModel) Get(id int) (*entities.User, error) {
 		return u, nil
 	}
 
-	return nil, repositories.ErrNoRecord
+	return nil, repository.ErrNoRecord
 }
 
 func (m *UserModel) PasswordUpdate(id int, currentPassword, newPassword string) error {
 	if id == 1 {
 		if currentPassword != "pa$$word" {
-			return repositories.ErrInvalidCredentials
+			return repository.ErrInvalidCredentials
 		}
 
 		return nil
 	}
 
-	return repositories.ErrNoRecord
+	return repository.ErrNoRecord
 }

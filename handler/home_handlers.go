@@ -20,7 +20,7 @@ func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 	pageSize := 10 // Количество постов на одной странице
 
 	// Получаем посты для нужной страницы.
-	posts, err := app.Usecases.Post.GetAllPaginatedPosts(page, pageSize)
+	posts, err := app.Service.Post.GetAllPaginatedPosts(page, pageSize)
 	if err != nil {
 		app.Logger.Error("get all paginated posts", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -35,7 +35,7 @@ func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 		posts = posts[:pageSize]
 	}
 
-	categories, err := app.Usecases.Category.GetAll()
+	categories, err := app.Service.Category.GetAll()
 	if err != nil {
 		app.Logger.Error("get all categories", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -92,7 +92,7 @@ func (app *Application) filterPosts(w http.ResponseWriter, r *http.Request) {
 		Categories: categoryIDs,
 	}
 
-	allCategories, err := app.Usecases.Category.GetAll()
+	allCategories, err := app.Service.Category.GetAll()
 	if err != nil {
 		app.Logger.Error("get all categories", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -108,7 +108,7 @@ func (app *Application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	data.Header = "All posts"
 
 	if !form.Valid() {
-		posts, err := app.Usecases.Post.GetAllPaginatedPosts(page, pageSize)
+		posts, err := app.Service.Post.GetAllPaginatedPosts(page, pageSize)
 		if err != nil {
 			app.Logger.Error("get all posts", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -135,7 +135,7 @@ func (app *Application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Получаем посты с пагинацией и на одну запись больше
-	posts, err := app.Usecases.Post.GetPaginatedPostsByCategory(form.Categories, page, pageSize)
+	posts, err := app.Service.Post.GetPaginatedPostsByCategory(form.Categories, page, pageSize)
 	if err != nil {
 		app.Logger.Error("get paginated posts by category", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)

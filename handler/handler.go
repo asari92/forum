@@ -18,14 +18,14 @@ import (
 )
 
 type Application struct {
-	Usecases       *service.Service
+	Service        *service.Service
 	Logger         *slog.Logger
 	TemplateCache  map[string]*template.Template
 	SessionManager *session.Manager
 }
 
 func NewHandler(usecases *service.Service) *Application {
-	return &Application{Usecases: usecases}
+	return &Application{Service: usecases}
 }
 
 func (app *Application) Serve(addr *string) error {
