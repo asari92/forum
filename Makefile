@@ -1,7 +1,7 @@
 # Инициализация базы данных
 initDB:
 	# Создание базы данных и выполнение начального скрипта
-	sqlite3 forum.db < ./docs/forum.sql
+	sqlite3 forum.db < ./schema/forum.sql
 	
 	
 

@@ -2,7 +2,7 @@ package repository
 
 import (
 	"database/sql"
-	"forum/docs"
+	"forum/schema"
 )
 
 func NewSqliteDB(dsn string) (*sql.DB, error) {
@@ -18,7 +18,7 @@ func NewSqliteDB(dsn string) (*sql.DB, error) {
 
 func InitSqliteDB(db *sql.DB) error {
 	// Используем встроенный файл для инициализации базы данных
-	query, err := docs.Files.ReadFile("forum.sql")
+	query, err := schema.Files.ReadFile("forum.sql")
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func InitSqliteDB(db *sql.DB) error {
 	}
 
 	// Добавление тестовых данных
-	insertTestdataSQL, err := docs.Files.ReadFile("testdata.sql")
+	insertTestdataSQL, err := schema.Files.ReadFile("testdata.sql")
 	if err != nil {
 		return err
 	}
