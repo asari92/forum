@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"forum/internal/assert"
-	"forum/repository"
+	"forum/internal/repository"
 )
 
 func TestUserModelExists(t *testing.T) {

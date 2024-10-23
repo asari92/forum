@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"forum/entities"
+	"forum/internal/entities"
 	"forum/internal/session"
 )
 

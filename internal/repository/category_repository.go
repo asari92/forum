@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"forum/entities"
+	"forum/internal/entities"
 )
 
 type CategorySqlite3 struct {

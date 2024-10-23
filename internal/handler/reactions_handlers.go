@@ -2,7 +2,7 @@ package handler
 
 import (
 	"errors"
-	"forum/entities"
+	"forum/internal/entities"
 	"net/http"
 	"strconv"
 )

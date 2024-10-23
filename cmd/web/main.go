@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"os"
 
-	"forum/handler"
-	"forum/repository"
-	"forum/service"
+	"forum/internal/handler"
+	"forum/internal/repository"
+	"forum/internal/service"
 
 	// Go вызывает функцию init() внутри этого пакета.
 	_ "forum/internal/memory"

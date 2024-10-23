@@ -1,8 +1,8 @@
 package service
 
 import (
-	"forum/entities"
-	"forum/repository"
+	"forum/internal/entities"
+	"forum/internal/repository"
 )
 
 type PostReactionUseCase struct {

@@ -2,7 +2,7 @@ package handler
 
 import (
 	"fmt"
-	"forum/entities"
+	"forum/internal/entities"
 	"net/http"
 	"strconv"
 	"strings"

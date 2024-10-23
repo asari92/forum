@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"forum/entities"
+	"forum/internal/entities"
 )
 
 type CommentSqlite3 struct {

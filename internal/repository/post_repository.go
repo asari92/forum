@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"forum/entities"
+	"forum/internal/entities"
 )
 
 type PostSqlite3 struct {

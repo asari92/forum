@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"forum/entities"
+	"forum/internal/entities"
 	"forum/ui"
 )
 

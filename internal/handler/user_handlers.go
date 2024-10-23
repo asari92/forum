@@ -2,8 +2,8 @@ package handler
 
 import (
 	"errors"
+	"forum/internal/repository"
 	"forum/internal/validator"
-	"forum/repository"
 	"net/http"
 	"strings"
 )

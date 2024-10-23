@@ -3,9 +3,9 @@ package handler
 import (
 	"errors"
 	"fmt"
-	"forum/entities"
+	"forum/internal/entities"
+	"forum/internal/repository"
 	"forum/internal/validator"
-	"forum/repository"
 	"net/http"
 	"strconv"
 )

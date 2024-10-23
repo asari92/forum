@@ -3,7 +3,7 @@ package repository
 import (
 	"database/sql"
 
-	"forum/entities"
+	"forum/internal/entities"
 )
 
 type CommentReactionSqlite3 struct {

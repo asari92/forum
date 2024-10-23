@@ -3,8 +3,8 @@ package service
 import (
 	"errors"
 
-	"forum/entities"
-	"forum/repository"
+	"forum/internal/entities"
+	"forum/internal/repository"
 )
 
 type CategoryUseCase struct {
