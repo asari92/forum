@@ -7,12 +7,12 @@ import (
 )
 
 type UserUseCase struct {
-	UserRepo repository.UserRepository
+	userRepo repository.UserRepository
 }
 
 func NewUserUseCase(userRepo repository.UserRepository) *UserUseCase {
 	return &UserUseCase{
-		UserRepo: userRepo,
+		userRepo: userRepo,
 	}
 }
 
@@ -21,7 +21,7 @@ func (u *UserUseCase) Insert(username, email, password string) error {
 	if username == "" || email == "" || password == "" {
 		return errors.New("fields can't be empty")
 	}
-	return u.UserRepo.Insert(username, email, password)
+	return u.userRepo.Insert(username, email, password)
 }
 
 func (u *UserUseCase) Authenticate(email, password string) (int, error) {
@@ -29,17 +29,17 @@ func (u *UserUseCase) Authenticate(email, password string) (int, error) {
 	if email == "" || password == "" {
 		return 0, errors.New("fields can't be empty")
 	}
-	return u.UserRepo.Authenticate(email, password)
+	return u.userRepo.Authenticate(email, password)
 }
 
 func (u *UserUseCase) UserExists(id int) (bool, error) {
-	return u.UserRepo.Exists(id)
+	return u.userRepo.Exists(id)
 }
 
 func (u *UserUseCase) GetUserByID(id int) (*entities.User, error) {
-	return u.UserRepo.Get(id)
+	return u.userRepo.Get(id)
 }
 
 func (u *UserUseCase) UpdatePassword(id int, currentPassword, newPassword string) error {
-	return u.UserRepo.UpdatePassword(id, currentPassword, newPassword)
+	return u.userRepo.UpdatePassword(id, currentPassword, newPassword)
 }

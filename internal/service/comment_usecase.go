@@ -7,12 +7,12 @@ import (
 )
 
 type CommentUseCase struct {
-	CommentRepo repository.CommentRepository
+	commentRepo repository.CommentRepository
 }
 
 func NewCommentUseCase(commentRepo repository.CommentRepository) *CommentUseCase {
 	return &CommentUseCase{
-		CommentRepo: commentRepo,
+		commentRepo: commentRepo,
 	}
 }
 
@@ -20,9 +20,9 @@ func (c *CommentUseCase) AddComment(postID, userID int, content string) error {
 	if content == "" {
 		return errors.New("content cannot be empty")
 	}
-	return c.CommentRepo.InsertComment(postID, userID, content)
+	return c.commentRepo.InsertComment(postID, userID, content)
 }
 
 func (c *CommentUseCase) GetPostComments(postID int) ([]*entities.Comment, error) {
-	return c.CommentRepo.GetComments(postID)
+	return c.commentRepo.GetComments(postID)
 }
