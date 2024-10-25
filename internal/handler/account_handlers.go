@@ -5,15 +5,7 @@ import (
 	"net/http"
 
 	"forum/internal/entities"
-	"forum/internal/validator"
 )
-
-type accountPasswordUpdateForm struct {
-	CurrentPassword         string
-	NewPassword             string
-	NewPasswordConfirmation string
-	validator.Validator
-}
 
 func (app *Application) accountView(w http.ResponseWriter, r *http.Request) {
 	sess := app.SessionFromContext(r)
@@ -45,50 +37,36 @@ func (app *Application) accountView(w http.ResponseWriter, r *http.Request) {
 
 func (app *Application) accountPasswordUpdateView(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
-	data.Form = accountPasswordUpdateForm{}
+	data.Form = app.Service.User.NewAccountPasswordUpdateForm()
 
 	app.render(w, http.StatusOK, "password.html", data)
 }
 
 func (app *Application) accountPasswordUpdate(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		app.render(w, http.StatusBadRequest, Errorpage, nil)
-		return
-	}
-	form := accountPasswordUpdateForm{
-		CurrentPassword:         r.PostForm.Get("currentPassword"),
-		NewPassword:             r.PostForm.Get("newPassword"),
-		NewPasswordConfirmation: r.PostForm.Get("newPasswordConfirmation"),
-	}
-
-	form.CheckField(validator.NotBlank(form.CurrentPassword), "currentPassword", "This field cannot be blank")
-	form.CheckField(validator.NotBlank(form.NewPassword), "newPassword", "This field cannot be blank")
-	form.CheckField(validator.MinChars(form.NewPassword, 8), "newPassword", "This field must be at least 8 characters long")
-	form.CheckField(validator.NotBlank(form.NewPasswordConfirmation), "newPasswordConfirmation", "This field cannot be blank")
-	form.CheckField(form.NewPassword == form.NewPasswordConfirmation, "newPasswordConfirmation", "Passwords do not match")
-
-	if !form.Valid() {
-		data := app.newTemplateData(r)
-		data.Form = form
-
-		app.render(w, http.StatusUnprocessableEntity, "password.html", data)
-		return
-	}
-
 	sess := app.SessionFromContext(r)
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if !ok || userID < 1 {
-		err = errors.New("get userID in accountPasswordUpdate")
+		err := errors.New("get userID in accountPasswordUpdate")
 		app.Logger.Error("get userid from session", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
-	err = app.Service.User.UpdatePassword(userID, form.CurrentPassword, form.NewPassword)
+	err := r.ParseForm()
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	form := app.Service.User.NewAccountPasswordUpdateForm()
+	form.CurrentPassword = r.PostForm.Get("currentPassword")
+	form.NewPassword = r.PostForm.Get("newPassword")
+	form.NewPasswordConfirmation = r.PostForm.Get("newPasswordConfirmation")
+
+	err = app.Service.User.UpdatePassword(userID, &form)
 	if err != nil {
 		if errors.Is(err, entities.ErrInvalidCredentials) {
-			form.AddFieldError("currentPassword", "Current password is incorrect")
+			form.AddFieldError("invalid credentials", "invalid credentials")
 			data := app.newTemplateData(r)
 			data.Form = form
 			app.render(w, http.StatusUnprocessableEntity, "password.html", data)

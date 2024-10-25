@@ -6,11 +6,12 @@ import (
 )
 
 type User interface {
+	NewAccountPasswordUpdateForm() accountPasswordUpdateForm
 	Insert(username, email, password string) error
 	Authenticate(email, password string) (int, error)
 	UserExists(id int) (bool, error)
 	GetUserByID(id int) (*entities.User, error)
-	UpdatePassword(id int, currentPassword, newPassword string) error
+	UpdatePassword(userID int, form *accountPasswordUpdateForm) error
 }
 
 type Post interface {
