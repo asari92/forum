@@ -2,10 +2,11 @@ package handler
 
 import (
 	"errors"
-	"forum/internal/repository"
-	"forum/internal/validator"
 	"net/http"
 	"strings"
+
+	"forum/internal/entities"
+	"forum/internal/validator"
 )
 
 type signupForm struct {
@@ -63,7 +64,7 @@ func (app *Application) userSignup(w http.ResponseWriter, r *http.Request) {
 
 	err = app.Service.User.Insert(form.Username, form.Email, form.Password)
 	if err != nil {
-		if errors.Is(err, repository.ErrDuplicateEmail) {
+		if errors.Is(err, entities.ErrDuplicateEmail) {
 			form.AddFieldError("email", "Email address is already in use")
 
 			data := app.newTemplateData(r)
@@ -134,7 +135,7 @@ func (app *Application) userLogin(w http.ResponseWriter, r *http.Request) {
 	// non-field error message and re-display the login page.
 	id, err := app.Service.User.Authenticate(form.Email, form.Password)
 	if err != nil {
-		if errors.Is(err, repository.ErrInvalidCredentials) {
+		if errors.Is(err, entities.ErrInvalidCredentials) {
 			form.AddNonFieldError("Email or password is incorrect")
 
 			data := app.newTemplateData(r)

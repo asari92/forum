@@ -79,7 +79,7 @@ func (r *PostSqlite3) GetPost(postID int) (*entities.Post, error) {
 	err := row.Scan(&p.ID, &p.Title, &username, &p.Content, &created)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNoRecord
+			return nil, entities.ErrNoRecord
 		} else {
 			return nil, err
 		}

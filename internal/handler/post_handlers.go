@@ -3,11 +3,11 @@ package handler
 import (
 	"errors"
 	"fmt"
-	"forum/internal/entities"
-	"forum/internal/repository"
-	"forum/internal/validator"
 	"net/http"
 	"strconv"
+
+	"forum/internal/entities"
+	"forum/internal/validator"
 )
 
 type postCreateForm struct {
@@ -18,101 +18,42 @@ type postCreateForm struct {
 }
 
 func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
 	postID, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || postID < 1 {
 		app.render(w, http.StatusNotFound, Errorpage, nil)
 		return
 	}
 
-	post, err := app.Service.Post.GetPost(postID)
-	if err != nil {
-		if errors.Is(err, repository.ErrNoRecord) {
-			app.render(w, http.StatusNotFound, Errorpage, nil)
-			return
-		} else {
-			app.Logger.Error("get post from database", "error", err)
-			app.render(w, http.StatusInternalServerError, Errorpage, nil)
-			return
-		}
-	}
-
-	categories, err := app.Service.Category.GetCategoriesForPost(postID)
-	if err != nil {
-		app.Logger.Error("get categories for post", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
-		return
-	}
-
-	likes, dislikes, err := app.Service.PostReaction.GetReactionsCount(postID)
-	if err != nil {
-		app.Logger.Error("get likes and dislikes count for post", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
-		return
-	}
-
 	sess := app.SessionFromContext(r)
-	var userReaction *entities.PostReaction
 	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
-	if ok && userID != 0 {
-		userReaction, err = app.Service.PostReaction.GetUserReaction(userID, postID) // Получите реакцию пользователя
-		if err != nil {
-			app.Logger.Error("get post user reaction", "error", err)
-			app.render(w, http.StatusInternalServerError, Errorpage, nil)
-			return
-		}
+	if !ok {
+		userID = 0
 	}
-	comments, err := app.Service.Comment.GetPostComments(postID)
+
+	postData, err := app.Service.Post.GetPostDTO(postID, userID)
 	if err != nil {
-		app.Logger.Error("get comments from database", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		app.Logger.Error("get post data", "error", err)
+		if errors.Is(err, entities.ErrNoRecord) {
+			app.render(w, http.StatusNotFound, Errorpage, nil)
+		} else {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		}
 		return
-	}
-	// continue
-	for _, val := range comments {
-		userID, ok := sess.Get(AuthUserIDSessionKey).(int)
-		if ok && userID != 0 {
-			userReaction, err := app.Service.CommentReaction.GetUserReaction(userID, val.ID)
-			if err != nil {
-				app.Logger.Error("get comment user reaction", "error", err)
-				app.render(w, http.StatusInternalServerError, Errorpage, nil)
-				return
-
-			}
-			if userReaction != nil {
-				if userReaction.IsLike {
-					val.UserReaction = 1
-				} else {
-					val.UserReaction = -1
-				}
-			}
-
-		}
-
-		like, err := app.Service.CommentReaction.GetLikesCount(val.ID)
-		if err != nil {
-			app.Logger.Error("get comment likes count", "error", err)
-			app.render(w, http.StatusInternalServerError, Errorpage, nil)
-			return
-		}
-		val.Like = like
-		app.Logger.Debug("comment likes count", "like:", like)
-		dislike, err := app.Service.CommentReaction.GetDislikesCount(val.ID)
-		if err != nil {
-			app.Logger.Error("get comment dislike count", "error", err)
-			app.render(w, http.StatusInternalServerError, Errorpage, nil)
-			return
-		}
-		val.Dislike = dislike
-
 	}
 
 	data := app.newTemplateData(r)
-	data.Post = post
-	data.Categories = categories
-	data.Comments = comments
-	data.ReactionData.Likes = likes
-	data.ReactionData.Dislikes = dislikes
-	data.ReactionData.UserReaction = userReaction
+	data.Post = postData.Post
+	data.Comments = postData.Comments
+	data.Categories = postData.Categories
+	data.ReactionData.Likes = postData.Likes
+	data.ReactionData.Dislikes = postData.Dislikes
+	data.ReactionData.UserReaction = postData.UserReaction
 
 	app.render(w, http.StatusOK, "post_view.html", data)
 }
@@ -232,42 +173,27 @@ func (app *Application) userPostsView(w http.ResponseWriter, r *http.Request) {
 		page = p
 	}
 
-	posts, err := app.Service.Post.GetUserPaginatedPosts(userId, page, pageSize)
+	paginationURL := fmt.Sprintf("/user/%d/posts", userId)
+	app.Logger.Debug("get user posts", "userID", userId, "page", page, "pageSize", pageSize, "paginationURL", paginationURL)
+	userPostsDTO, err := app.Service.Post.GetUserPostsDTO(userId, page, pageSize, paginationURL)
+	app.Logger.Debug("get user posts", "userPostsDTO", userPostsDTO)
 	if err != nil {
 		app.Logger.Error("get user posts", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		if errors.Is(err, entities.ErrNoRecord) {
+			app.render(w, http.StatusNotFound, Errorpage, nil)
+		} else {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		}
 		return
 	}
 
-	user, err := app.Service.User.GetUserByID(userId)
-	if err != nil {
-		if errors.Is(err, repository.ErrNoRecord) {
-			if len(posts) == 0 {
-				app.render(w, http.StatusNotFound, Errorpage, nil)
-				return
-			} else {
-				user = &entities.User{Username: "Deleted User", ID: userId}
-			}
-		} else {
-			app.Logger.Error("get user query error", "error", err)
-			app.render(w, http.StatusInternalServerError, Errorpage, nil)
-			return
-		}
-	}
-
-	hasNextPage := len(posts) > pageSize
-
-	if hasNextPage {
-		posts = posts[:pageSize]
-	}
-
 	data := app.newTemplateData(r)
-	data.Posts = posts
-	data.Header = fmt.Sprintf("Posts by %s", user.Username)
+	data.Posts = userPostsDTO.Posts
+	data.Header = fmt.Sprintf("Posts by %s", userPostsDTO.User.Username)
 	data.Pagination = pagination{
-		CurrentPage:      page,
-		HasNextPage:      hasNextPage,
-		PaginationAction: fmt.Sprintf("/user/%d/posts", userId), // Маршрут для пагинации
+		CurrentPage:      userPostsDTO.CurrentPage,
+		HasNextPage:      userPostsDTO.HasNextPage,
+		PaginationAction: userPostsDTO.PaginationURL,
 	}
 	app.render(w, http.StatusOK, "user_posts.html", data)
 }
@@ -295,33 +221,21 @@ func (app *Application) userLikedPostsView(w http.ResponseWriter, r *http.Reques
 		page = p
 	}
 
-	posts, err := app.Service.Post.GetUserLikedPaginatedPosts(userID, page, pageSize)
+	paginationURL := "/user/liked"
+	userLikedPostsDTO, err := app.Service.Post.GetUserLikedPostsDTO(userID, page, pageSize, paginationURL)
 	if err != nil {
 		app.Logger.Error("get user liked posts", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
-	user, err := app.Service.User.GetUserByID(userID)
-	if err != nil {
-		app.Logger.Error("get user", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
-		return
-	}
-
-	hasNextPage := len(posts) > pageSize
-
-	if hasNextPage {
-		posts = posts[:pageSize]
-	}
-
 	data := app.newTemplateData(r)
-	data.Posts = posts
-	data.Header = fmt.Sprintf("Posts liked by %s", user.Username)
+	data.Posts = userLikedPostsDTO.Posts
+	data.Header = fmt.Sprintf("Posts liked by %s", userLikedPostsDTO.User.Username)
 	data.Pagination = pagination{
-		CurrentPage:      page,
-		HasNextPage:      hasNextPage,
-		PaginationAction: "/user/liked", // Маршрут для пагинации
+		CurrentPage:      userLikedPostsDTO.CurrentPage,
+		HasNextPage:      userLikedPostsDTO.HasNextPage,
+		PaginationAction: userLikedPostsDTO.PaginationURL,
 	}
 	app.render(w, http.StatusOK, "user_posts.html", data)
 }

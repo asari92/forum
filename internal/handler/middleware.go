@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"runtime/debug"
 
 	"forum/internal/session"
 )
@@ -70,7 +71,11 @@ func (app *Application) recoverPanic(next http.Handler) http.Handler {
 			if err := recover(); err != nil {
 				w.Header().Set("Connection", "close")
 				err = fmt.Errorf("%s", err)
-				app.Logger.Error("recover panic", "error", err)
+				app.Logger.Error("recover panic",
+					"error", err,
+					"stack_trace", string(debug.Stack()), // Включение стека
+				)
+
 				app.render(w, http.StatusInternalServerError, Errorpage, nil)
 				return
 			}

@@ -36,7 +36,7 @@ func (r *CategorySqlite3) Get(categoryId int) (*entities.Category, error) {
 	err := row.Scan(&category.ID, &category.Name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNoRecord
+			return nil, entities.ErrNoRecord
 		} else {
 			return nil, err
 		}

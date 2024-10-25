@@ -3,8 +3,7 @@ package mocks
 import (
 	"time"
 
-	"forum/entities"
-	"forum/repository"
+	"forum/internal/entities"
 )
 
 var mockPost = &entities.Post{
@@ -26,7 +25,7 @@ func (m *PostModel) Get(id int) (*entities.Post, error) {
 	case 1:
 		return mockPost, nil
 	default:
-		return nil, repository.ErrNoRecord
+		return nil, entities.ErrNoRecord
 	}
 }
 
@@ -43,7 +42,7 @@ func (m *PostModel) GetUserPaginatedPosts(userId, page, pageSize int) ([]*entiti
 	case 1:
 		return []*entities.Post{mockPost}, nil
 	default:
-		return nil, repository.ErrNoRecord
+		return nil, entities.ErrNoRecord
 	}
 }
 
@@ -52,6 +51,6 @@ func (m *PostModel) GetUserLikedPaginatedPosts(userId, page, pageSize int) ([]*e
 	case 1:
 		return []*entities.Post{mockPost}, nil
 	default:
-		return nil, repository.ErrNoRecord
+		return nil, entities.ErrNoRecord
 	}
 }

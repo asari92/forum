@@ -2,9 +2,10 @@ package handler
 
 import (
 	"errors"
-	"forum/internal/repository"
-	"forum/internal/validator"
 	"net/http"
+
+	"forum/internal/entities"
+	"forum/internal/validator"
 )
 
 type accountPasswordUpdateForm struct {
@@ -26,7 +27,7 @@ func (app *Application) accountView(w http.ResponseWriter, r *http.Request) {
 
 	user, err := app.Service.User.GetUserByID(userID)
 	if err != nil {
-		if errors.Is(err, repository.ErrNoRecord) {
+		if errors.Is(err, entities.ErrNoRecord) {
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 		} else {
 			app.Logger.Error("get user from db", "error", err)
@@ -86,7 +87,7 @@ func (app *Application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 
 	err = app.Service.User.UpdatePassword(userID, form.CurrentPassword, form.NewPassword)
 	if err != nil {
-		if errors.Is(err, repository.ErrInvalidCredentials) {
+		if errors.Is(err, entities.ErrInvalidCredentials) {
 			form.AddFieldError("currentPassword", "Current password is incorrect")
 			data := app.newTemplateData(r)
 			data.Form = form

@@ -1,17 +1,8 @@
 package service
 
 import (
-	"errors"
 	"forum/internal/entities"
 	"forum/internal/repository"
-)
-
-var (
-	ErrNoRecord = errors.New("models: no matching record found")
-
-	ErrInvalidCredentials = errors.New("models: invalid credentials")
-
-	ErrDuplicateEmail = errors.New("models: duplicate email")
 )
 
 type User interface {
@@ -23,11 +14,15 @@ type User interface {
 }
 
 type Post interface {
+	GetPostDTO(postID int, userID int) (*PostDTO, error)
+	GetUserPostsDTO(userID, page, pageSize int, paginationURL string) (*UserPostsDTO, error)
+	GetUserLikedPostsDTO(userID, page, pageSize int, paginationURL string) (*UserPostsDTO, error)
+
 	CreatePostWithCategories(title, content string, userID int, categoryIDs []int) (int, error)
-	GetPost(postID int) (*entities.Post, error)
+	// GetPost(postID int) (*entities.Post, error)
 	GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error)
-	GetUserPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
-	GetUserLikedPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
+	// GetUserPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
+	// GetUserLikedPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
 	GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post, error)
 	DeletePost(postID int) error
 }
@@ -73,7 +68,7 @@ type Service struct {
 func NewService(repos *repository.Repository) *Service {
 	return &Service{
 		User:            NewUserUseCase(repos.UserRepository),
-		Post:            NewPostUseCase(repos.PostRepository),
+		Post:            NewPostUseCase(repos),
 		PostReaction:    NewPostReactionUseCase(repos.PostReactionRepository),
 		Comment:         NewCommentUseCase(repos.CommentRepository),
 		CommentReaction: NewCommentReactionUseCase(repos.CommentReactionRepository),

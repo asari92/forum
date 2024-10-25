@@ -3,8 +3,7 @@ package mocks
 import (
 	"time"
 
-	"forum/entities"
-	"forum/repository"
+	"forum/internal/entities"
 )
 
 type UserModel struct{}
@@ -12,7 +11,7 @@ type UserModel struct{}
 func (m *UserModel) Insert(name, email, password string) error {
 	switch email {
 	case "dupe@example.com":
-		return repository.ErrDuplicateEmail
+		return entities.ErrDuplicateEmail
 	default:
 		return nil
 	}
@@ -23,7 +22,7 @@ func (m *UserModel) Authenticate(email, password string) (int, error) {
 		return 1, nil
 	}
 
-	return 0, repository.ErrInvalidCredentials
+	return 0, entities.ErrInvalidCredentials
 }
 
 func (m *UserModel) Exists(id int) (bool, error) {
@@ -47,17 +46,17 @@ func (m *UserModel) Get(id int) (*entities.User, error) {
 		return u, nil
 	}
 
-	return nil, repository.ErrNoRecord
+	return nil, entities.ErrNoRecord
 }
 
 func (m *UserModel) PasswordUpdate(id int, currentPassword, newPassword string) error {
 	if id == 1 {
 		if currentPassword != "pa$$word" {
-			return repository.ErrInvalidCredentials
+			return entities.ErrInvalidCredentials
 		}
 
 		return nil
 	}
 
-	return repository.ErrNoRecord
+	return entities.ErrNoRecord
 }

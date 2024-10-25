@@ -36,7 +36,7 @@ func (r *UserSqlite3) Insert(username, email, password string) error {
 		var sqliteError sqlite3.Error
 		if errors.As(err, &sqliteError) {
 			if sqliteError.Code == sqlite3.ErrConstraint && strings.Contains(sqliteError.Error(), "users.email") {
-				return ErrDuplicateEmail
+				return entities.ErrDuplicateEmail
 			}
 		}
 		return err
@@ -54,7 +54,7 @@ func (r *UserSqlite3) Authenticate(email, password string) (int, error) {
 	err := r.DB.QueryRow(stmt, email).Scan(&id, &hashedPassword)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, ErrInvalidCredentials
+			return 0, entities.ErrInvalidCredentials
 		} else {
 			return 0, err
 		}
@@ -63,7 +63,7 @@ func (r *UserSqlite3) Authenticate(email, password string) (int, error) {
 	err = bcrypt.CompareHashAndPassword(hashedPassword, []byte(password))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return 0, ErrInvalidCredentials
+			return 0, entities.ErrInvalidCredentials
 		} else {
 			return 0, err
 		}
@@ -90,7 +90,7 @@ func (r *UserSqlite3) Get(id int) (*entities.User, error) {
 	err := row.Scan(&u.ID, &u.Username, &u.Email, &created)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNoRecord
+			return nil, entities.ErrNoRecord
 		} else {
 			return nil, err
 		}
@@ -118,7 +118,7 @@ func (r *UserSqlite3) UpdatePassword(id int, currentPassword, newPassword string
 	err = bcrypt.CompareHashAndPassword(currentHashedPassword, []byte(currentPassword))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return ErrInvalidCredentials
+			return entities.ErrInvalidCredentials
 		} else {
 			return err
 		}

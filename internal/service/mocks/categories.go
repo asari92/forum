@@ -1,8 +1,7 @@
 package mocks
 
 import (
-	"forum/entities"
-	"forum/repository"
+	"forum/internal/entities"
 )
 
 type CategoryModel struct{}
@@ -19,7 +18,7 @@ func (m *CategoryModel) GetCategoriesForPost(postId int) ([]*entities.Category, 
 		categories = append(categories, mockCategory)
 		return categories, nil
 	default:
-		return nil, repository.ErrNoRecord
+		return nil, entities.ErrNoRecord
 	}
 }
 
