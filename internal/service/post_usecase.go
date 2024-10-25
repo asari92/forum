@@ -290,13 +290,29 @@ func (uc *PostUseCase) GetFilteredPaginatedPostsDTO(form *postCreateForm, page, 
 }
 
 // Создание поста с категориями
-func (uc *PostUseCase) CreatePostWithCategories(title, content string, userID int, categoryIDs []int) (int, error) {
-	postID, err := uc.postRepo.InsertPostWithCategories(title, content, userID, categoryIDs)
+func (uc *PostUseCase) CreatePostWithCategories(form *postCreateForm, userID int) (int, []*entities.Category, error) {
+	// валидировать все данные
+	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
+
+	allCategories, err := uc.categoryRepo.GetAll()
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
 
-	return postID, nil
+	form.validateCategories(allCategories)
+
+	if !form.Valid() {
+		return 0, allCategories, nil
+	}
+
+	postID, err := uc.postRepo.InsertPostWithCategories(form.Title, form.Content, userID, form.Categories)
+	if err != nil {
+		return 0, allCategories, err
+	}
+
+	return postID, allCategories, nil
 }
 
 // // Получение поста по ID

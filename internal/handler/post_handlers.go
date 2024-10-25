@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"forum/internal/entities"
-	"forum/internal/validator"
 )
 
 func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +69,15 @@ func (app *Application) postCreateView(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in postCreate")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
 	err := r.ParseForm()
 	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
@@ -91,19 +99,12 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 	form.Content = r.PostForm.Get("content")
 	form.Categories = categoryIDs
 
-	// валидировать все данные
-	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
-	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
-	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
-
-	allCategories, err := app.Service.Category.GetAll()
+	postId, allCategories, err := app.Service.Post.CreatePostWithCategories(&form, userId)
 	if err != nil {
-		app.Logger.Error("get all categories", "error", err)
+		app.Logger.Error("insert post and categories", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
-
-	// form.validateCategories(allCategories) !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	if !form.Valid() {
 		data := app.newTemplateData(r)
@@ -117,28 +118,9 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sess := app.SessionFromContext(r)
-	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
-	if !ok || userId < 1 {
-		err = errors.New("get userID in postCreate")
-		app.Logger.Error("get userid from session", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
-		return
-	}
-
-	postId, err := app.Service.Post.CreatePostWithCategories(form.Title, form.Content, userId, form.Categories)
-	if err != nil {
-		app.Logger.Error("insert post and categories", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
-		return
-	}
-
 	err = sess.Set(FlashSessionKey, "Post successfully created!")
 	if err != nil {
 		// кажется тут не нужна ошибка, достаточно логирования
-		// app.serverError(w, err)
-		// trace := fmt.Sprintf("Error: %+v", err) // Log full stack trace
-		// app.errorLog.Println(trace)
 		app.Logger.Error("Session error during set flash", "error", err)
 	}
 

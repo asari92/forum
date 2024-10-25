@@ -21,7 +21,7 @@ type Post interface {
 	GetUserLikedPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetFilteredPaginatedPostsDTO(form *postCreateForm, page, pageSize int, paginationURL string) (*PostsDTO, error)
 
-	CreatePostWithCategories(title, content string, userID int, categoryIDs []int) (int, error)
+	CreatePostWithCategories(form *postCreateForm, userID int) (int, []*entities.Category, error)
 	// GetPost(postID int) (*entities.Post, error)
 	GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error)
 	// GetUserPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
