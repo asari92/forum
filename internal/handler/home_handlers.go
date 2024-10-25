@@ -1,11 +1,8 @@
 package handler
 
 import (
-	"fmt"
-	"forum/internal/entities"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 type pagination struct {
@@ -15,47 +12,29 @@ type pagination struct {
 }
 
 func (app *Application) home(w http.ResponseWriter, r *http.Request) {
-	// Определяем текущую страницу. По умолчанию - страница 1.
-	page := 1
+	page := 1      // Определяем текущую страницу. По умолчанию - страница 1.
 	pageSize := 10 // Количество постов на одной странице
 
-	// Получаем посты для нужной страницы.
-	posts, err := app.Service.Post.GetAllPaginatedPosts(page, pageSize)
+	// Получаем посты для нужной страницы через юзкейс.
+	userPostsDTO, err := app.Service.Post.GetAllPaginatedPostsDTO(page, pageSize, "/")
 	if err != nil {
 		app.Logger.Error("get all paginated posts", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
-	// Проверяем, есть ли следующая страница
-	hasNextPage := len(posts) > pageSize
-
-	// Если постов больше, чем pageSize, обрезаем список до pageSize
-	if hasNextPage {
-		posts = posts[:pageSize]
-	}
-
-	categories, err := app.Service.Category.GetAll()
-	if err != nil {
-		app.Logger.Error("get all categories", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
-		return
-	}
-
-	form := postCreateForm{
-		Categories: []int{},
-	}
+	form := app.Service.Post.NewPostCreateForm()
 
 	data := app.newTemplateData(r)
-	data.Posts = posts
-	data.Categories = categories
-	data.Header = "All posts"
-	data.Pagination = pagination{
-		CurrentPage:      page,
-		HasNextPage:      hasNextPage,
-		PaginationAction: "/", // Маршрут для пагинации
-	}
 	data.Form = form
+	data.Header = "All posts"
+	data.Posts = userPostsDTO.Posts
+	data.Categories = userPostsDTO.Categories
+	data.Pagination = pagination{
+		CurrentPage:      userPostsDTO.CurrentPage,
+		HasNextPage:      userPostsDTO.HasNextPage,
+		PaginationAction: userPostsDTO.PaginationURL, // Динамическая ссылка на пагинацию
+	}
 	app.render(w, http.StatusOK, "home.html", data)
 }
 
@@ -88,117 +67,32 @@ func (app *Application) filterPosts(w http.ResponseWriter, r *http.Request) {
 		categoryIDs = append(categoryIDs, intID)
 	}
 
-	form := postCreateForm{
-		Categories: categoryIDs,
-	}
+	form := app.Service.Post.NewPostCreateForm()
+	form.Categories = categoryIDs
 
-	allCategories, err := app.Service.Category.GetAll()
+	filteredPostsDTO, err := app.Service.Post.GetFilteredPaginatedPostsDTO(&form, page, pageSize, "/")
 	if err != nil {
-		app.Logger.Error("get all categories", "error", err)
+		app.Logger.Error("filter posts by categories", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
-	// Проверка категорий
-	form.validateCategories(allCategories)
-
 	data := app.newTemplateData(r)
-	data.Categories = allCategories
 	data.Form = form
-	data.Header = "All posts"
+	data.Posts = filteredPostsDTO.Posts
+	data.Header = filteredPostsDTO.Header
+	data.Categories = filteredPostsDTO.Categories
+	data.Pagination = pagination{
+		CurrentPage:      filteredPostsDTO.CurrentPage,
+		HasNextPage:      filteredPostsDTO.HasNextPage,
+		PaginationAction: filteredPostsDTO.PaginationURL, // Маршрут для пагинации
+	}
 
 	if !form.Valid() {
-		posts, err := app.Service.Post.GetAllPaginatedPosts(page, pageSize)
-		if err != nil {
-			app.Logger.Error("get all posts", "error", err)
-			app.render(w, http.StatusInternalServerError, Errorpage, nil)
-			return
-		}
-
-		// Проверяем, есть ли следующая страница
-		hasNextPage := len(posts) > pageSize
-
-		// Если постов больше, чем pageSize, обрезаем список до pageSize
-		if hasNextPage {
-			posts = posts[:pageSize]
-		}
-
-		data.Posts = posts
-		data.Pagination = pagination{
-			CurrentPage:      page,
-			HasNextPage:      hasNextPage,
-			PaginationAction: "/", // Маршрут для пагинации
-		}
-
 		app.render(w, http.StatusUnprocessableEntity, "home.html", data)
 		return
 	}
-
-	// Получаем посты с пагинацией и на одну запись больше
-	posts, err := app.Service.Post.GetPaginatedPostsByCategory(form.Categories, page, pageSize)
-	if err != nil {
-		app.Logger.Error("get paginated posts by category", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
-		return
-	}
-
-	// Проверяем, есть ли следующая страница
-	hasNextPage := len(posts) > pageSize
-
-	// Если постов больше, чем pageSize, обрезаем список до pageSize
-	if hasNextPage {
-		posts = posts[:pageSize]
-	}
-
-	// Собираем названия категорий, совпадающие с выбранными categoryIDs
-	var filteredCategoryNames []string
-	for _, category := range allCategories {
-		for _, selectedID := range categoryIDs {
-			if category.ID == selectedID {
-				filteredCategoryNames = append(filteredCategoryNames, category.Name)
-			}
-		}
-	}
-
-	// Если категории выбраны, создаем строку заголовка с их названиями
-	if len(filteredCategoryNames) > 0 {
-		data.Header = fmt.Sprintf("Posts filtered by: %s", strings.Join(filteredCategoryNames, ", "))
-	}
-
-	data.Posts = posts
-	data.Pagination = pagination{
-		CurrentPage:      page,
-		HasNextPage:      hasNextPage,
-		PaginationAction: "/", // Маршрут для пагинации
-	}
-
 	app.render(w, http.StatusOK, "home.html", data)
-}
-
-func (form *postCreateForm) validateCategories(allCategories []*entities.Category) {
-	categoryIDs := []int{}
-	if len(form.Categories) == 0 {
-		form.AddFieldError("categories", "Need one or more category")
-	} else {
-		categoryMap := make(map[int]bool)
-		for _, category := range allCategories {
-			categoryMap[category.ID] = true
-		}
-
-		for _, c := range form.Categories {
-			if _, exists := categoryMap[c]; exists {
-				categoryIDs = append(categoryIDs, c)
-			} else {
-				form.AddFieldError("categories", "One or more categories are invalid")
-			}
-		}
-	}
-
-	if len(categoryIDs) > 0 {
-		form.Categories = categoryIDs
-	} else {
-		form.AddFieldError("categories", "Need one or more category")
-	}
 }
 
 func (app *Application) aboutView(w http.ResponseWriter, r *http.Request) {

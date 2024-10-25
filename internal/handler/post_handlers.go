@@ -10,13 +10,6 @@ import (
 	"forum/internal/validator"
 )
 
-type postCreateForm struct {
-	Title      string
-	Content    string
-	Categories []int
-	validator.Validator
-}
-
 func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
@@ -68,10 +61,10 @@ func (app *Application) postCreateView(w http.ResponseWriter, r *http.Request) {
 
 	data := app.newTemplateData(r)
 	data.Categories = categories
-	data.Form = postCreateForm{
-		// первая категория всегда отмечена
-		Categories: []int{DefaultCategory},
-	}
+	form := app.Service.Post.NewPostCreateForm()
+	// первая категория всегда отмечена
+	form.Categories = []int{DefaultCategory}
+	data.Form = form
 
 	app.render(w, http.StatusOK, "create_post.html", data)
 }
@@ -93,11 +86,10 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 		categoryIDs = append(categoryIDs, intID)
 	}
 
-	form := postCreateForm{
-		Title:      r.PostForm.Get("title"),
-		Content:    r.PostForm.Get("content"),
-		Categories: categoryIDs,
-	}
+	form := app.Service.Post.NewPostCreateForm()
+	form.Title = r.PostForm.Get("title")
+	form.Content = r.PostForm.Get("content")
+	form.Categories = categoryIDs
 
 	// валидировать все данные
 	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
@@ -111,7 +103,7 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	form.validateCategories(allCategories)
+	// form.validateCategories(allCategories) !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	if !form.Valid() {
 		data := app.newTemplateData(r)

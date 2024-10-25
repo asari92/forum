@@ -2,9 +2,12 @@ package service
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
 	"forum/internal/entities"
 	"forum/internal/repository"
+	"forum/internal/validator"
 )
 
 // Use Case структура
@@ -26,12 +29,21 @@ type PostDTO struct {
 	UserReaction *entities.PostReaction
 }
 
-type UserPostsDTO struct {
+type PostsDTO struct {
 	User          *entities.User
 	Posts         []*entities.Post
 	HasNextPage   bool
 	CurrentPage   int
 	PaginationURL string
+	Categories    []*entities.Category
+	Header        string
+}
+
+type postCreateForm struct {
+	Title      string
+	Content    string
+	Categories []int
+	validator.Validator
 }
 
 func NewPostUseCase(repo *repository.Repository) *PostUseCase {
@@ -43,6 +55,10 @@ func NewPostUseCase(repo *repository.Repository) *PostUseCase {
 		postReactionRepo:    repo.PostReactionRepository,
 		userRepo:            repo.UserRepository,
 	}
+}
+
+func (uc *PostUseCase) NewPostCreateForm() postCreateForm {
+	return postCreateForm{Categories: []int{}}
 }
 
 func (uc *PostUseCase) GetPostDTO(postID int, userID int) (*PostDTO, error) {
@@ -113,7 +129,7 @@ func (uc *PostUseCase) GetPostDTO(postID int, userID int) (*PostDTO, error) {
 }
 
 // Получение постов пользователя с пагинацией
-func (uc *PostUseCase) GetUserPostsDTO(userID, page, pageSize int, paginationURL string) (*UserPostsDTO, error) {
+func (uc *PostUseCase) GetUserPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error) {
 	posts, err := uc.postRepo.GetUserPaginatedPosts(userID, page, pageSize)
 	if err != nil {
 		return nil, err
@@ -137,7 +153,7 @@ func (uc *PostUseCase) GetUserPostsDTO(userID, page, pageSize int, paginationURL
 		posts = posts[:pageSize]
 	}
 
-	return &UserPostsDTO{
+	return &PostsDTO{
 		User:          user,
 		Posts:         posts,
 		HasNextPage:   hasNextPage,
@@ -147,7 +163,7 @@ func (uc *PostUseCase) GetUserPostsDTO(userID, page, pageSize int, paginationURL
 }
 
 // Получение постов, которые пользователь лайкнул
-func (uc *PostUseCase) GetUserLikedPostsDTO(userID, page, pageSize int, paginationURL string) (*UserPostsDTO, error) {
+func (uc *PostUseCase) GetUserLikedPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error) {
 	// Получаем посты, которые пользователь лайкнул
 	posts, err := uc.postRepo.GetUserLikedPaginatedPosts(userID, page, pageSize)
 	if err != nil {
@@ -166,13 +182,111 @@ func (uc *PostUseCase) GetUserLikedPostsDTO(userID, page, pageSize int, paginati
 		posts = posts[:pageSize]
 	}
 
-	return &UserPostsDTO{
+	return &PostsDTO{
 		User:          user,
 		Posts:         posts,
 		HasNextPage:   hasNextPage,
 		CurrentPage:   page,
 		PaginationURL: paginationURL,
 	}, nil
+}
+
+// Получение всех постов с пагинацией
+func (uc *PostUseCase) GetAllPaginatedPostsDTO(page, pageSize int, paginationURL string) (*PostsDTO, error) {
+	// Получаем посты для нужной страницы.
+	posts, err := uc.postRepo.GetAllPaginatedPosts(page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	// Проверяем, есть ли следующая страница
+	hasNextPage := len(posts) > pageSize
+	// Если постов больше, чем pageSize, обрезаем список до pageSize
+	if hasNextPage {
+		posts = posts[:pageSize]
+	}
+
+	categories, err := uc.categoryRepo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	return &PostsDTO{
+		Posts:         posts,
+		HasNextPage:   hasNextPage,
+		CurrentPage:   page,
+		PaginationURL: paginationURL,
+		Categories:    categories,
+	}, nil
+}
+
+func (uc *PostUseCase) GetFilteredPaginatedPostsDTO(form *postCreateForm, page, pageSize int, paginationURL string) (*PostsDTO, error) {
+	allCategories, err := uc.categoryRepo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	// Проверка категорий
+	form.validateCategories(allCategories)
+
+	PostsDTO := &PostsDTO{
+		Header:        "All posts",
+		CurrentPage:   page,
+		PaginationURL: paginationURL,
+		Categories:    allCategories,
+	}
+
+	if !form.Valid() {
+		posts, err := uc.postRepo.GetAllPaginatedPosts(page, pageSize)
+		if err != nil {
+			return nil, err
+		}
+
+		// Проверяем, есть ли следующая страница
+		hasNextPage := len(posts) > pageSize
+		// Если постов больше, чем pageSize, обрезаем список до pageSize
+		if hasNextPage {
+			posts = posts[:pageSize]
+		}
+
+		PostsDTO.Posts = posts
+		PostsDTO.HasNextPage = hasNextPage
+
+		return PostsDTO, nil
+	}
+
+	// Получаем посты с пагинацией
+	posts, err := uc.postRepo.GetPaginatedPostsByCategory(form.Categories, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	// Проверяем, есть ли следующая страница
+	hasNextPage := len(posts) > pageSize
+	// Если постов больше, чем pageSize, обрезаем список до pageSize
+	if hasNextPage {
+		posts = posts[:pageSize]
+	}
+
+	// Собираем названия категорий, совпадающие с выбранными categoryIDs
+	var filteredCategoryNames []string
+	for _, category := range allCategories {
+		for _, selectedID := range form.Categories {
+			if category.ID == selectedID {
+				filteredCategoryNames = append(filteredCategoryNames, category.Name)
+			}
+		}
+	}
+
+	// Если категории выбраны, создаем строку заголовка с их названиями
+	if len(filteredCategoryNames) > 0 {
+		PostsDTO.Header = fmt.Sprintf("Posts filtered by: %s", strings.Join(filteredCategoryNames, ", "))
+	}
+
+	PostsDTO.Posts = posts
+	PostsDTO.HasNextPage = hasNextPage
+
+	return PostsDTO, nil
 }
 
 // Создание поста с категориями
@@ -203,7 +317,6 @@ func (uc *PostUseCase) GetPaginatedPostsByCategory(categoryIDs []int, page, page
 // 	return uc.postRepo.GetUserLikedPaginatedPosts(userID, page, pageSize)
 // }
 
-// Получение всех постов с пагинацией
 func (uc *PostUseCase) GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post, error) {
 	return uc.postRepo.GetAllPaginatedPosts(page, pageSize)
 }
@@ -211,4 +324,30 @@ func (uc *PostUseCase) GetAllPaginatedPosts(page, pageSize int) ([]*entities.Pos
 // Удаление поста
 func (uc *PostUseCase) DeletePost(postID int) error {
 	return uc.postRepo.DeletePost(postID)
+}
+
+func (form *postCreateForm) validateCategories(allCategories []*entities.Category) {
+	categoryIDs := []int{}
+	if len(form.Categories) == 0 {
+		form.AddFieldError("categories", "Need one or more category")
+	} else {
+		categoryMap := make(map[int]bool)
+		for _, category := range allCategories {
+			categoryMap[category.ID] = true
+		}
+
+		for _, c := range form.Categories {
+			if _, exists := categoryMap[c]; exists {
+				categoryIDs = append(categoryIDs, c)
+			} else {
+				form.AddFieldError("categories", "One or more categories are invalid")
+			}
+		}
+	}
+
+	if len(categoryIDs) > 0 {
+		form.Categories = categoryIDs
+	} else {
+		form.AddFieldError("categories", "Need one or more category")
+	}
 }

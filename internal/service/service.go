@@ -14,9 +14,12 @@ type User interface {
 }
 
 type Post interface {
+	NewPostCreateForm() postCreateForm
 	GetPostDTO(postID int, userID int) (*PostDTO, error)
-	GetUserPostsDTO(userID, page, pageSize int, paginationURL string) (*UserPostsDTO, error)
-	GetUserLikedPostsDTO(userID, page, pageSize int, paginationURL string) (*UserPostsDTO, error)
+	GetAllPaginatedPostsDTO(page, pageSize int, paginationURL string) (*PostsDTO, error)
+	GetUserPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error)
+	GetUserLikedPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error)
+	GetFilteredPaginatedPostsDTO(form *postCreateForm, page, pageSize int, paginationURL string) (*PostsDTO, error)
 
 	CreatePostWithCategories(title, content string, userID int, categoryIDs []int) (int, error)
 	// GetPost(postID int) (*entities.Post, error)
