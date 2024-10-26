@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"forum/internal/assert"
+	"forum/pkg/assert"
 )
 
 func TestSecureHeaders(t *testing.T) {

@@ -6,21 +6,8 @@ import (
 	"strings"
 
 	"forum/internal/entities"
-	"forum/internal/validator"
+	"forum/pkg/validator"
 )
-
-type signupForm struct {
-	Username string
-	Email    string
-	Password string
-	validator.Validator
-}
-
-type userLoginForm struct {
-	Email    string
-	Password string
-	validator.Validator
-}
 
 func (app *Application) userSignupView(w http.ResponseWriter, r *http.Request) {
 	if !strings.Contains(r.Referer(), "/user/signup") && !strings.Contains(r.Referer(), "/user/login") {
@@ -29,7 +16,7 @@ func (app *Application) userSignupView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := app.newTemplateData(r)
-	data.Form = signupForm{}
+	data.Form = app.Service.User.NewUserAuthForm()
 	app.render(w, http.StatusOK, "signup.html", data)
 }
 
@@ -39,44 +26,31 @@ func (app *Application) userSignup(w http.ResponseWriter, r *http.Request) {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
-	form := signupForm{
-		Username: r.PostForm.Get("username"),
-		Email:    r.PostForm.Get("email"),
-		Password: r.PostForm.Get("password"),
-	}
 
-	// ДОБАВИТЬ ПРОВЕРОК!!!!!!!!!!!!!!!!!!!
-	form.CheckField(validator.NotBlank(form.Username), "username", "This field cannot be blank")
-	form.CheckField(validator.MaxChars(form.Username, 100), "username", "This field cannot be more than 100 characters long")
-	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
-	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")
-	form.CheckField(validator.MaxChars(form.Email, 100), "email", "This field cannot be more than 100 characters long")
-	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
-	form.CheckField(validator.MinChars(form.Password, 8), "password", "This field must be at least 8 characters long")
-	form.CheckField(validator.MaxChars(form.Password, 100), "password", "This field cannot be more than 100 characters long")
+	form := app.Service.User.NewUserAuthForm()
+	form.Username = r.PostForm.Get("username")
+	form.Email = r.PostForm.Get("email")
+	form.Password = r.PostForm.Get("password")
 
-	if !form.Valid() {
-		data := app.newTemplateData(r)
-		data.Form = form
-		app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
-		return
-	}
-
-	err = app.Service.User.Insert(form.Username, form.Email, form.Password)
+	err = app.Service.User.Insert(&form)
 	if err != nil {
-		if errors.Is(err, entities.ErrDuplicateEmail) {
+		if errors.Is(err, entities.ErrInvalidCredentials) {
+			form.AddFieldError("insert user credentials", "invalid credentials")
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
+		} else if errors.Is(err, entities.ErrDuplicateEmail) {
 			form.AddFieldError("email", "Email address is already in use")
-
 			data := app.newTemplateData(r)
 			data.Form = form
 			app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
 		} else {
 			app.Logger.Error("insert user credentials", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
-
 		}
 		return
 	}
+
 	sess := app.SessionFromContext(r)
 	// Если валидация прошла успешно, удаляем токен из сессии
 	err = sess.Delete(CsrfTokenSessionKey)
@@ -101,7 +75,7 @@ func (app *Application) userLoginView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := app.newTemplateData(r)
-	data.Form = userLoginForm{}
+	data.Form = app.Service.User.NewUserAuthForm()
 
 	app.render(w, http.StatusOK, "login.html", data)
 }
@@ -112,10 +86,9 @@ func (app *Application) userLogin(w http.ResponseWriter, r *http.Request) {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
-	form := userLoginForm{
-		Email:    r.PostForm.Get("email"),
-		Password: r.PostForm.Get("password"),
-	}
+	form := app.Service.User.NewUserAuthForm()
+	form.Email = r.PostForm.Get("email")
+	form.Password = r.PostForm.Get("password")
 
 	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
 	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")

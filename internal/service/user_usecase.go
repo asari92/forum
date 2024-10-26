@@ -5,11 +5,18 @@ import (
 
 	"forum/internal/entities"
 	"forum/internal/repository"
-	"forum/internal/validator"
+	"forum/pkg/validator"
 )
 
 type UserUseCase struct {
 	userRepo repository.UserRepository
+}
+
+type userAuthForm struct {
+	Username string
+	Email    string
+	Password string
+	validator.Validator
 }
 
 type accountPasswordUpdateForm struct {
@@ -25,16 +32,30 @@ func NewUserUseCase(userRepo repository.UserRepository) *UserUseCase {
 	}
 }
 
+func (uc *UserUseCase) NewUserAuthForm() userAuthForm {
+	return userAuthForm{}
+}
+
 func (uc *UserUseCase) NewAccountPasswordUpdateForm() accountPasswordUpdateForm {
 	return accountPasswordUpdateForm{}
 }
 
-func (u *UserUseCase) Insert(username, email, password string) error {
-	// Валидация данных
-	if username == "" || email == "" || password == "" {
-		return errors.New("fields can't be empty")
+func (u *UserUseCase) Insert(form *userAuthForm) error {
+	// ДОБАВИТЬ ПРОВЕРОК!!!!!!!!!!!!!!!!!!!
+	form.CheckField(validator.NotBlank(form.Username), "username", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Username, 100), "username", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")
+	form.CheckField(validator.MaxChars(form.Email, 100), "email", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+	form.CheckField(validator.MinChars(form.Password, 8), "password", "This field must be at least 8 characters long")
+	form.CheckField(validator.MaxChars(form.Password, 100), "password", "This field cannot be more than 100 characters long")
+
+	if !form.Valid() {
+		return entities.ErrInvalidCredentials
 	}
-	return u.userRepo.Insert(username, email, password)
+
+	return u.userRepo.Insert(form.Username, form.Email, form.Password)
 }
 
 func (u *UserUseCase) Authenticate(email, password string) (int, error) {

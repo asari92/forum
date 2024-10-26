@@ -7,7 +7,7 @@ import (
 
 	"forum/internal/entities"
 	"forum/internal/repository"
-	"forum/internal/validator"
+	"forum/pkg/validator"
 )
 
 // Use Case структура
@@ -315,23 +315,10 @@ func (uc *PostUseCase) CreatePostWithCategories(form *postCreateForm, userID int
 	return postID, allCategories, nil
 }
 
-// // Получение поста по ID
-// func (uc *PostUseCase) GetPost(postID int) (*entities.Post, error) {
-// 	return uc.postRepo.GetPost(postID)
-// }
-
 // Получение постов по категориям с пагинацией
 func (uc *PostUseCase) GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error) {
 	return uc.postRepo.GetPaginatedPostsByCategory(categoryIDs, page, pageSize)
 }
-
-// func (uc *PostUseCase) GetUserPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error) {
-// 	return uc.postRepo.GetUserPaginatedPosts(userID, page, pageSize)
-// }
-
-// func (uc *PostUseCase) GetUserLikedPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error) {
-// 	return uc.postRepo.GetUserLikedPaginatedPosts(userID, page, pageSize)
-// }
 
 func (uc *PostUseCase) GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post, error) {
 	return uc.postRepo.GetAllPaginatedPosts(page, pageSize)

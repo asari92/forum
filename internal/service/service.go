@@ -6,8 +6,9 @@ import (
 )
 
 type User interface {
+	NewUserAuthForm() userAuthForm
 	NewAccountPasswordUpdateForm() accountPasswordUpdateForm
-	Insert(username, email, password string) error
+	Insert(form *userAuthForm) error
 	Authenticate(email, password string) (int, error)
 	UserExists(id int) (bool, error)
 	GetUserByID(id int) (*entities.User, error)
@@ -21,12 +22,8 @@ type Post interface {
 	GetUserPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetUserLikedPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetFilteredPaginatedPostsDTO(form *postCreateForm, page, pageSize int, paginationURL string) (*PostsDTO, error)
-
 	CreatePostWithCategories(form *postCreateForm, userID int) (int, []*entities.Category, error)
-	// GetPost(postID int) (*entities.Post, error)
 	GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error)
-	// GetUserPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
-	// GetUserLikedPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
 	GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post, error)
 	DeletePost(postID int) error
 }

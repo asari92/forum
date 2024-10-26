@@ -79,14 +79,3 @@ CREATE TABLE IF NOT EXISTS users(
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS users_uc_email ON users(email);
-
-CREATE TABLE IF NOT EXISTS sessions(
-  user_id INTEGER NOT NULL,
-  token VARCHAR PRIMARY KEY NOT NULL,
-  expires TEXT NOT NULL,
-  CONSTRAINT users_tokens
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE Cascade
-      ON UPDATE No action
-);
-
-CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires);

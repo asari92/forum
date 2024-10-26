@@ -3,8 +3,8 @@ package service
 import (
 	"testing"
 
-	"forum/internal/assert"
 	"forum/internal/repository"
+	"forum/pkg/assert"
 )
 
 func TestUserModelExists(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"testing"
 
-	"forum/internal/assert"
+	"forum/pkg/assert"
 )
 
 func TestPing(t *testing.T) {
