@@ -1,8 +1,6 @@
 package service
 
 import (
-	"errors"
-
 	"forum/internal/entities"
 	"forum/internal/repository"
 	"forum/pkg/validator"
@@ -58,12 +56,20 @@ func (u *UserUseCase) Insert(form *userAuthForm) error {
 	return u.userRepo.Insert(form.Username, form.Email, form.Password)
 }
 
-func (u *UserUseCase) Authenticate(email, password string) (int, error) {
+func (u *UserUseCase) Authenticate(form *userAuthForm) (int, error) {
 	// Валидация данных
-	if email == "" || password == "" {
-		return 0, errors.New("fields can't be empty")
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")
+	form.CheckField(validator.MaxChars(form.Email, 100), "email", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+	form.CheckField(validator.MinChars(form.Password, 8), "password", "This field must be at least 8 characters long")
+	form.CheckField(validator.MaxChars(form.Password, 100), "password", "This field cannot be more than 100 characters long")
+
+	if !form.Valid() {
+		return 0, entities.ErrInvalidCredentials
 	}
-	return u.userRepo.Authenticate(email, password)
+
+	return u.userRepo.Authenticate(form.Email, form.Password)
 }
 
 func (u *UserUseCase) UserExists(id int) (bool, error) {

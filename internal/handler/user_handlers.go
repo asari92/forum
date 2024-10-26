@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"forum/internal/entities"
-	"forum/pkg/validator"
 )
 
 func (app *Application) userSignupView(w http.ResponseWriter, r *http.Request) {
@@ -86,31 +85,17 @@ func (app *Application) userLogin(w http.ResponseWriter, r *http.Request) {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
+
 	form := app.Service.User.NewUserAuthForm()
 	form.Email = r.PostForm.Get("email")
 	form.Password = r.PostForm.Get("password")
 
-	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
-	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")
-	form.CheckField(validator.MaxChars(form.Email, 100), "email", "This field cannot be more than 100 characters long")
-	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
-	form.CheckField(validator.MinChars(form.Password, 8), "password", "This field must be at least 8 characters long")
-	form.CheckField(validator.MaxChars(form.Password, 100), "password", "This field cannot be more than 100 characters long")
-
-	if !form.Valid() {
-		data := app.newTemplateData(r)
-		data.Form = form
-		app.render(w, http.StatusUnprocessableEntity, "login.html", data)
-		return
-	}
-
 	// Check whether the credentials are valid. If they're not, add a generic
 	// non-field error message and re-display the login page.
-	id, err := app.Service.User.Authenticate(form.Email, form.Password)
+	id, err := app.Service.User.Authenticate(&form)
 	if err != nil {
 		if errors.Is(err, entities.ErrInvalidCredentials) {
 			form.AddNonFieldError("Email or password is incorrect")
-
 			data := app.newTemplateData(r)
 			data.Form = form
 			app.render(w, http.StatusUnprocessableEntity, "login.html", data)
