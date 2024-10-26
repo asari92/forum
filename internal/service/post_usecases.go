@@ -315,15 +315,6 @@ func (uc *PostUseCase) CreatePostWithCategories(form *postCreateForm, userID int
 	return postID, allCategories, nil
 }
 
-// Получение постов по категориям с пагинацией
-func (uc *PostUseCase) GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error) {
-	return uc.postRepo.GetPaginatedPostsByCategory(categoryIDs, page, pageSize)
-}
-
-func (uc *PostUseCase) GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post, error) {
-	return uc.postRepo.GetAllPaginatedPosts(page, pageSize)
-}
-
 // Удаление поста
 func (uc *PostUseCase) DeletePost(postID int) error {
 	return uc.postRepo.DeletePost(postID)

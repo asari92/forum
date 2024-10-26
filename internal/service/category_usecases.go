@@ -33,11 +33,3 @@ func (u *CategoryUseCase) GetAll() ([]*entities.Category, error) {
 func (u *CategoryUseCase) Delete(categoryId int) error {
 	return u.categoryRepo.Delete(categoryId)
 }
-
-func (u *CategoryUseCase) GetCategoriesForPost(postId int) ([]*entities.Category, error) {
-	return u.categoryRepo.GetCategoriesForPost(postId)
-}
-
-func (u *CategoryUseCase) DeleteCategoriesForPost(postId int) error {
-	return u.categoryRepo.DeleteCategoriesForPost(postId)
-}

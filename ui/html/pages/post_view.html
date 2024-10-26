@@ -90,48 +90,42 @@
             </div>
             <div class="comment-content">{{.Content}}</div>
             <form method="POST" action="/post/view/{{.PostID}}">
-            <input type="hidden" name="token" value="{{$CSRFToken}}">
-            <input type="hidden" name="comment_id" value="{{.ID}}">
-            {{if eq .UserReaction 1}}
-            <button type="submit" name="comment_is_like" value="true">
-                <span class="icon icon-like-active">
-                    {{.Like}} 👍
-                </span>    
-            </button>
-            <button type="submit" name="comment_is_like" value="false">
-                <span class="icon icon-neutral">
-                    {{.Dislike}} 👎🏿
-                </span>    
-            </button>
-
-            {{else if eq .UserReaction -1}}
-            <button type="submit" name="comment_is_like" value="true">
-                <span class="icon icon-neutral">
-                    {{.Like}} 👍🏿
-                </span>    
-            </button>
-            <button type="submit" name="comment_is_like" value="false">
-                <span class="icon icon-dislike-active">
-                    {{.Dislike}} 👎
-                </span>    
-            </button>
-            {{else}}
-            <button type="submit" name="comment_is_like" value="true">
-                <span class="icon icon-neutral">
-                    {{.Like}} 👍🏿
-                </span>    
-            </button>
-            <button type="submit" name="comment_is_like" value="false">
-                <span class="icon icon-neutral">
-                    {{.Dislike}} 👎🏿
-                </span>    
-            </button>
-
- 
-
-            {{end}}
-
-            
+                <input type="hidden" name="token" value="{{$CSRFToken}}">
+                <input type="hidden" name="comment_id" value="{{.ID}}">
+                {{if eq .UserReaction 1}}
+                <button type="submit" name="comment_is_like" value="true">
+                    <span class="icon icon-like-active">
+                        {{.Like}} 👍
+                    </span>    
+                </button>
+                <button type="submit" name="comment_is_like" value="false">
+                    <span class="icon icon-neutral">
+                        {{.Dislike}} 👎🏿
+                    </span>    
+                </button>
+                {{else if eq .UserReaction -1}}
+                <button type="submit" name="comment_is_like" value="true">
+                    <span class="icon icon-neutral">
+                        {{.Like}} 👍🏿
+                    </span>    
+                </button>
+                <button type="submit" name="comment_is_like" value="false">
+                    <span class="icon icon-dislike-active">
+                        {{.Dislike}} 👎
+                    </span>    
+                </button>
+                {{else}}
+                <button type="submit" name="comment_is_like" value="true">
+                    <span class="icon icon-neutral">
+                        {{.Like}} 👍🏿
+                    </span>    
+                </button>
+                <button type="submit" name="comment_is_like" value="false">
+                    <span class="icon icon-neutral">
+                        {{.Dislike}} 👎🏿
+                    </span>    
+                </button>
+                {{end}}
             </form>
         </li>
         {{else}}
