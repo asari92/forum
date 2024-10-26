@@ -252,7 +252,7 @@ func (uc *PostUseCase) GetFilteredPaginatedPostsDTO(form *postCreateForm, page, 
 		PostsDTO.Posts = posts
 		PostsDTO.HasNextPage = hasNextPage
 
-		return PostsDTO, nil
+		return PostsDTO, entities.ErrInvalidCredentials
 	}
 
 	// Получаем посты с пагинацией
@@ -304,7 +304,7 @@ func (uc *PostUseCase) CreatePostWithCategories(form *postCreateForm, userID int
 	form.validateCategories(allCategories)
 
 	if !form.Valid() {
-		return 0, allCategories, nil
+		return 0, allCategories, entities.ErrInvalidCredentials
 	}
 
 	postID, err := uc.postRepo.InsertPostWithCategories(form.Title, form.Content, userID, form.Categories)

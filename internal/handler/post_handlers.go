@@ -101,20 +101,19 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 
 	postId, allCategories, err := app.Service.Post.CreatePostWithCategories(&form, userId)
 	if err != nil {
-		app.Logger.Error("insert post and categories", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
-		return
-	}
-
-	if !form.Valid() {
-		data := app.newTemplateData(r)
-		data.Categories = allCategories
-		// первая категория будет отмечена по умолчанию
-		if len(form.Categories) == 0 {
-			form.Categories = []int{DefaultCategory}
+		if errors.Is(err, entities.ErrInvalidCredentials) {
+			data := app.newTemplateData(r)
+			data.Categories = allCategories
+			// первая категория будет отмечена по умолчанию
+			if len(form.Categories) == 0 {
+				form.Categories = []int{DefaultCategory}
+			}
+			data.Form = form
+			app.render(w, http.StatusUnprocessableEntity, "create_post.html", data)
+		} else {
+			app.Logger.Error("insert post and categories", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		}
-		data.Form = form
-		app.render(w, http.StatusUnprocessableEntity, "create_post.html", data)
 		return
 	}
 

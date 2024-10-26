@@ -1,8 +1,11 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
+
+	"forum/internal/entities"
 )
 
 type pagination struct {
@@ -70,28 +73,30 @@ func (app *Application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	form := app.Service.Post.NewPostCreateForm()
 	form.Categories = categoryIDs
 
-	filteredPostsDTO, err := app.Service.Post.GetFilteredPaginatedPostsDTO(&form, page, pageSize, "/")
-	if err != nil {
-		app.Logger.Error("filter posts by categories", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
-		return
-	}
-
 	data := app.newTemplateData(r)
 	data.Form = form
-	data.Posts = filteredPostsDTO.Posts
-	data.Header = filteredPostsDTO.Header
-	data.Categories = filteredPostsDTO.Categories
-	data.Pagination = pagination{
-		CurrentPage:      filteredPostsDTO.CurrentPage,
-		HasNextPage:      filteredPostsDTO.HasNextPage,
-		PaginationAction: filteredPostsDTO.PaginationURL, // Маршрут для пагинации
-	}
 
-	if !form.Valid() {
-		app.render(w, http.StatusUnprocessableEntity, "home.html", data)
+	filteredPostsDTO, err := app.Service.Post.GetFilteredPaginatedPostsDTO(&form, page, pageSize, "/")
+	if filteredPostsDTO != nil {
+		data.Posts = filteredPostsDTO.Posts
+		data.Header = filteredPostsDTO.Header
+		data.Categories = filteredPostsDTO.Categories
+		data.Pagination = pagination{
+			CurrentPage:      filteredPostsDTO.CurrentPage,
+			HasNextPage:      filteredPostsDTO.HasNextPage,
+			PaginationAction: filteredPostsDTO.PaginationURL, // Маршрут для пагинации
+		}
+	}
+	if err != nil {
+		app.Logger.Error("filter posts by categories", "error", err)
+		if errors.Is(err, entities.ErrInvalidCredentials) {
+			app.render(w, http.StatusUnprocessableEntity, "home.html", data)
+		} else {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		}
 		return
 	}
+
 	app.render(w, http.StatusOK, "home.html", data)
 }
 
