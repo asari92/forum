@@ -30,12 +30,15 @@ func (r *CommentReactionSqlite3) RemoveReaction(userID, commentID int) error {
 	stmt := `DELETE FROM comment_reactions
 	WHERE user_id = ? AND comment_id = ?`
 	_, err := r.DB.Exec(stmt, userID, commentID)
-	return err
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *CommentReactionSqlite3) GetUserReaction(userID, commentID int) (*entities.CommentReaction, error) {
 	stmt := `SELECT is_like FROM comment_reactions WHERE user_id = ? AND comment_id = ?`
-	row := r.DB.QueryRow(stmt, commentID, userID)
+	row := r.DB.QueryRow(stmt, userID, commentID)
 
 	commentReaction := &entities.CommentReaction{}
 	err := row.Scan(&commentReaction.IsLike)

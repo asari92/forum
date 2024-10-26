@@ -45,7 +45,7 @@ type Comment interface {
 
 type CommentReaction interface {
 	AddReaction(userID, commentID int, isLike bool) error
-	RemoveReaction(userID, postID int) error
+	RemoveReaction(userID, commentID int) error
 	GetUserReaction(userID, commentID int) (*entities.CommentReaction, error)
 	GetLikesCount(commentID int) (int, error)
 	GetDislikesCount(commentID int) (int, error)

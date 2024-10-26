@@ -76,9 +76,8 @@ func (app *Application) postReaction(w http.ResponseWriter, r *http.Request) {
 		}
 
 		reaction := commentIsLike == "true"
-		var commentReaction *entities.CommentReaction
 
-		commentReaction, err = app.Service.CommentReaction.GetUserReaction(userID, commentID)
+		commentReaction, err := app.Service.CommentReaction.GetUserReaction(userID, commentID)
 		if err != nil {
 			app.Logger.Error("get user comment reaction", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
