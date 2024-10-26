@@ -11,8 +11,10 @@
         <button type="submit" name="page" value="{{sub .Pagination.CurrentPage 1}}">Previous</button>
         {{end}}
 
+        {{if .Posts}}
         <span>Page {{.Pagination.CurrentPage}}</span>
-
+        {{end}}
+        
         {{if .Pagination.HasNextPage}}
         <button type="submit" name="page" value="{{add .Pagination.CurrentPage 1}}">Next</button>
         {{end}}
