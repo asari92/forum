@@ -27,10 +27,7 @@ Users must register to access the forum. The registration process includes:
    - Must ask for an email.
    - If the email is already taken, return an error response.
    
-2. **Username Input**: 
-   - Must ask for a username.
-
-3. **Password Input**: 
+2. **Password Input**: 
    - Must ask for a password.
    - The password must be encrypted when stored (bonus task).
 
@@ -61,37 +58,14 @@ Implement a filtering mechanism that allows users to filter displayed posts by:
 
 This project must utilize Docker for deployment. Familiarize yourself with Docker basics through the ASCII Art Web Dockerize subject.
 
-### 📝 Instructions
+## 📦 Usage
 
-- Use SQLite for data storage.
-- Handle website errors and HTTP status codes appropriately.
-- Ensure all technical errors are managed effectively.
-- Follow best coding practices.
-- Include unit testing with test files.
+### Running the Server Locally
 
-### 📦 Allowed Packages
+1. **Install Go**: Ensure you have Go installed on your machine. You can download it from the [official Go website](https://golang.org/dl/).
 
-- All standard Go packages.
-- `sqlite3`
-- `bcrypt`
-- `UUID`
-
-**Important**: No frontend libraries or frameworks (e.g., React, Angular, Vue) are allowed.
-
-## 📚 Learning Outcomes
-
-By completing this project, you will learn about:
-
-- Basics of web development:
-  - HTML
-  - HTTP
-  - Sessions and cookies
-- Setting up and using Docker:
-  - Containerization
-  - Compatibility and dependency management
-  - Creating Docker images
-- SQL language fundamentals
-- Database manipulation techniques
-- Basic encryption principles
-
-Thank you for checking out the **Web Forum Project**! We hope you enjoy building and learning through this experience. If you have any questions or feedback, feel free to reach out! 💬
+2. **Clone the Repository**: Use Git to clone the project repository to your local machine.
+   ```bash
+   git clone <repository-url>
+   cd forum
+   go run ./cmd/web/main.go
