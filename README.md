@@ -94,10 +94,4 @@ By completing this project, you will learn about:
 - Database manipulation techniques
 - Basic encryption principles
 
-## 📄 License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
-
----
-
 Thank you for checking out the **Web Forum Project**! We hope you enjoy building and learning through this experience. If you have any questions or feedback, feel free to reach out! 💬
