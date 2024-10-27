@@ -8,7 +8,7 @@
     {{end}}
     <div id="pagination">
         {{if gt .Pagination.CurrentPage 1}}
-        <button type="submit" name="page" value="{{sub .Pagination.CurrentPage 1}}">Previous</button>
+        <button type="submit" name="page" value="{{sub .Pagination.CurrentPage 1}}" class="custom-button">Previous</button>
         {{end}}
 
         {{if .Posts}}
@@ -16,7 +16,7 @@
         {{end}}
         
         {{if .Pagination.HasNextPage}}
-        <button type="submit" name="page" value="{{add .Pagination.CurrentPage 1}}">Next</button>
+        <button type="submit" name="page" value="{{add .Pagination.CurrentPage 1}}" class="custom-button">Next</button>
         {{end}}
     </div>
 </form>

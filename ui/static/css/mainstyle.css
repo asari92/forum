@@ -13,7 +13,7 @@ html, body {
 
 body {
     line-height: 1.5;
-    background-color: #2D2D2D; /* Темный фон */
+    background-color: #555555; /* Темный фон */
     color: #EAEAEA; /* Светлый цвет текста */
     overflow-y: scroll;
 }
@@ -27,7 +27,7 @@ main {
     margin-bottom: 54px;
     min-height: calc(100vh - 345px);
     overflow: auto;
-    background-color: #1E1E1E; /* Фон для основного содержимого */
+    background-color: #555555; /* Фон для основного содержимого */
     color: #EAEAEA; /* Цвет текста */
 }
 
@@ -43,12 +43,12 @@ h1 a {
 }
 
 h1 a:hover {
-    color: #0e050969; /* Цвет при наведении (золотистый) */
+    color: #555555; /* Цвет при наведении (золотистый) */
 }
 
 h1 a:hover {
     text-decoration: none;
-    color: #0e050969; /* Цвет при наведении (золотистый) */
+    color: #555555; /* Цвет при наведении (золотистый) */
 }
 
 h2 {
@@ -61,12 +61,12 @@ h2 {
 
 
 a {
-    color: #3b31cb; /* Цвет ссылок */
+    color: #3b5998; /* Цвет ссылок */
     text-decoration: none;
 }
 
 a:hover {
-    color: #3b31cb; /* Цвет ссылок при наведении */
+    color: #3b5998; /* Цвет ссылок при наведении */
     text-decoration: underline;
 }
 
@@ -74,7 +74,7 @@ a:hover {
 textarea, input:not([type="submit"]) {
     font-size: 18px;
     font-family: "Ubuntu Mono", monospace;
-    background-color: #1E1E1E; /* Темный фон */
+    background-color: #555555; /* Темный фон */
     color: #283466; /* Светлый цвет текста */
     border: 1px solid #4A4A4A; /* Тонкий серый бордер */
 }
@@ -82,7 +82,7 @@ textarea, input:not([type="submit"]) {
 header {
     background-size: 100% 6px;
     background-repeat: no-repeat;
-    border-bottom: 1px solid #3E3E3E; /* Более темный бордер */
+    border-bottom: 1px solid #555555; /* Более темный бордер */
     overflow: auto;
     padding-top: 33px;
     padding-bottom: 27px;
@@ -114,7 +114,7 @@ nav a {
 }
 
 nav a:hover {
-    color: #007BFF; /* Изменен цвет при наведении */
+    color: #3b5998; /* Изменен цвет при наведении */
 }
 
 /* Остальные стили остаются без изменений */
@@ -138,7 +138,7 @@ nav div:last-child a {
 }
 
 nav a.live {
-    color: #2C3E50; /* Уменьшен цвет для активной ссылки */
+    color: #3b5998; /* Уменьшен цвет для активной ссылки */
     cursor: default;
 }
 
@@ -162,7 +162,7 @@ nav a.live:after {
 
 /* Кнопки */
 a.button, input[type="submit"] {
-    background-color: #402abf; /* Уменьшен зеленый цвет */
+    background-color: #3b5998; /* Уменьшен зеленый цвет */
     border-radius: 4px; /* Увеличен радиус границы */
     color: #FFFFFF;
     padding: 16px 26px; /* Уменьшены отступы */
@@ -174,7 +174,7 @@ a.button, input[type="submit"] {
 }
 
 a.button:hover, input[type="submit"]:hover {
-    background-color: #402abf; /* Уменьшен зеленый цвет */
+    background-color: #3b5998; /* Уменьшен зеленый цвет */
     color: #FFFFFF;
     cursor: pointer;
     text-decoration: none;
@@ -229,12 +229,12 @@ button {
     background: none;
     padding: 0;
     border: none;
-    color: #402abf; /* Уменьшен цвет */
+    color: #3b5998; /* Уменьшен цвет */
     text-decoration: none;
 }
 
 button:hover {
-    color: #402abf; /* Уменьшен цвет */
+    color: #3b5998; /* Уменьшен цвет */
     text-decoration: underline;
     cursor: pointer;
 }
@@ -264,7 +264,7 @@ button:hover {
 }
 
 .snippet .metadata strong {
-    color: #2C3E50; /* Уменьшен темный цвет */
+    color: #555555; /* Уменьшен темный цвет */
 }
 
 .snippet .metadata time {
@@ -408,7 +408,7 @@ p {
 }
 
 a {
-    color: #402abf;          /* Синий цвет для ссылок */
+    color: #3b5998;          /* Синий цвет для ссылок */
     text-decoration: none;   /* Убрать подчеркивание, если нужно */
 }
 
@@ -465,7 +465,7 @@ a:hover {
 }
 
 .comment-submit-btn {
-    background-color: #402abf;            /* Изменен цвет кнопки на зеленый */
+    background-color: #3b5998;            /* Изменен цвет кнопки на зеленый */
     color: white;
     border: none;
     padding: 12px 22px;                   /* Увеличены отступы */
@@ -475,7 +475,7 @@ a:hover {
 }
 
 .comment-submit-btn:hover {
-    background-color: #402abf;            /* Темнее зеленый цвет при наведении */
+    background-color: #3b5998;            /* Темнее зеленый цвет при наведении */
 }
 
 .comments-section {
@@ -527,7 +527,7 @@ a:hover {
 .comment-submit-btn {
     align-self: flex-end;
     padding: 12px 22px;                  /* Увеличены отступы */
-    background-color: #007BFF;           /* Синий цвет для кнопки */
+    background-color: #3b5998;           /* Синий цвет для кнопки */
     color: white;
     border: none;
     border-radius: 5px;
@@ -536,7 +536,7 @@ a:hover {
 }
 
 .comment-submit-btn:hover {
-    background-color: #0056b3;           /* Темнее синий цвет при наведении */
+    background-color: #3b5998;           /* Темнее синий цвет при наведении */
 }
 
 .post-title {
@@ -607,7 +607,7 @@ h3 {
 }
 
 .comment-submit-btn {
-    background-color: #007BFF;            /* Синий цвет кнопки */
+    background-color: #3b5998;            /* Синий цвет кнопки */
     color: white;
     border: none;
     border-radius: 5px;
@@ -617,10 +617,37 @@ h3 {
 }
 
 .comment-submit-btn:hover {
-    background-color: #0056b3;           /* Темнее синий цвет при наведении */
+    background-color: #3b5998;           /* Темнее синий цвет при наведении */
 }
 
 
 h1 a:hover {
-    color: #6A0DAD; /* Изменяет цвет текста ссылки на фиолетовый при наведении */
+    color: #A50034; /* Вишнёвый */
+}
+
+
+.custom-button {
+    background-color: #007BFF; /* Ярко-синий фон */
+    color: #ffffff; /* Белый цвет текста */
+    border: none; /* Убирает стандартную рамку */
+    border-radius: 4px; /* Закругление углов */
+    padding: 10px 15px; /* Отступы для удобства */
+    font-size: 16px; /* Размер шрифта */
+    cursor: pointer; /* Изменяет курсор при наведении */
+    transition: background-color 0.3s; /* Плавный переход цвета фона */
+}
+
+
+
+.custom-paragraph {
+    color: #3b5998; /* Ярко-синий цвет текста */
+}
+
+.custom-paragraph a {
+    color: inherit; /* Убирает стандартный цвет ссылки, чтобы она наследовала синий цвет родительского тега */
+    text-decoration: underline; /* Подчёркивание ссылки */
+}
+
+.custom-paragraph a:hover {
+    color: #3b5998; /* Более тёмный синий при наведении */
 }
