@@ -39,7 +39,7 @@ The system verifies if the provided email exists and checks if all credentials a
 - **Category Association**: Users can associate one or more categories with their posts.
 - **Visibility**: Posts and comments are visible to all users (registered or not). Non-registered users can only view posts and comments.
 
-## 👍👎 Likes and Dislikes
+## 👍🏿👎🏿 Likes and Dislikes
 
 - **Registered Users Only**: Can like or dislike posts and comments.
 - **Visibility**: The count of likes and dislikes is visible to all users.
