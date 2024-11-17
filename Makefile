@@ -3,8 +3,6 @@ initDB:
 	# Создание базы данных и выполнение начального скрипта
 	sqlite3 forum.db < ./schema/forum.sql
 	
-	
-
 # Генерация самоподписанных сертификатов
 generateCerts:
 	# Создание директории для хранения сертификатов
@@ -17,12 +15,23 @@ generateCerts:
 init: generateCerts initDB
 	@echo "Initialization complete!"
 
-IMAGE_NAME=forum
+IMAGE_NAME = forum
+CONTAINER_NAME = forum-container
+PORT = 4000
 
-# Сборка образа
+# Сборка Docker-образа
 build:
-	docker build -t $(IMAGE_NAME) .
+	@echo "Сборка Docker-образа $(IMAGE_NAME)..."
+	@docker build -t $(IMAGE_NAME) .
+	@echo "Образ $(IMAGE_NAME) успешно собран!"
 
-# Запуск контейнера
+# Запуск Docker-контейнера
 run:
-	@docker run --rm -p 4000:4000 $(IMAGE_NAME)
+	@echo "Запуск Docker-контейнера $(CONTAINER_NAME)..."
+	@docker run --rm --name $(CONTAINER_NAME) -p $(PORT):$(PORT) $(IMAGE_NAME)
+	@echo "Контейнер $(CONTAINER_NAME) запущен на порту $(PORT)!"
+
+# Остановка Docker-контейнера (если запущен в фоновом режиме)
+stop:
+	@echo "Остановка Docker-контейнера $(CONTAINER_NAME)..."
+	@docker stop $(CONTAINER_NAME) || echo "Контейнер $(CONTAINER_NAME) не запущен."
