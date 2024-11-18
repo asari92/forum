@@ -108,9 +108,5 @@ This project is Dockerized for easy deployment. Follow the steps below to run th
 
 ---
 
-### 📑 Additional Notes
-
-- Ensure `forum.db` is properly initialized if running locally. You can use the `make initDB` command.
-- For generating certificates locally, use the `make generateCerts` command.
 
 Enjoy building and improving your Web Forum Project! 🚀
