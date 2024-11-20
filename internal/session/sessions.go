@@ -22,6 +22,7 @@ type Provider interface {
 	SessionRead(sid string) (Session, error)
 	SessionDestroy(sid string) error
 	SessionGC(maxLifeTime int64)
+	SessionBindUser(userID int, sessionID string) error
 }
 
 type Session interface {
@@ -78,7 +79,7 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 	return
 }
 
-func (manager *Manager) RenewToken(w http.ResponseWriter, r *http.Request) error {
+func (manager *Manager) RenewToken(w http.ResponseWriter, r *http.Request, userID int) error {
 	manager.lock.Lock()
 	defer manager.lock.Unlock()
 
@@ -113,6 +114,12 @@ func (manager *Manager) RenewToken(w http.ResponseWriter, r *http.Request) error
 	err = manager.provider.SessionDestroy(oldSid)
 	if err != nil {
 		return err
+	}
+
+	// Привязываем новую сессию к текущему пользователю
+	err = manager.provider.SessionBindUser(userID, newSid)
+	if err != nil {
+		return fmt.Errorf("session bind user: %w", err)
 	}
 
 	// Устанавливаем новую куку с новым сессионным ID

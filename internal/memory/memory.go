@@ -9,7 +9,7 @@ import (
 	"forum/internal/session"
 )
 
-var pder = &Provider{list: list.New()}
+var pder = &Provider{list: list.New(), userSessions: map[int]string{}}
 
 func init() {
 	pder.sessions = make(map[string]*list.Element, 0)
@@ -23,9 +23,10 @@ type SessionStore struct {
 }
 
 type Provider struct {
-	lock     sync.Mutex               // lock
-	sessions map[string]*list.Element // save in memory
-	list     *list.List               // gc
+	lock         sync.Mutex               // lock
+	sessions     map[string]*list.Element // save in memory
+	userSessions map[int]string           // userID -> sessionID
+	list         *list.List               // gc
 }
 
 func (st *SessionStore) Set(key, value interface{}) error {
@@ -128,4 +129,19 @@ func (pder *Provider) SessionUpdate(sid string) error {
 	}
 
 	return fmt.Errorf("session not found")
+}
+
+func (pder *Provider) SessionBindUser(userID int, sid string) error {
+	pder.lock.Lock()
+	defer pder.lock.Unlock()
+
+	// Уничтожаем старую сессию, если она есть
+	if oldSid, ok := pder.userSessions[userID]; ok {
+		if err := pder.SessionDestroy(oldSid); err != nil {
+			return err
+		}
+	}
+	// Связываем новую сессию
+	pder.userSessions[userID] = sid
+	return nil
 }

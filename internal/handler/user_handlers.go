@@ -92,7 +92,7 @@ func (app *Application) userLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Check whether the credentials are valid. If they're not, add a generic
 	// non-field error message and re-display the login page.
-	id, err := app.Service.User.Authenticate(&form)
+	userID, err := app.Service.User.Authenticate(&form)
 	if err != nil {
 		if errors.Is(err, entities.ErrInvalidCredentials) {
 			form.AddNonFieldError("Email or password is incorrect")
@@ -114,16 +114,9 @@ func (app *Application) userLogin(w http.ResponseWriter, r *http.Request) {
 		app.Logger.Error("Session error during delete csrfToken", "error", err)
 	}
 
-	err = sess.Set(FlashSessionKey, "Your log in was successful.")
-	if err != nil {
-		app.Logger.Error("Set FlashSessionKey", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
-		return
-	}
-
 	// Add the ID of the current user to the session, so that they are now
 	// 'logged in'.
-	err = sess.Set(AuthUserIDSessionKey, id)
+	err = sess.Set(AuthUserIDSessionKey, userID)
 	if err != nil {
 		app.Logger.Error("set AuthUserIDSessionKey", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -140,7 +133,14 @@ func (app *Application) userLogin(w http.ResponseWriter, r *http.Request) {
 		redirectUrl = path
 	}
 
-	err = app.SessionManager.RenewToken(w, r)
+	err = sess.Set(FlashSessionKey, "Your log in was successful.")
+	if err != nil {
+		app.Logger.Error("Set FlashSessionKey", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	err = app.SessionManager.RenewToken(w, r, userID)
 	if err != nil {
 		app.Logger.Error("renewtoken", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
@@ -158,12 +158,12 @@ func (app *Application) userLogout(w http.ResponseWriter, r *http.Request) {
 	}
 	sess.Set(FlashSessionKey, "You've been logged out successfully!")
 
-	err = app.SessionManager.RenewToken(w, r)
-	if err != nil {
-		app.Logger.Error("renewtoken", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
-		return
-	}
+	// err = app.SessionManager.RenewToken(w, r)
+	// if err != nil {
+	// 	app.Logger.Error("renewtoken", "error", err)
+	// 	app.render(w, http.StatusInternalServerError, Errorpage, nil)
+	// 	return
+	// }
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
