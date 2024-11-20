@@ -43,6 +43,10 @@ func NotBlank(value string) bool {
 	return strings.TrimSpace(value) != ""
 }
 
+func NotHaveAnySpaces(value string) bool {
+	return strings.Join(strings.Fields(value), "") == value
+}
+
 func MaxChars(value string, n int) bool {
 	return utf8.RuneCountInString(value) <= n
 }
@@ -63,5 +67,3 @@ func MinChars(value string, n int) bool {
 func Matches(value string, rx *regexp.Regexp) bool {
 	return rx.MatchString(value)
 }
-
-
