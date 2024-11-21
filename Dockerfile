@@ -15,7 +15,7 @@ COPY . .
 RUN go build -o forum ./cmd/web/main.go
 
 # Создаём минимальный образ для запуска приложения
-FROM debian:bullseye-slim
+FROM ubuntu:latest
 
 # Устанавливаем зависимости для SQLite3
 RUN apt-get update && apt-get install -y \
@@ -28,6 +28,7 @@ WORKDIR /app
 
 # Копируем собранный бинарник из стадии сборки
 COPY --from=builder /app/forum .
+COPY /forum.db .
 
 # Экспонируем порт 4000
 EXPOSE 4000
