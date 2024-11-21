@@ -1,3 +1,7 @@
+Here's the updated README file with Docker instructions:
+
+---
+
 # 🌐 Web Forum Project
 
 Welcome to the **Web Forum Project**! This project aims to create an interactive web forum that enables users to communicate, share thoughts, and engage in discussions.
@@ -54,13 +58,37 @@ Implement a filtering mechanism that allows users to filter displayed posts by:
 
 *Note*: The last two filters are only available for registered users and refer to the logged-in user.
 
+---
+
 ## 🐳 Docker Integration
 
-This project must utilize Docker for deployment. Familiarize yourself with Docker basics through the ASCII Art Web Dockerize subject.
+This project is Dockerized for easy deployment. Follow the steps below to run the server using Docker.
 
-## 📦 Usage
+### Running the Server with Docker
 
-### Running the Server Locally
+1. **Build the Docker Image**:
+   Run the following command to build the Docker image:
+   ```bash
+   make build
+   ```
+
+2. **Run the Docker Container**:
+   Start the server inside a Docker container with:
+   ```bash
+   make run
+   ```
+
+   The server will be available at [http://localhost:4000](http://localhost:4000).
+
+3. **Stop the Docker Container**:
+   If you need to stop the running container, use:
+   ```bash
+   make stop
+   ```
+
+---
+
+## 📦 Running the Server Locally (Without Docker)
 
 1. **Install Go**: Ensure you have Go installed on your machine. You can download it from the [official Go website](https://golang.org/dl/).
 
@@ -68,4 +96,17 @@ This project must utilize Docker for deployment. Familiarize yourself with Docke
    ```bash
    git clone <repository-url>
    cd forum
+   ```
+
+3. **Run the Server**:
+   Execute the following command to start the server locally:
+   ```bash
    go run ./cmd/web/main.go
+   ```
+
+   The server will be available at [http://localhost:4000](http://localhost:4000).
+
+---
+
+
+Enjoy building and improving your Web Forum Project! 🚀

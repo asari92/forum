@@ -1,33 +1,36 @@
-# Указываем базовый образ с Go
-FROM golang:1.22 AS builder
+# Используем официальный образ Go 1.22 как базовый
+FROM golang:1.22 as builder
 
-# Устанавливаем рабочую директорию
+# Устанавливаем рабочую директорию внутри контейнера
 WORKDIR /app
 
-# Копируем go.mod и go.sum для кэширования зависимостей
+# Копируем файлы проекта в контейнер
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Копируем остальные файлы проекта
+# Копируем остальной код проекта
 COPY . .
 
-# Собираем приложение
-RUN go build -o main ./cmd/web
+# Сборка приложения
+RUN go build -o forum ./cmd/web/main.go
 
-# Создаем финальный образ
-FROM alpine:latest
+# Создаём минимальный образ для запуска приложения
+FROM debian:bullseye-slim
 
-# Устанавливаем необходимые зависимости (например, для SQLite)
-RUN apk --no-cache add sqlite sqlite-dev
+# Устанавливаем зависимости для SQLite3
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем бинарник из стадии сборки
-COPY --from=builder /app/main .
+# Копируем собранный бинарник из стадии сборки
+COPY --from=builder /app/forum .
 
-# Копируем SQL-скрипт new_forum.sql
-COPY ./docs/new_forum.sql  /app/docs/
+# Экспонируем порт 4000
+EXPOSE 4000
 
-# Запускаем приложение и инициализируем базу данных
-CMD ["sh", "-c", "sqlite3 forum.db < /app/docs/new_forum.sql && ./main"]
+# Устанавливаем команду запуска
+CMD ["./forum"]
