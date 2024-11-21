@@ -109,4 +109,6 @@ This project is Dockerized for easy deployment. Follow the steps below to run th
 ---
 
 
-Enjoy building and improving your Web Forum Project! 🚀
+## 👨‍💻 Authors
+- [adulmaev](https://01.alem.school/git/adulmaev)
+- [dkurmant](https://01.alem.school/git/dkurmant)
