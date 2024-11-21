@@ -1,7 +1,3 @@
-Here's the updated README file with Docker instructions:
-
----
-
 # 🌐 Web Forum Project
 
 Welcome to the **Web Forum Project**! This project aims to create an interactive web forum that enables users to communicate, share thoughts, and engage in discussions.
