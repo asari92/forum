@@ -89,8 +89,12 @@ func (app *Application) verifyCSRF(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Проверяем (все) запросы которые могут изменить данные
 		if r.Method == http.MethodPost {
-
-			sess := app.SessionManager.SessionStart(w, r)
+			sess, err := app.SessionManager.SessionStart(w, r)
+			if err != nil {
+				app.Logger.Error("verifyCSRF", "error", err)
+				app.render(w, http.StatusInternalServerError, Errorpage, nil)
+				return
+			}
 			sessionToken, ok := sess.Get(CsrfTokenSessionKey).(string)
 			if !ok || sessionToken == "" {
 				sessionToken = app.generateCSRFToken()
@@ -124,7 +128,13 @@ func (app *Application) sessionMiddleware(next http.Handler) http.Handler {
 		// Извлекаем сессию из контекста
 		sess, ok := r.Context().Value(sessionContextKey).(session.Session)
 		if !ok {
-			sess = app.SessionManager.SessionStart(w, r)
+			var err error
+			sess, err = app.SessionManager.SessionStart(w, r)
+			if err != nil {
+				app.Logger.Error("SessionStart", "error", err)
+				app.render(w, http.StatusInternalServerError, Errorpage, nil)
+				return
+			}
 			app.Logger.Debug("session in sessionMiddleware", "session", sess)
 		}
 

@@ -51,15 +51,15 @@ func (manager *Manager) sessionId() string {
 	return id.String()
 }
 
-func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (session Session) {
+func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (Session, error) {
 	manager.lock.Lock()
 	defer manager.lock.Unlock()
 	cookie, err := r.Cookie(manager.cookieName)
 	if err != nil || cookie.Value == "" {
 		sid := manager.sessionId()
-		session, err = manager.provider.SessionInit(sid)
+		session, err := manager.provider.SessionInit(sid)
 		if err != nil {
-			//!!!!!!!!!!!
+			return nil, err
 		}
 		// Установка cookie с флагами HttpOnly и Secure
 		cookie := http.Cookie{
@@ -72,11 +72,12 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 			SameSite: http.SameSiteLaxMode,
 		}
 		http.SetCookie(w, &cookie)
+		return session, nil
 	} else {
 		sid, _ := url.QueryUnescape(cookie.Value)
-		session, _ = manager.provider.SessionRead(sid)
+		session, _ := manager.provider.SessionRead(sid)
+		return session, nil
 	}
-	return
 }
 
 func (manager *Manager) RenewToken(w http.ResponseWriter, r *http.Request, userID int) error {
