@@ -35,18 +35,24 @@ func (app *Application) userSignup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, entities.ErrInvalidCredentials) {
 			form.AddFieldError("insert user credentials", "invalid credentials")
-			data := app.newTemplateData(r)
-			data.Form = form
-			app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
+			// data := app.newTemplateData(r)
+			// data.Form = form
+			// app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
 		} else if errors.Is(err, entities.ErrDuplicateEmail) {
 			form.AddFieldError("email", "Email address is already in use")
-			data := app.newTemplateData(r)
-			data.Form = form
-			app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
+			// data := app.newTemplateData(r)
+			// data.Form = form
+			// app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
+		} else if errors.Is(err, entities.ErrDuplicateUsername) {
+			form.AddFieldError("username", "Username is already in use")
 		} else {
 			app.Logger.Error("insert user credentials", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			return
 		}
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
 		return
 	}
 

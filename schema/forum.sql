@@ -79,3 +79,4 @@ CREATE TABLE IF NOT EXISTS users(
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS users_uc_email ON users(email);
+CREATE UNIQUE INDEX IF NOT EXISTS users_uc_username ON users(username);

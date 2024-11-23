@@ -35,8 +35,13 @@ func (r *UserSqlite3) Insert(username, email, password string) error {
 	if err != nil {
 		var sqliteError sqlite3.Error
 		if errors.As(err, &sqliteError) {
-			if sqliteError.Code == sqlite3.ErrConstraint && strings.Contains(sqliteError.Error(), "users.email") {
-				return entities.ErrDuplicateEmail
+			if sqliteError.Code == sqlite3.ErrConstraint {
+				if strings.Contains(sqliteError.Error(), "users.email") {
+					return entities.ErrDuplicateEmail
+				}
+				if strings.Contains(sqliteError.Error(), "users.username") {
+					return entities.ErrDuplicateUsername
+				}
 			}
 		}
 		return err
