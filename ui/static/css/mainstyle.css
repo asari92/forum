@@ -185,9 +185,7 @@ form div {
     margin-bottom: 18px;
 }
 
-form div:last-child {
-    border-top: 1px dashed #D0D5DB; /* Уменьшен светлый цвет */
-}
+
 
 form input[type="radio"] {
     margin-left: 18px;
@@ -653,6 +651,7 @@ h1 a:hover {
 }
 
 .categories-container {
+    margin-top: 10px;
     display: grid;
     grid-template-columns: 1fr 1fr; /* Создаёт две колонки одинаковой ширины */
     gap: 10px; /* Добавляет небольшое пространство между элементами */
