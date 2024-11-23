@@ -39,7 +39,6 @@ func (uc *UserUseCase) NewAccountPasswordUpdateForm() accountPasswordUpdateForm 
 }
 
 func (u *UserUseCase) Insert(form *userAuthForm) error {
-	// ДОБАВИТЬ ПРОВЕРОК!!!!!!!!!!!!!!!!!!!
 	form.CheckField(validator.NotBlank(form.Username), "username", "This field cannot be blank")
 	form.CheckField(validator.NotHaveAnySpaces(form.Username), "username", "This field cannot have any spaces")
 	form.CheckField(validator.MaxChars(form.Username, 100), "username", "This field cannot be more than 100 characters long")

@@ -153,16 +153,6 @@ func (app *Application) sessionMiddleware(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), csrfTokenContextKey, token)
 		ctx = context.WithValue(ctx, sessionContextKey, sess)
 		r = r.WithContext(ctx)
-		// fmt.Println("sess ctx", sess)
-
-		// role, err := app.users.DB.getRole(userId.(int))
-
-		// Проверка ролей для защищённых маршрутов
-		// if role != nil && hasAccess(role, r.URL.Path) {
-		// 	// http.Error(w, "Forbidden", http.StatusForbidden)
-		// 	http.Redirect(w, r, "/", http.StatusSeeOther)
-		// 	return
-		// }
 
 		// Продолжить выполнение запроса
 		next.ServeHTTP(w, r)

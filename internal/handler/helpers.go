@@ -28,16 +28,6 @@ var RequestPaths = map[string]bool{
 const Errorpage = "errorpage.html"
 const DefaultCategory = 1
 
-// func (app *application) serverErrorLogging(err error) {
-// 	_, path, line, _ := runtime.Caller(1)
-
-// 	app.logger.Error("Server error occurred",
-// 		"error", err,
-// 		path, line,
-// 		// "stack_trace", string(debug.Stack()), // Включение стека
-// 	)
-// }
-
 func (app *Application) serverError(w http.ResponseWriter) {
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }

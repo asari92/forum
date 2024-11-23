@@ -35,14 +35,8 @@ func (app *Application) userSignup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, entities.ErrInvalidCredentials) {
 			form.AddFieldError("insert user credentials", "invalid credentials")
-			// data := app.newTemplateData(r)
-			// data.Form = form
-			// app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
 		} else if errors.Is(err, entities.ErrDuplicateEmail) {
 			form.AddFieldError("email", "Email address is already in use")
-			// data := app.newTemplateData(r)
-			// data.Form = form
-			// app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
 		} else if errors.Is(err, entities.ErrDuplicateUsername) {
 			form.AddFieldError("username", "Username is already in use")
 		} else {
@@ -163,13 +157,6 @@ func (app *Application) userLogout(w http.ResponseWriter, r *http.Request) {
 		app.Logger.Error("Session error during delete authUserID", "error", err)
 	}
 	sess.Set(FlashSessionKey, "You've been logged out successfully!")
-
-	// err = app.SessionManager.RenewToken(w, r)
-	// if err != nil {
-	// 	app.Logger.Error("renewtoken", "error", err)
-	// 	app.render(w, http.StatusInternalServerError, Errorpage, nil)
-	// 	return
-	// }
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

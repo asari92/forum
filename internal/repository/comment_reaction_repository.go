@@ -15,7 +15,6 @@ func NewCommentReactionSqlite3(db *sql.DB) *CommentReactionSqlite3 {
 }
 
 //	прежде чем добавить реакцию я пробую достать из бд реакцию пользователя под этот коммент,
-//
 // если передаваемая через пост запрос реакция и та реакция которую я достал одинаковые
 // то просто удаляю эту запись
 func (r *CommentReactionSqlite3) AddReaction(userID, commentID int, isLike bool) error {

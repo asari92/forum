@@ -329,14 +329,6 @@ th:last-child, td:last-child {
     color: #4B4F54; /* Уменьшен темный цвет */
 }
 
-/* tr {
-    border-bottom: 1px solid #D0D5DB;
-}
-
-tr:nth-child(2n) {
-    background-color: #F2F4F6; 
-} */
-
 /* Футер */
 footer {
     border-top: 1px solid #D0D5DB; /* Уменьшен светлый цвет */
