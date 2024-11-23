@@ -20,7 +20,7 @@ CONTAINER_NAME = forum-container
 PORT = 4000
 
 # Сборка Docker-образа
-build:
+build: init
 	@echo "Сборка Docker-образа $(IMAGE_NAME)..."
 	@docker build -t $(IMAGE_NAME) .
 	@echo "Образ $(IMAGE_NAME) успешно собран!"

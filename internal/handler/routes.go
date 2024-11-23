@@ -36,9 +36,6 @@ func (app *Application) Routes() http.Handler {
 	fileServer := http.FileServer(neuteredFileSystem{http.FS(ui.Files)})
 	mux.Handle("GET /static/", fileServer)
 
-	// Add a test route
-	mux.Handle("GET /ping", http.HandlerFunc(ping))
-
 	dynamic := New(app.verifyCSRF, app.sessionMiddleware, app.authenticate)
 
 	mux.Handle("/", dynamic.ThenFunc(app.errorHandler))
