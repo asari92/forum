@@ -8,6 +8,7 @@ var (
 	ErrNoRecord = errors.New("no matching record found")
 
 	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrInvalidData        = errors.New("invalid data")
 
 	ErrDuplicateEmail    = errors.New("duplicate email")
 	ErrDuplicateUsername = errors.New("duplicate username")

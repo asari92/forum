@@ -6,4 +6,5 @@ const (
 	AuthUserIDSessionKey             = "authenticatedUserID"
 	CsrfTokenSessionKey              = "token"
 	RedirectPathAfterLoginSessionKey = "redirectPathAfterLogin"
+	ReactionFormSessionKey           = "reactionForm"
 )

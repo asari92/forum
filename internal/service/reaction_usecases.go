@@ -3,6 +3,7 @@ package service
 import (
 	"forum/internal/entities"
 	"forum/internal/repository"
+	"forum/pkg/validator"
 )
 
 type ReactionUseCase struct {
@@ -19,6 +20,7 @@ type reactionForm struct {
 	PostIsLike    string
 	CommentIsLike string
 	CommentID     int
+	validator.Validator
 }
 
 func NewReactionUseCase(repo *repository.Repository) *ReactionUseCase {
@@ -38,6 +40,10 @@ func (uc *ReactionUseCase) NewReactionForm() reactionForm {
 
 func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reactionForm) error {
 	if form.Comment != "" {
+		form.CheckField(validator.NotBlank(form.Comment), "comment", "This field cannot be blank")
+		if !form.Valid() {
+			return entities.ErrInvalidData
+		}
 		err := uc.commentRepo.InsertComment(postID, userID, form.Comment)
 		if err != nil {
 			return err

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+
+	"forum/internal/entities"
 )
 
 func (app *Application) postReaction(w http.ResponseWriter, r *http.Request) {
@@ -46,6 +48,11 @@ func (app *Application) postReaction(w http.ResponseWriter, r *http.Request) {
 
 	err = app.Service.Reaction.UpdatePostReaction(userID, postID, &form)
 	if err != nil {
+		if errors.Is(err, entities.ErrInvalidData) {
+			sess.Set(ReactionFormSessionKey, form)
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
 		app.Logger.Error("update reaction on post in database", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return

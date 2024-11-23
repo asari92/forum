@@ -46,6 +46,11 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	data.ReactionData.Likes = postData.Likes
 	data.ReactionData.Dislikes = postData.Dislikes
 	data.ReactionData.UserReaction = postData.UserReaction
+	data.Form = sess.Get(ReactionFormSessionKey)
+	err = sess.Delete(ReactionFormSessionKey)
+	if err != nil {
+		app.Logger.Error("Session error during delete reaction form", "error", err)
+	}
 
 	app.render(w, http.StatusOK, "post_view.html", data)
 }
