@@ -651,3 +651,14 @@ h1 a:hover {
 .custom-paragraph a:hover {
     color: #3b5998; /* Более тёмный синий при наведении */
 }
+
+.categories-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Создаёт две колонки одинаковой ширины */
+    gap: 10px; /* Добавляет небольшое пространство между элементами */
+}
+
+.category {
+    display: flex;
+    align-items: center; /* Выравнивание чекбокса и текста по центру */
+}
