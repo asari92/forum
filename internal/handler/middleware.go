@@ -112,7 +112,8 @@ func (app *Application) verifyCSRF(next http.Handler) http.Handler {
 
 			app.Logger.Debug("tokens in verifyCSRF", "request", requestToken, "session", sessionToken)
 			if requestToken != sessionToken {
-				http.Error(w, "Invalid CSRF token", http.StatusForbidden)
+				app.Logger.Error("Invalid CSRF token", "error", err)
+				app.render(w, http.StatusForbidden, Errorpage, nil)
 				return
 			}
 		}

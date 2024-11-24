@@ -26,7 +26,7 @@ func (app *Application) postReaction(w http.ResponseWriter, r *http.Request) {
 
 	postID, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || postID < 1 {
-		app.render(w, http.StatusNotFound, Errorpage, nil)
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 

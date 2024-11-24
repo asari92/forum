@@ -18,7 +18,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 
 	postID, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || postID < 1 {
-		app.render(w, http.StatusNotFound, Errorpage, nil)
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 
@@ -32,7 +32,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.Logger.Error("get post data", "error", err)
 		if errors.Is(err, entities.ErrNoRecord) {
-			app.render(w, http.StatusNotFound, Errorpage, nil)
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
 		} else {
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		}
@@ -140,7 +140,7 @@ func (app *Application) userPostsView(w http.ResponseWriter, r *http.Request) {
 
 	userId, err := strconv.Atoi(r.PathValue("userId"))
 	if err != nil || userId < 1 {
-		app.render(w, http.StatusNotFound, Errorpage, nil)
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 
@@ -158,7 +158,7 @@ func (app *Application) userPostsView(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.Logger.Error("get user posts", "error", err)
 		if errors.Is(err, entities.ErrNoRecord) {
-			app.render(w, http.StatusNotFound, Errorpage, nil)
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
 		} else {
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		}
