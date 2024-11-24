@@ -24,8 +24,8 @@ func main() {
 
 	// Инициализация нового логгера slog
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		AddSource: true,            // Включить вывод источника вызова (файл и строка)
-		Level:     slog.LevelDebug, // задан дебаг уровень, можно поменять на инфо чтобы убрать лишнюю инфу
+		AddSource: true,           // Включить вывод источника вызова (файл и строка)
+		Level:     slog.LevelInfo, // задан дебаг уровень, можно поменять на инфо чтобы убрать лишнюю инфу
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 			if a.Key == slog.TimeKey {
 				// Устанавливаем формат времени на "2006-01-02 15:04:05"

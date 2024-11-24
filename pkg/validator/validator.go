@@ -6,7 +6,12 @@ import (
 	"unicode/utf8"
 )
 
-var EmailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+var (
+	UsernameRX = regexp.MustCompile(`^[^._ ](?:[\w-]|\.[\w-])+[^._ ]$`)
+	EmailRX    = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	PasswordRX = regexp.MustCompile("[0-9a-zA-Z!_.@#$%^&*]{8,}")
+	TextRX     = regexp.MustCompile(`^[а-яА-ЯёЁa-zA-Z0-9.,:;!?'"()\-–—\[\]{}<>/|@#$%^&*+=_~\s]+$`)
+)
 
 type Validator struct {
 	NonFieldErrors []string

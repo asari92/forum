@@ -41,6 +41,7 @@ func (uc *ReactionUseCase) NewReactionForm() reactionForm {
 func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reactionForm) error {
 	if form.Comment != "" {
 		form.CheckField(validator.NotBlank(form.Comment), "comment", "This field cannot be blank")
+		form.CheckField(validator.Matches(form.Comment, validator.TextRX), "comment", "This field must contain only english or russian letters")
 		if !form.Valid() {
 			return entities.ErrInvalidData
 		}

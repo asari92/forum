@@ -296,6 +296,9 @@ func (uc *PostUseCase) CreatePostWithCategories(form *postCreateForm, userID int
 	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
 	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
 
+	form.CheckField(validator.Matches(form.Title, validator.TextRX), "title", "This field must contain only english or russian letters")
+	form.CheckField(validator.Matches(form.Content, validator.TextRX), "content", "This field must contain only english or russian letters")
+
 	allCategories, err := uc.categoryRepo.GetAll()
 	if err != nil {
 		return 0, nil, err
