@@ -3,9 +3,9 @@ package handler
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
 	"forum/internal/entities"
+	"forum/pkg/validator"
 )
 
 type pagination struct {
@@ -55,14 +55,14 @@ func (app *Application) filterPosts(w http.ResponseWriter, r *http.Request) {
 	page := 1
 	pageSize := 10
 
-	if p, err := strconv.Atoi(r.PostFormValue("page")); err == nil && p > 0 {
+	if p, err := validator.ValidateID(r.PostFormValue("page")); err == nil {
 		page = p
 	}
 
 	// Получаем массив категорий
 	categoryIDs := []int{}
 	for _, id := range r.PostForm["categories"] {
-		intID, err := strconv.Atoi(id)
+		intID, err := validator.ValidateID(id)
 		if err != nil {
 			app.render(w, http.StatusBadRequest, Errorpage, nil)
 			return

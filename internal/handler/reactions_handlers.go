@@ -3,9 +3,9 @@ package handler
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
 	"forum/internal/entities"
+	"forum/pkg/validator"
 )
 
 func (app *Application) postReaction(w http.ResponseWriter, r *http.Request) {
@@ -24,8 +24,8 @@ func (app *Application) postReaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postID, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil || postID < 1 {
+	postID, err := validator.ValidateID(r.PathValue("id"))
+	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
@@ -38,8 +38,8 @@ func (app *Application) postReaction(w http.ResponseWriter, r *http.Request) {
 	commentIsLike := r.PostForm.Get("comment_is_like")
 	form.CommentIsLike = commentIsLike
 	if commentIsLike != "" {
-		commentID, err := strconv.Atoi(r.PostForm.Get("comment_id"))
-		if err != nil || commentID < 1 {
+		commentID, err := validator.ValidateID(r.PostForm.Get("comment_id"))
+		if err != nil {
 			app.render(w, http.StatusBadRequest, Errorpage, nil)
 			return
 		}
@@ -79,8 +79,8 @@ func (app *Application) commentReaction(w http.ResponseWriter, r *http.Request) 
 	}
 
 	form := app.Service.Reaction.NewReactionForm()
-	commentID, err := strconv.Atoi(r.PostForm.Get("comment_id"))
-	if err != nil || commentID < 1 {
+	commentID, err := validator.ValidateID(r.PostForm.Get("comment_id"))
+	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"forum/internal/entities"
+	"forum/pkg/validator"
 )
 
 func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
@@ -16,8 +16,8 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postID, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil || postID < 1 {
+	postID, err := validator.ValidateID(r.PathValue("id"))
+	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
@@ -91,7 +91,7 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 
 	var categoryIDs []int
 	for _, id := range r.PostForm["categories"] {
-		intID, err := strconv.Atoi(id)
+		intID, err := validator.ValidateID(id)
 		if err != nil {
 			app.render(w, http.StatusBadRequest, Errorpage, nil)
 			return
@@ -138,7 +138,7 @@ func (app *Application) userPostsView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId, err := strconv.Atoi(r.PathValue("userId"))
+	userId, err := validator.ValidateID(r.PathValue("userId"))
 	if err != nil || userId < 1 {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
@@ -147,7 +147,7 @@ func (app *Application) userPostsView(w http.ResponseWriter, r *http.Request) {
 	page := 1
 	pageSize := 10
 
-	if p, err := strconv.Atoi(r.PostFormValue("page")); err == nil && p > 0 {
+	if p, err := validator.ValidateID(r.PostFormValue("page")); err == nil {
 		page = p
 	}
 
@@ -195,7 +195,7 @@ func (app *Application) userLikedPostsView(w http.ResponseWriter, r *http.Reques
 	page := 1
 	pageSize := 10
 
-	if p, err := strconv.Atoi(r.PostFormValue("page")); err == nil && p > 0 {
+	if p, err := validator.ValidateID(r.PostFormValue("page")); err == nil {
 		page = p
 	}
 

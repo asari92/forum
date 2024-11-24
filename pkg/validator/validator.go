@@ -1,8 +1,11 @@
 package validator
 
 import (
+	"errors"
 	"regexp"
+	"strconv"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -71,4 +74,35 @@ func MinChars(value string, n int) bool {
 
 func Matches(value string, rx *regexp.Regexp) bool {
 	return rx.MatchString(value)
+}
+
+// ValidateID выполняет полную проверку ID
+func ValidateID(id string) (int, error) {
+	// Проверяем, начинается ли строка с "+" или "-"
+	if id == "" {
+		return 0, errors.New("ID не может быть пустым")
+	}
+	if id[0] == '+' || id[0] == '-' {
+		return 0, errors.New("ID не может содержать знак '+' или '-'")
+	}
+
+	// Проверяем на ведущие нули
+	if len(id) > 1 && id[0] == '0' {
+		return 0, errors.New("ID содержит незначащие нули")
+	}
+
+	// Проверяем, что ID состоит только из цифр
+	for _, r := range id {
+		if !unicode.IsDigit(r) {
+			return 0, errors.New("ID может содержать только цифры")
+		}
+	}
+
+	// Преобразуем строку в число
+	ID, err := strconv.Atoi(id)
+	if err != nil || ID < 1 {
+		return 0, errors.New("ID должен быть положительным числом")
+	}
+
+	return ID, nil
 }
