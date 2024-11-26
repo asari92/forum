@@ -22,6 +22,13 @@ func NewUserSqlite3(db *sql.DB) *UserSqlite3 {
 	}
 }
 
+func (r *UserSqlite3) Exists(id int) (bool, error) {
+	var exists bool
+	stmt := "SELECT EXISTS(SELECT true FROM users WHERE id = ?)"
+	err := r.DB.QueryRow(stmt, id).Scan(&exists)
+	return exists, err
+}
+
 func (r *UserSqlite3) Insert(username, email, password string) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
@@ -75,13 +82,6 @@ func (r *UserSqlite3) Authenticate(email, password string) (int, error) {
 	}
 
 	return id, nil
-}
-
-func (r *UserSqlite3) Exists(id int) (bool, error) {
-	var exists bool
-	stmt := "SELECT EXISTS(SELECT true FROM users WHERE id = ?)"
-	err := r.DB.QueryRow(stmt, id).Scan(&exists)
-	return exists, err
 }
 
 func (r *UserSqlite3) Get(id int) (*entities.User, error) {

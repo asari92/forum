@@ -2,18 +2,20 @@ package repository
 
 import (
 	"database/sql"
+
 	"forum/internal/entities"
 )
 
 type UserRepository interface {
+	Exists(id int) (bool, error)
 	Insert(username, email, password string) error
 	Authenticate(email, password string) (int, error)
-	Exists(id int) (bool, error)
 	Get(id int) (*entities.User, error)
 	UpdatePassword(id int, currentPassword, newPassword string) error
 }
 
 type PostRepository interface {
+	Exists(id int) (bool, error)
 	InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error)
 	GetPost(postID int) (*entities.Post, error)
 	GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error)

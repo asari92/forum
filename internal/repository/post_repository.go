@@ -20,6 +20,13 @@ func NewPostSqlite3(db *sql.DB) *PostSqlite3 {
 	}
 }
 
+func (r *PostSqlite3) Exists(id int) (bool, error) {
+	var exists bool
+	stmt := "SELECT EXISTS(SELECT true FROM posts WHERE id = ?)"
+	err := r.DB.QueryRow(stmt, id).Scan(&exists)
+	return exists, err
+}
+
 func (r *PostSqlite3) InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error) {
 	// Начинаем транзакцию
 	tx, err := r.DB.Begin()

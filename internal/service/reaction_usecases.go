@@ -39,6 +39,22 @@ func (uc *ReactionUseCase) NewReactionForm() reactionForm {
 }
 
 func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reactionForm) error {
+	exists, err := uc.userRepo.Exists(userID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
+
+	exists, err = uc.postRepo.Exists(postID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
+
 	if form.Comment != "" {
 		form.CheckField(validator.NotBlank(form.Comment), "comment", "This field cannot be blank")
 		form.CheckField(validator.Matches(form.Comment, validator.TextRX), "comment", "This field must contain only english or russian letters")
@@ -95,10 +111,18 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 }
 
 func (uc *ReactionUseCase) UpdateCommentReaction(userID int, form *reactionForm) error {
+	exists, err := uc.userRepo.Exists(userID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
+
 	reaction := form.CommentIsLike == "true"
 	var commentReaction *entities.CommentReaction
 
-	commentReaction, err := uc.commentReactionRepo.GetUserReaction(userID, form.CommentID)
+	commentReaction, err = uc.commentReactionRepo.GetUserReaction(userID, form.CommentID)
 	if err != nil {
 		return err
 	}

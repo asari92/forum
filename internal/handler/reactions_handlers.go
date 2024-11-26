@@ -48,13 +48,15 @@ func (app *Application) postReaction(w http.ResponseWriter, r *http.Request) {
 
 	err = app.Service.Reaction.UpdatePostReaction(userID, postID, &form)
 	if err != nil {
+		app.Logger.Error("update reaction on post in database", "error", err)
 		if errors.Is(err, entities.ErrInvalidData) {
 			sess.Set(ReactionFormSessionKey, form)
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
+		} else if errors.Is(err, entities.ErrNoRecord) {
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
+		} else {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		}
-		app.Logger.Error("update reaction on post in database", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
 
@@ -91,7 +93,11 @@ func (app *Application) commentReaction(w http.ResponseWriter, r *http.Request) 
 	err = app.Service.Reaction.UpdateCommentReaction(userID, &form)
 	if err != nil {
 		app.Logger.Error("update reaction on post in database", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		if errors.Is(err, entities.ErrNoRecord) {
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
+		} else {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		}
 		return
 	}
 

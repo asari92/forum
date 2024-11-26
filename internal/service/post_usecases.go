@@ -62,6 +62,22 @@ func (uc *PostUseCase) NewPostCreateForm() postCreateForm {
 }
 
 func (uc *PostUseCase) GetPostDTO(postID int, userID int) (*PostDTO, error) {
+	exists, err := uc.userRepo.Exists(userID)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, entities.ErrNoRecord
+	}
+
+	exists, err = uc.postRepo.Exists(postID)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, entities.ErrNoRecord
+	}
+
 	post, err := uc.postRepo.GetPost(postID)
 	if err != nil {
 		return nil, err
@@ -130,6 +146,14 @@ func (uc *PostUseCase) GetPostDTO(postID int, userID int) (*PostDTO, error) {
 
 // Получение постов пользователя с пагинацией
 func (uc *PostUseCase) GetUserPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error) {
+	exists, err := uc.userRepo.Exists(userID)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, entities.ErrNoRecord
+	}
+	
 	posts, err := uc.postRepo.GetUserPaginatedPosts(userID, page, pageSize)
 	if err != nil {
 		return nil, err
