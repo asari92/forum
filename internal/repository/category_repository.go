@@ -15,6 +15,13 @@ func NewCategorySqlite3(db *sql.DB) *CategorySqlite3 {
 	return &CategorySqlite3{DB: db}
 }
 
+func (r *CategorySqlite3) Exists(id int) (bool, error) {
+	var exists bool
+	stmt := "SELECT EXISTS(SELECT true FROM categories WHERE id = ?)"
+	err := r.DB.QueryRow(stmt, id).Scan(&exists)
+	return exists, err
+}
+
 func (r *CategorySqlite3) Insert(name string) (int, error) {
 	stmt := `INSERT INTO categories (name) VALUES (?)`
 	result, err := r.DB.Exec(stmt, name)

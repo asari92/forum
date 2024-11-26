@@ -106,6 +106,7 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 
 	postId, allCategories, err := app.Service.Post.CreatePostWithCategories(&form, userId)
 	if err != nil {
+		app.Logger.Error("insert post and categories", "error", err)
 		if errors.Is(err, entities.ErrInvalidCredentials) {
 			data := app.newTemplateData(r)
 			data.Categories = allCategories
@@ -115,8 +116,9 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 			}
 			data.Form = form
 			app.render(w, http.StatusUnprocessableEntity, "create_post.html", data)
+		} else if errors.Is(err, entities.ErrNoRecord) {
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
 		} else {
-			app.Logger.Error("insert post and categories", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		}
 		return
@@ -203,7 +205,11 @@ func (app *Application) userLikedPostsView(w http.ResponseWriter, r *http.Reques
 	userLikedPostsDTO, err := app.Service.Post.GetUserLikedPostsDTO(userID, page, pageSize, paginationURL)
 	if err != nil {
 		app.Logger.Error("get user liked posts", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		if errors.Is(err, entities.ErrNoRecord) {
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
+		} else {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		}
 		return
 	}
 

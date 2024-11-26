@@ -31,5 +31,12 @@ func (u *CategoryUseCase) GetAll() ([]*entities.Category, error) {
 }
 
 func (u *CategoryUseCase) Delete(categoryId int) error {
+	exists, err := u.categoryRepo.Exists(categoryId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
 	return u.categoryRepo.Delete(categoryId)
 }

@@ -153,7 +153,7 @@ func (uc *PostUseCase) GetUserPostsDTO(userID, page, pageSize int, paginationURL
 	if !exists {
 		return nil, entities.ErrNoRecord
 	}
-	
+
 	posts, err := uc.postRepo.GetUserPaginatedPosts(userID, page, pageSize)
 	if err != nil {
 		return nil, err
@@ -188,6 +188,14 @@ func (uc *PostUseCase) GetUserPostsDTO(userID, page, pageSize int, paginationURL
 
 // Получение постов, которые пользователь лайкнул
 func (uc *PostUseCase) GetUserLikedPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error) {
+	exists, err := uc.userRepo.Exists(userID)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, entities.ErrNoRecord
+	}
+
 	// Получаем посты, которые пользователь лайкнул
 	posts, err := uc.postRepo.GetUserLikedPaginatedPosts(userID, page, pageSize)
 	if err != nil {
@@ -334,6 +342,14 @@ func (uc *PostUseCase) CreatePostWithCategories(form *postCreateForm, userID int
 		return 0, allCategories, entities.ErrInvalidCredentials
 	}
 
+	exists, err := uc.userRepo.Exists(userID)
+	if err != nil {
+		return 0, allCategories, err
+	}
+	if !exists {
+		return 0, allCategories, entities.ErrNoRecord
+	}
+
 	postID, err := uc.postRepo.InsertPostWithCategories(form.Title, form.Content, userID, form.Categories)
 	if err != nil {
 		return 0, allCategories, err
@@ -344,6 +360,14 @@ func (uc *PostUseCase) CreatePostWithCategories(form *postCreateForm, userID int
 
 // Удаление поста
 func (uc *PostUseCase) DeletePost(postID int) error {
+	exists, err := uc.postRepo.Exists(postID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
+
 	return uc.postRepo.DeletePost(postID)
 }
 

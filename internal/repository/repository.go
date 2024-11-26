@@ -46,6 +46,7 @@ type CommentReactionRepository interface {
 }
 
 type CategoryRepository interface {
+	Exists(id int) (bool, error)
 	Insert(name string) (int, error)
 	Get(categoryId int) (*entities.Category, error)
 	GetAll() ([]*entities.Category, error)

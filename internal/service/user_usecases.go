@@ -95,5 +95,13 @@ func (u *UserUseCase) UpdatePassword(userID int, form *accountPasswordUpdateForm
 		return entities.ErrInvalidCredentials
 	}
 
+	exists, err := u.userRepo.Exists(userID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
+
 	return u.userRepo.UpdatePassword(userID, form.CurrentPassword, form.NewPassword)
 }

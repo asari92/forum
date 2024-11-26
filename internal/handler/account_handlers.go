@@ -65,13 +65,15 @@ func (app *Application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 
 	err = app.Service.User.UpdatePassword(userID, &form)
 	if err != nil {
+		app.Logger.Error("password update", "error", err)
 		if errors.Is(err, entities.ErrInvalidCredentials) {
 			form.AddFieldError("invalid credentials", "invalid credentials")
 			data := app.newTemplateData(r)
 			data.Form = form
 			app.render(w, http.StatusUnprocessableEntity, "password.html", data)
+		} else if errors.Is(err, entities.ErrNoRecord) {
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
 		} else {
-			app.Logger.Error("password update", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		}
 		return
