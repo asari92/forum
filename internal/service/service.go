@@ -29,7 +29,6 @@ type Post interface {
 type Reaction interface {
 	NewReactionForm() reactionForm
 	UpdatePostReaction(userID, postID int, form *reactionForm) error
-	UpdateCommentReaction(userID int, form *reactionForm) error
 }
 
 type Category interface {

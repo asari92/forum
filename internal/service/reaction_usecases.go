@@ -89,6 +89,14 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 	} else if form.CommentIsLike != "" {
 		reaction := form.CommentIsLike == "true"
 
+		exists, err := uc.commentRepo.Exists(form.CommentID)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return entities.ErrNoRecord
+		}
+
 		commentReaction, err := uc.commentReactionRepo.GetUserReaction(userID, form.CommentID)
 		if err != nil {
 			return err
@@ -99,38 +107,6 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 			if err != nil {
 				return err
 			}
-		} else {
-			err = uc.commentReactionRepo.AddReaction(userID, form.CommentID, reaction)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func (uc *ReactionUseCase) UpdateCommentReaction(userID int, form *reactionForm) error {
-	exists, err := uc.userRepo.Exists(userID)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return entities.ErrNoRecord
-	}
-
-	reaction := form.CommentIsLike == "true"
-	var commentReaction *entities.CommentReaction
-
-	commentReaction, err = uc.commentReactionRepo.GetUserReaction(userID, form.CommentID)
-	if err != nil {
-		return err
-	}
-
-	if reaction == commentReaction.IsLike {
-		err = uc.commentReactionRepo.RemoveReaction(userID, form.CommentID)
-		if err != nil {
-			return err
 		} else {
 			err = uc.commentReactionRepo.AddReaction(userID, form.CommentID, reaction)
 			if err != nil {

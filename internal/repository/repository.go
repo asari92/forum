@@ -33,6 +33,7 @@ type PostReactionRepository interface {
 }
 
 type CommentRepository interface {
+	Exists(id int) (bool, error)
 	InsertComment(postID, userID int, content string) error
 	GetComments(postID int) ([]*entities.Comment, error)
 }

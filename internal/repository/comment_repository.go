@@ -17,6 +17,13 @@ func NewCommentSqlite3(db *sql.DB) *CommentSqlite3 {
 	}
 }
 
+func (r *CommentSqlite3) Exists(id int) (bool, error) {
+	var exists bool
+	stmt := "SELECT EXISTS(SELECT true FROM comments WHERE id = ?)"
+	err := r.DB.QueryRow(stmt, id).Scan(&exists)
+	return exists, err
+}
+
 func (c *CommentSqlite3) InsertComment(postID, userID int, content string) error {
 	stmt := `INSERT INTO comments (post_id, user_id,content, created)
 	VALUES (?,?,?, datetime('now'))`
