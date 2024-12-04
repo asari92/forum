@@ -62,15 +62,7 @@ func (uc *PostUseCase) NewPostCreateForm() postCreateForm {
 }
 
 func (uc *PostUseCase) GetPostDTO(postID int, userID int) (*PostDTO, error) {
-	exists, err := uc.userRepo.Exists(userID)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, entities.ErrNoRecord
-	}
-
-	exists, err = uc.postRepo.Exists(postID)
+	exists, err := uc.postRepo.Exists(postID)
 	if err != nil {
 		return nil, err
 	}
