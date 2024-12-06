@@ -14,19 +14,20 @@ import (
 
 var RequestPaths = map[string]bool{
 	"/":                        true,
-	"/ping":                    true,
 	"/about":                   true,
+	"/account/view":            true,
+	"/account/password/update": true,
+	"/post/create":             true,
+	"/user/liked":              true,
 	"/user/login":              true,
 	"/user/signup":             true,
-	"/post/create":             true,
-	"/account/view":            true,
-	"/user/liked":              true,
-	"/account/password/update": true,
 	"/user/logout":             true,
 }
 
-const Errorpage = "errorpage.html"
-const DefaultCategory = 1
+const (
+	Errorpage       = "errorpage.html"
+	DefaultCategory = 1
+)
 
 func (app *Application) serverError(w http.ResponseWriter) {
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
