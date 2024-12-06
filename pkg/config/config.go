@@ -8,19 +8,26 @@ import (
 )
 
 type Config struct {
-	Host            string
-	Port            string
-	Dsn             string
-	MaxSendFileSize int64
-	DialerTimeout   time.Duration
+	Host                    string
+	Port                    string
+	Dsn                     string
+	GoogleClientID          string
+	GoogleClientSecret      string
+	GoogleClientCallbackURL string
+	MaxSendFileSize         int64
+	DialerTimeout           time.Duration
 }
 
 // New returns a new Config struct
 func New() *Config {
 	return &Config{
-		Host:            getEnv("HOST", "localhost"),
-		Port:            getEnv("PORT", "4000"),
-		Dsn:             getEnv("DSN", "./forum.db"),
+		Host:                    getEnv("HOST", "localhost"),
+		Port:                    getEnv("PORT", "4000"),
+		Dsn:                     getEnv("DSN", "./forum.db"),
+		GoogleClientID:          getEnv("GOOGLE_CLIENT_ID", ""),
+		GoogleClientSecret:      getEnv("GOOGLE_CLIENT_SECRET", ""),
+		GoogleClientCallbackURL: getEnv("GOOGLE_CLIENT_CALLBACK_URL", "https://localhost:4000/auth/google/callback"),
+
 		MaxSendFileSize: int64(getEnvAsInt("MAX_SEND_FILE_SIZE", 26214400)),
 		DialerTimeout:   time.Duration(getEnvAsInt("DIALER_TIMEOUT", 60)),
 	}
