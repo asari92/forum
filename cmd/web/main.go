@@ -1,13 +1,15 @@
 package main
 
 import (
-	"flag"
+	"log"
 	"log/slog"
 	"os"
 
 	"forum/internal/handler"
 	"forum/internal/repository"
 	"forum/internal/service"
+	"forum/pkg/config"
+	"forum/pkg/utils"
 
 	// Go вызывает функцию init() внутри этого пакета.
 	_ "forum/internal/memory"
@@ -17,10 +19,12 @@ import (
 )
 
 func main() {
-	addr := flag.String("addr", ":4000", "HTTP network address")
-	dsn := flag.String("dsn", "./forum.db", "MySQL data source name")
+	// Загрузить переменные окружения из файла .env
+	if err := utils.LoadEnv(".env"); err != nil {
+		log.Printf("Failed to load .env file: %v", err)
+	}
 
-	flag.Parse()
+	conf := config.New()
 
 	// Инициализация нового логгера slog
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -37,7 +41,7 @@ func main() {
 
 	slog.SetDefault(logger)
 
-	db, err := repository.NewSqliteDB(*dsn)
+	db, err := repository.NewSqliteDB(conf.Dsn)
 	if err != nil {
 		logger.Error("Unable to open database", "error", err)
 		os.Exit(1)
@@ -65,13 +69,14 @@ func main() {
 	go sessionManager.GC()
 
 	app := &handler.Application{
+		Config:         conf,
 		Logger:         logger,
 		Service:        service.NewService(repository.NewRepository(db)),
 		TemplateCache:  templateCache,
 		SessionManager: sessionManager,
 	}
 
-	err = app.Serve(addr)
+	err = app.Serve(conf.Host + ":" + conf.Port)
 	if err != nil {
 		logger.Error("Fatal server error", "error", err)
 	}

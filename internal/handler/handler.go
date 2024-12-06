@@ -4,9 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"forum/internal/service"
-	"forum/internal/session"
-	tlsecurity "forum/tls"
 	"html/template"
 	"io/fs"
 	"log/slog"
@@ -15,9 +12,15 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"forum/internal/service"
+	"forum/internal/session"
+	"forum/pkg/config"
+	tlsecurity "forum/tls"
 )
 
 type Application struct {
+	Config         *config.Config
 	Service        *service.Service
 	Logger         *slog.Logger
 	TemplateCache  map[string]*template.Template
@@ -28,7 +31,7 @@ func NewHandler(usecases *service.Service) *Application {
 	return &Application{Service: usecases}
 }
 
-func (app *Application) Serve(addr *string) error {
+func (app *Application) Serve(addr string) error {
 	// Чтение встроенных TLS-ключей из файловой системы
 	certPEM, err := fs.ReadFile(tlsecurity.Files, "cert.pem")
 	if err != nil {
@@ -62,7 +65,7 @@ func (app *Application) Serve(addr *string) error {
 	}
 
 	srv := &http.Server{
-		Addr:         *addr,
+		Addr:         addr,
 		ErrorLog:     slog.NewLogLogger(app.Logger.Handler(), slog.LevelError),
 		Handler:      app.Routes(),
 		TLSConfig:    tlsConfig,
@@ -96,7 +99,7 @@ func (app *Application) Serve(addr *string) error {
 		shutdownError <- srv.Shutdown(ctx)
 	}()
 
-	app.Logger.Info("Starting server", "address", "https://localhost"+*addr)
+	app.Logger.Info("Starting server", "address", "https://"+addr)
 	// Calling Shutdown() on our server will cause ListenAndServe() to immediately
 	// return a http.ErrServerClosed error. So if we see this error, it is actually a
 	// good thing and an indication that the graceful shutdown has started. So we check
@@ -116,7 +119,7 @@ func (app *Application) Serve(addr *string) error {
 
 	// At this point we know that the graceful shutdown completed successfully and we
 	// log a "stopped server" message.
-	app.Logger.Info("stopped server", "addr", *addr)
+	app.Logger.Info("stopped server", "addr", addr)
 
 	return nil
 }
