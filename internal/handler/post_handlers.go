@@ -3,7 +3,6 @@ package handler
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"forum/internal/entities"
@@ -130,7 +129,23 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 	files := r.MultipartForm.File["image"]
 	if len(files) != 0 {
 		err = app.Service.Post.UploadImages(files, postId)
-		log.Println(err)
+		if err != nil {
+			if errors.Is(err, entities.ErrInvalidCredentials) {
+				data := app.newTemplateData(r)
+				data.Form = form
+				data.Categories = allCategories
+				data.ImageError = true
+				if len(form.Categories) == 0 {
+					form.Categories = []int{DefaultCategory}
+				}
+
+				app.render(w, http.StatusUnprocessableEntity, "create_post.html", data)
+
+			} else {
+				app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			}
+			return
+		}
 
 	}
 

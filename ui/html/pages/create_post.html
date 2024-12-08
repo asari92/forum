@@ -5,22 +5,28 @@
     <input type="hidden" name="token" value="{{.CSRFToken}}">
     <div>
         <label>Title:</label>
+        {{if .Form}}
         {{with .Form.FieldErrors.title}}
             <label class='error'>{{.}}</label>
+        {{end}}
         {{end}}
         <input type='text' name='title' value='{{.Form.Title}}'>
     </div>
     <div>
         <label>Content:</label>
+        {{if .Form}}
         {{with .Form.FieldErrors.content}}
             <label class='error'>{{.}}</label>
+        {{end}}
         {{end}}
         <textarea name='content'>{{.Form.Content}}</textarea>
     </div>
     <div>
         <label>Categories:</label>
+        {{if .Form}}
         {{with .Form.FieldErrors.categories}}
             <label class='error'>{{.}}</label>
+        {{end}}
         {{end}}
         <!-- Динамическое отображение категорий -->
         {{range .Categories}}
@@ -32,7 +38,10 @@
     </div>
     <div>
         <div>
-            <label for="image-upload">Загрузить изображение</label>
+            {{if .ImageError}}
+            <p class="error">The project requires handling JPEG, PNG, and GIF images with a maximum size limit of 20 MB.</p>
+            {{end}}
+            <label for="image-upload">upload image</label>
             <input type="file" id="image-upload" name="image" multiple style="display: none;">
 
         </div>

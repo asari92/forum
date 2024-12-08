@@ -32,7 +32,7 @@ type PostDTO struct {
 	Categories   []*entities.Category
 	Likes        int
 	Dislikes     int
-	Images []*entities.Image
+	Images       []*entities.Image
 	Comments     []*entities.Comment
 	UserReaction *entities.PostReaction
 }
@@ -78,7 +78,7 @@ func (uc *PostUseCase) UploadImages(files []*multipart.FileHeader, postId int) e
 	validFiles := []*multipart.FileHeader{}
 	for _, fileHeader := range files {
 		if fileHeader.Size > 20*1024*1024 {
-			return fmt.Errorf("file %s is too large", fileHeader.Filename)
+			return entities.ErrInvalidCredentials
 		}
 
 		file, err := fileHeader.Open()
@@ -101,7 +101,7 @@ func (uc *PostUseCase) UploadImages(files []*multipart.FileHeader, postId int) e
 		}
 
 		if !validMimeTypes[mimeType] {
-			return fmt.Errorf("file %s has an invalid MIME type: %s", fileHeader.Filename, mimeType)
+			return entities.ErrInvalidCredentials
 		}
 
 		validFiles = append(validFiles, fileHeader)
@@ -134,11 +134,9 @@ func (uc *PostUseCase) UploadImages(files []*multipart.FileHeader, postId int) e
 		if err != nil {
 			return fmt.Errorf("error saving file %s: %v", safeFilename, err)
 		}
-		fmt.Println("true")
 
 		err = uc.postRepo.InsertImageByPost(postId, filePath)
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
 
@@ -226,7 +224,7 @@ func (uc *PostUseCase) GetPostDTO(postID int, userID int) (*PostDTO, error) {
 		Categories:   categories,
 		Likes:        likes,
 		Dislikes:     dislikes,
-		Images: images,
+		Images:       images,
 		Comments:     comments,
 		UserReaction: userReaction,
 	}, nil
