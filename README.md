@@ -1,4 +1,4 @@
-# Forum Image Upload Feature
+# Forum Image Upload
 
 This is a forum feature that allows registered users to create posts containing both images and text. When viewing a post, users (both registered and guests) can see the image associated with it. The image upload supports JPEG, PNG, and GIF formats with a maximum file size of 20MB. 
 
