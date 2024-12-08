@@ -20,6 +20,43 @@ func NewPostSqlite3(db *sql.DB) *PostSqlite3 {
 	}
 }
 
+func (r *PostSqlite3) InsertImageByPost(postID int, imageUrl string) error {
+	stmt := `INSERT INTO post_images (post_id, image_url)
+	VALUES (?,?)`
+	_, err := r.DB.Exec(stmt, postID, imageUrl)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *PostSqlite3) GetImagesByPost(postID int) ([]*entities.Image, error) {
+	stmt := `SELECT image_url FROM post_images
+	WHERE post_id = ?`
+	rows, err := r.DB.Query(stmt, postID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, entities.ErrNoRecord
+		} else {
+			return nil, err
+		}
+	}
+	images := []*entities.Image{}
+	for rows.Next() {
+		image := &entities.Image{}
+		err := rows.Scan(&image.UrlImage)
+		if err != nil {
+			return nil, err
+		}
+		images = append(images, image)
+
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return images, nil
+}
+
 func (r *PostSqlite3) Exists(id int) (bool, error) {
 	var exists bool
 	stmt := "SELECT EXISTS(SELECT true FROM posts WHERE id = ?)"

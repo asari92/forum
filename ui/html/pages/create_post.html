@@ -1,7 +1,7 @@
 {{define "title"}}Create a New Post{{end}}
 
 {{define "main"}}
-<form action='/post/create' method='POST'>
+<form action='/post/create' method='POST' enctype="multipart/form-data">
     <input type="hidden" name="token" value="{{.CSRFToken}}">
     <div>
         <label>Title:</label>
@@ -31,6 +31,11 @@
         {{end}}
     </div>
     <div>
+        <div>
+            <label for="image-upload">Загрузить изображение</label>
+            <input type="file" id="image-upload" name="image" accept="image/*" multiple style="display: none;">
+
+        </div>
         <input type='submit' value='Publish post'>
     </div>
 </form>

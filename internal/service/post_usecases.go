@@ -3,11 +3,18 @@ package service
 import (
 	"errors"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"os"
+	"path"
 	"strings"
 
 	"forum/internal/entities"
 	"forum/internal/repository"
 	"forum/pkg/validator"
+
+	"github.com/gofrs/uuid"
 )
 
 // Use Case структура
@@ -55,6 +62,88 @@ func NewPostUseCase(repo *repository.Repository) *PostUseCase {
 		postReactionRepo:    repo.PostReactionRepository,
 		userRepo:            repo.UserRepository,
 	}
+}
+
+func (uc *PostUseCase) UploadImages(files []*multipart.FileHeader, postId int) error {
+	uploadDir := "uploads"
+
+	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
+		err := os.MkdirAll(uploadDir, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("error creating upload directory: %v", err)
+		}
+	}
+
+	validFiles := []*multipart.FileHeader{}
+	for _, fileHeader := range files {
+		if fileHeader.Size > 20*1024*1024 {
+			return fmt.Errorf("file %s is too large", fileHeader.Filename)
+		}
+
+		file, err := fileHeader.Open()
+		if err != nil {
+			return fmt.Errorf("error opening file %s: %v", fileHeader.Filename, err)
+		}
+		defer file.Close()
+
+		buf := make([]byte, 512)
+		_, err = file.Read(buf)
+		if err != nil {
+			return fmt.Errorf("error reading file %s: %v", fileHeader.Filename, err)
+		}
+
+		mimeType := http.DetectContentType(buf)
+		validMimeTypes := map[string]bool{
+			"image/jpeg": true,
+			"image/png":  true,
+			"image/gif":  true,
+		}
+
+		if !validMimeTypes[mimeType] {
+			return fmt.Errorf("file %s has an invalid MIME type: %s", fileHeader.Filename, mimeType)
+		}
+
+		validFiles = append(validFiles, fileHeader)
+	}
+
+	// Сохраняем файлы в папку
+	for _, fileHeader := range validFiles {
+		file, err := fileHeader.Open()
+		if err != nil {
+			return fmt.Errorf("error opening file %s: %v", fileHeader.Filename, err)
+		}
+		defer file.Close()
+
+		fileId, err := uuid.NewV4()
+		if err != nil {
+			return fmt.Errorf("error generating UUID: %v", err)
+		}
+		fileExtension := path.Ext(fileHeader.Filename)
+		safeFilename := fmt.Sprintf("%s%s", fileId.String(), fileExtension)
+
+		filePath := path.Join(uploadDir, safeFilename)
+
+		outFile, err := os.Create(filePath)
+		if err != nil {
+			return fmt.Errorf("error creating file %s: %v", safeFilename, err)
+		}
+		defer outFile.Close()
+
+		_, err = io.Copy(outFile, file)
+		if err != nil {
+			return fmt.Errorf("error saving file %s: %v", safeFilename, err)
+		}
+		fmt.Println("true")
+
+		err = uc.postRepo.InsertImageByPost(postId, filePath)
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+
+	}
+
+	return nil
 }
 
 func (uc *PostUseCase) NewPostCreateForm() postCreateForm {

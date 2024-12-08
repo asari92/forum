@@ -3,10 +3,9 @@ package handler
 import (
 	"context"
 	"fmt"
+	"forum/internal/session"
 	"net/http"
 	"runtime/debug"
-
-	"forum/internal/session"
 )
 
 // Middleware type for handling HTTP requests

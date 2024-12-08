@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 
 	"forum/internal/entities"
@@ -74,18 +75,20 @@ func (app *Application) postCreateView(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(20*1024*1024 + (10 * 1024))
+	if err != nil {
+		app.Logger.Error("Uploaded file is too big", "error", err)
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+
+	}
+
 	sess := app.SessionFromContext(r)
 	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if !ok || userId < 1 {
 		err := errors.New("get userID in postCreate")
 		app.Logger.Error("get userid from session", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
-		return
-	}
-
-	err := r.ParseForm()
-	if err != nil {
-		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 
@@ -122,6 +125,12 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		}
 		return
+	}
+	files := r.MultipartForm.File["image"]
+	if len(files) != 0 {
+		err = app.Service.Post.UploadImages(files, postId)
+		log.Println(err)
+
 	}
 
 	err = sess.Set(FlashSessionKey, "Post successfully created!")
