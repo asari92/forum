@@ -1,68 +1,53 @@
-# 🌐 Web Forum Project
+# Forum Image Upload Feature
 
-Welcome to the **Web Forum Project**! This project aims to create an interactive web forum that enables users to communicate, share thoughts, and engage in discussions.
+This is a forum feature that allows registered users to create posts containing both images and text. When viewing a post, users (both registered and guests) can see the image associated with it. The image upload supports JPEG, PNG, and GIF formats with a maximum file size of 20MB. 
 
-## 🚀 Features
+## Features:
+- Image upload support for JPEG, PNG, and GIF formats.
+- Automatic rejection of images exceeding 20MB in size.
+- Error handling for unsupported formats or oversized images.
+- Display the uploaded image alongside the post for both registered users and guests.
 
-- **🗣️ User Communication**: Facilitate discussions between users through posts and comments.
-- **📂 Post Categories**: Associate categories with your posts for better organization.
-- **👍👎 Likes and Dislikes**: Users can like or dislike posts and comments.
-- **🔍 Post Filtering**: Easily filter posts by categories, created posts, and liked posts.
+## Technologies Used:
+- Go (Golang) - Backend logic and image handling.
+- SQLite3 - Database for storing user data and post information.
+- bcrypt - User authentication and password hashing.
+- UUID - Unique identification for users, posts, and images.
 
----
+## File Upload:
+The uploaded images must be:
+- JPEG, PNG, or GIF formats.
+- No larger than 20MB.
+  
+If the image exceeds 20MB, the backend will return an error message stating "The image is too large."
 
-## 📦 Running the Server Locally (Without Docker)
+## Error Handling:
+The backend will handle errors related to:
+- Unsupported image file types.
+- Image size exceeding 20MB.
+- Any other operational errors.
 
-1. **Install Go**: Ensure you have Go(v.1.22) installed on your machine. You can download it from the [official Go website](https://golang.org/dl/).
+## Backend Implementation:
 
-2. **Clone the Repository**: Use Git to clone the project repository to your local machine.
+### Dependencies:
+- Go standard libraries
+- `github.com/gofrs/uuid`
+- `github.com/mattn/go-sqlite3`
+- `golang.org/x/crypto/bcrypt`
+
+
+
+## Installation
+
+### Prerequisites:
+1. Install Go (version 1.22 or higher).
+2. Install SQLite3 and make sure it's accessible.
+3. Install required Go packages:
    ```bash
-   git clone https://github.com/asari92/forum
-   cd forum
-   ```
-3. **Initialize project**:
-   Execute the following command to initialize database and create TLS certificates:
-   ```bash
-   make init
-   ```
+   go get github.com/gofrs/uuid
+   go get github.com/mattn/go-sqlite3
+   go get golang.org/x/crypto/bcrypt
 
-4. **Run the Server**:
-   Execute the following command to start the server locally:
-   ```bash
-   go run ./cmd/web/main.go
-   ```
-
-   The server will be available at [https://localhost:4000](https://localhost:4000).
-
----
-
-## 🐳 Docker Integration
-
-This project is Dockerized for easy deployment. Follow the steps below to run the server using Docker.
-
-### Running the Server with Docker
-
-1. **Build the Docker Image**:
-   Run the following command to build the Docker image:
-   ```bash
-   make build
-   ```
-
-2. **Run the Docker Container**:
-   Start the server inside a Docker container with:
-   ```bash
-   make run
-   ```
-
-   The server will be available at [https://localhost:4000](https://localhost:4000).
-
-3. **Stop the Docker Container**:
-   If you need to stop the running container, use:
-   ```bash
-   make stop
-   ```
-
----
 
 ## 👨‍💻 Authors
 - [adulmaev](https://01.alem.school/git/adulmaev)
