@@ -40,6 +40,7 @@ type templateData struct {
 	CSRFToken       string
 	Post            *entities.Post
 	Posts           []*entities.Post
+	Images          []*entities.Image
 	Comments        []*entities.Comment
 	Form            any
 	Flash           string

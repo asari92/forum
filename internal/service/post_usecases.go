@@ -32,6 +32,7 @@ type PostDTO struct {
 	Categories   []*entities.Category
 	Likes        int
 	Dislikes     int
+	Images []*entities.Image
 	Comments     []*entities.Comment
 	UserReaction *entities.PostReaction
 }
@@ -174,6 +175,11 @@ func (uc *PostUseCase) GetPostDTO(postID int, userID int) (*PostDTO, error) {
 		return nil, err
 	}
 
+	images, err := uc.postRepo.GetImagesByPost(postID)
+	if err != nil {
+		return nil, err
+	}
+
 	var userReaction *entities.PostReaction
 	if userID > 0 {
 		userReaction, err = uc.postReactionRepo.GetUserReaction(userID, postID) // Получите реакцию пользователя
@@ -220,6 +226,7 @@ func (uc *PostUseCase) GetPostDTO(postID int, userID int) (*PostDTO, error) {
 		Categories:   categories,
 		Likes:        likes,
 		Dislikes:     dislikes,
+		Images: images,
 		Comments:     comments,
 		UserReaction: userReaction,
 	}, nil

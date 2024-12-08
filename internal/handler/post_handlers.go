@@ -44,6 +44,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	data.Post = postData.Post
 	data.Comments = postData.Comments
 	data.Categories = postData.Categories
+	data.Images = postData.Images
 	data.ReactionData.Likes = postData.Likes
 	data.ReactionData.Dislikes = postData.Dislikes
 	data.ReactionData.UserReaction = postData.UserReaction

@@ -36,6 +36,9 @@ func (app *Application) Routes() http.Handler {
 	fileServer := http.FileServer(neuteredFileSystem{http.FS(ui.Files)})
 	mux.Handle("GET /static/", fileServer)
 
+	uploadServer := http.FileServer(http.Dir("./uploads"))
+	mux.Handle("GET /uploads/", http.StripPrefix("/uploads/", uploadServer))
+
 	dynamic := New(app.verifyCSRF, app.sessionMiddleware, app.authenticate)
 
 	mux.Handle("/", dynamic.ThenFunc(app.errorHandler))
