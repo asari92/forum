@@ -5,8 +5,10 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
-	"log"
+	"errors"
 	"net/http"
+
+	"forum/internal/entities"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -66,7 +68,6 @@ func (app *Application) oauthGoogleCallback(w http.ResponseWriter, r *http.Reque
 	defer resp.Body.Close()
 
 	var userInfo struct {
-		Id    string `json:"id`
 		Email string `json:"email"`
 		Name  string `json:"name"`
 	}
@@ -77,6 +78,80 @@ func (app *Application) oauthGoogleCallback(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Логика регистрации/входа пользователя
-	log.Printf("User info: %s %s (%s)", userInfo.Id, userInfo.Name, userInfo.Email)
-	w.Write([]byte("Welcome, " + userInfo.Name))
+	// log.Printf("User info: %s %s (%s)", userInfo.Name, userInfo.Email)
+	// w.Write([]byte("Welcome, " + userInfo.Name))
+
+	userID, err := app.Service.User.OauthAuthenticate(userInfo.Email)
+	if err != nil {
+		if errors.Is(err, entities.ErrInvalidCredentials) {
+		} else {
+			app.Logger.Error("get id Authenticate user", "error", err)
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			return
+		}
+	}
+
+	sess := app.SessionFromContext(r)
+
+	if userID < 1 {
+		userID, err = app.Service.User.Insert(userInfo.Name, userInfo.Email, "")
+		if err != nil {
+			if errors.Is(err, entities.ErrDuplicateUsername) {
+				err = sess.Set(FlashSessionKey, "Sorry, but this username is already in use, you must register with email and password or change name in your google account.")
+				if err != nil {
+					app.Logger.Error("set flashsessionkey", "error", err)
+					app.render(w, http.StatusInternalServerError, Errorpage, nil)
+					return
+				}
+				data := app.newTemplateData(r)
+				app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
+				return
+			} else {
+				app.Logger.Error("insert user credentials", "error", err)
+				app.render(w, http.StatusInternalServerError, Errorpage, nil)
+				return
+			}
+		}
+	}
+
+	// Если валидация прошла успешно, удаляем токен из сессии
+	err = sess.Delete(CsrfTokenSessionKey)
+	if err != nil {
+		app.Logger.Error("Session error during delete csrfToken", "error", err)
+	}
+
+	// Add the ID of the current user to the session, so that they are now
+	// 'logged in'.
+	err = sess.Set(AuthUserIDSessionKey, userID)
+	if err != nil {
+		app.Logger.Error("set AuthUserIDSessionKey", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	redirectUrl := "/"
+	path, ok := sess.Get(RedirectPathAfterLoginSessionKey).(string)
+	if ok {
+		err = sess.Delete(RedirectPathAfterLoginSessionKey)
+		if err != nil {
+			app.Logger.Error("Session error during delete redirectPath", "error", err)
+		}
+		redirectUrl = path
+	}
+
+	err = sess.Set(FlashSessionKey, "Your log in was successful.")
+	if err != nil {
+		app.Logger.Error("Set FlashSessionKey", "error", err)
+		// app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		// return
+	}
+
+	err = app.SessionManager.RenewToken(w, r, userID)
+	if err != nil {
+		app.Logger.Error("renewtoken", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	http.Redirect(w, r, redirectUrl, http.StatusSeeOther)
 }
