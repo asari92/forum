@@ -2,8 +2,6 @@ package handler
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -26,10 +24,18 @@ var googleOauthConfig = &oauth2.Config{
 	Endpoint: google.Endpoint,
 }
 
-var oauthState string = "state-token"
+type userInfo struct {
+	Email string `json:"email"`
+	Name  string `json:"name"`
+}
 
 func (app *Application) oauthGoogleLogin(w http.ResponseWriter, r *http.Request) {
-	oauthState = generateStateOauthCookie(w)
+	oauthState := app.generateCSRFToken()
+
+	sess := app.SessionFromContext(r)
+	sess.Set(GoogleOAuthStateSessionKey, oauthState)
+	app.Logger.Info("oauth state was generated successfull", "oauthState", oauthState)
+
 	googleOauthConfig.ClientID = app.Config.GoogleClientID
 	googleOauthConfig.ClientSecret = app.Config.GoogleClientSecret
 	googleOauthConfig.RedirectURL = app.Config.GoogleClientCallbackURL
@@ -37,17 +43,23 @@ func (app *Application) oauthGoogleLogin(w http.ResponseWriter, r *http.Request)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
-func generateStateOauthCookie(w http.ResponseWriter) string {
-	b := make([]byte, 16)
-	rand.Read(b)
-	state := base64.URLEncoding.EncodeToString(b)
-
-	return state
-}
+// func generateStateOauthCookie(sess session.Session) string {
+// 	b := make([]byte, 16)
+// 	if _, err := rand.Read(b); err != nil {
+// 		app.Logger.Error("Failed to generate random state", "error", err)
+// 		return ""
+// 	}
+// 	state := base64.URLEncoding.EncodeToString(b)
+// 	sess.Set(GoogleOAuthStateSessionKey, state)
+// 	return state
+// }
 
 // Callback от Google
 func (app *Application) oauthGoogleCallback(w http.ResponseWriter, r *http.Request) {
-	if r.FormValue("state") != oauthState {
+	sess := app.SessionFromContext(r)
+
+	sessionState, ok := sess.Get(GoogleOAuthStateSessionKey).(string)
+	if !ok || sessionState != r.FormValue("state") {
 		http.Error(w, "Invalid state parameter", http.StatusBadRequest)
 		return
 	}
@@ -59,27 +71,11 @@ func (app *Application) oauthGoogleCallback(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	client := googleOauthConfig.Client(context.Background(), token)
-	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
+	userInfo, err := fetchGoogleUserInfo(token)
 	if err != nil {
-		http.Error(w, "Failed to get user info", http.StatusInternalServerError)
+		http.Error(w, "Failed to fetch GoogleUserInfo", http.StatusInternalServerError)
 		return
 	}
-	defer resp.Body.Close()
-
-	var userInfo struct {
-		Email string `json:"email"`
-		Name  string `json:"name"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&userInfo); err != nil {
-		http.Error(w, "Failed to parse user info", http.StatusInternalServerError)
-		return
-	}
-
-	// Логика регистрации/входа пользователя
-	// log.Printf("User info: %s %s (%s)", userInfo.Name, userInfo.Email)
-	// w.Write([]byte("Welcome, " + userInfo.Name))
 
 	userID, err := app.Service.User.OauthAuthenticate(userInfo.Email)
 	if err != nil {
@@ -90,8 +86,6 @@ func (app *Application) oauthGoogleCallback(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	}
-
-	sess := app.SessionFromContext(r)
 
 	if userID < 1 {
 		userID, err = app.Service.User.Insert(userInfo.Name, userInfo.Email, "")
@@ -118,6 +112,11 @@ func (app *Application) oauthGoogleCallback(w http.ResponseWriter, r *http.Reque
 	err = sess.Delete(CsrfTokenSessionKey)
 	if err != nil {
 		app.Logger.Error("Session error during delete csrfToken", "error", err)
+	}
+
+	err = sess.Delete(GoogleOAuthStateSessionKey)
+	if err != nil {
+		app.Logger.Error("Session error during delete google oauth state", "error", err)
 	}
 
 	// Add the ID of the current user to the session, so that they are now
@@ -154,4 +153,20 @@ func (app *Application) oauthGoogleCallback(w http.ResponseWriter, r *http.Reque
 	}
 
 	http.Redirect(w, r, redirectUrl, http.StatusSeeOther)
+}
+
+func fetchGoogleUserInfo(token *oauth2.Token) (*userInfo, error) {
+	client := googleOauthConfig.Client(context.Background(), token)
+	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var userInfo userInfo
+	if err := json.NewDecoder(resp.Body).Decode(&userInfo); err != nil {
+		return nil, err
+	}
+
+	return &userInfo, nil
 }
