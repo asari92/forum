@@ -14,6 +14,9 @@ type Config struct {
 	GoogleClientID          string
 	GoogleClientSecret      string
 	GoogleClientCallbackURL string
+	GithubClientID          string
+	GithubClientSecret      string
+	GithubClientCallbackURL string
 	MaxSendFileSize         int64
 	DialerTimeout           time.Duration
 }
@@ -27,6 +30,9 @@ func New() *Config {
 		GoogleClientID:          getEnv("GOOGLE_CLIENT_ID", ""),
 		GoogleClientSecret:      getEnv("GOOGLE_CLIENT_SECRET", ""),
 		GoogleClientCallbackURL: getEnv("GOOGLE_CLIENT_CALLBACK_URL", "https://localhost:4000/auth/google/callback"),
+		GithubClientID:          getEnv("GITHUB_CLIENT_ID", ""),
+		GithubClientSecret:      getEnv("GITHUB_CLIENT_SECRET", ""),
+		GithubClientCallbackURL: getEnv("GITHUB_CLIENT_CALLBACK_URL", "https://localhost:4000/auth/github/callback"),
 
 		MaxSendFileSize: int64(getEnvAsInt("MAX_SEND_FILE_SIZE", 26214400)),
 		DialerTimeout:   time.Duration(getEnvAsInt("DIALER_TIMEOUT", 60)),
