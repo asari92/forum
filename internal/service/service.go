@@ -10,8 +10,9 @@ import (
 type User interface {
 	NewUserAuthForm() userAuthForm
 	NewAccountPasswordUpdateForm() accountPasswordUpdateForm
-	Insert(form *userAuthForm) error
-	Authenticate(form *userAuthForm) (int, error)
+	Insert(username, email, password string) (int, error)
+	OauthAuthenticate(email string) (int, error)
+	Authenticate(email, password string) (int, error)
 	UserExists(id int) (bool, error)
 	GetUserByID(id int) (*entities.User, error)
 	UpdatePassword(userID int, form *accountPasswordUpdateForm) error
