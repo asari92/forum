@@ -56,21 +56,6 @@ func (app *Application) oauthGoogleLogin(w http.ResponseWriter, r *http.Request)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
-func (app *Application) oauthGithubLogin(w http.ResponseWriter, r *http.Request) {
-	oauthState := app.generateCSRFToken()
-
-	sess := app.SessionFromContext(r)
-	sess.Set(GitHubOAuthStateSessionKey, oauthState)
-	app.Logger.Info("oauth state was generated successfull", "oauthState", oauthState)
-
-	githubOauthConfig.ClientID = app.Config.GithubClientID
-	githubOauthConfig.ClientSecret = app.Config.GithubClientSecret
-	githubOauthConfig.RedirectURL = app.Config.GithubClientCallbackURL
-	url := githubOauthConfig.AuthCodeURL(oauthState, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
-}
-
-// Callback от Google
 func (app *Application) oauthGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	sess := app.SessionFromContext(r)
 
@@ -94,6 +79,20 @@ func (app *Application) oauthGoogleCallback(w http.ResponseWriter, r *http.Reque
 	}
 
 	app.oauthAuthentication(w, r, userInfo)
+}
+
+func (app *Application) oauthGithubLogin(w http.ResponseWriter, r *http.Request) {
+	oauthState := app.generateCSRFToken()
+
+	sess := app.SessionFromContext(r)
+	sess.Set(GitHubOAuthStateSessionKey, oauthState)
+	app.Logger.Info("oauth state was generated successfull", "oauthState", oauthState)
+
+	githubOauthConfig.ClientID = app.Config.GithubClientID
+	githubOauthConfig.ClientSecret = app.Config.GithubClientSecret
+	githubOauthConfig.RedirectURL = app.Config.GithubClientCallbackURL
+	url := githubOauthConfig.AuthCodeURL(oauthState, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
+	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
 func (app *Application) oauthGithubCallback(w http.ResponseWriter, r *http.Request) {
