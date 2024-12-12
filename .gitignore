@@ -26,3 +26,8 @@ go.work.sum
 
 # Ignore local TLS certificates and keys
 *.pem
+
+*.png 
+*.jpeg
+*.gif
+*.jpg

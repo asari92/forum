@@ -36,6 +36,9 @@ func (app *Application) Routes() http.Handler {
 	fileServer := http.FileServer(neuteredFileSystem{http.FS(ui.Files)})
 	mux.Handle("GET /static/", fileServer)
 
+	uploadServer := http.FileServer(http.Dir("./uploads"))
+	mux.Handle("GET /uploads/", http.StripPrefix("/uploads/", uploadServer))
+
 	dynamic := New(app.verifyCSRF, app.sessionMiddleware, app.authenticate)
 
 	mux.Handle("/", dynamic.ThenFunc(app.errorHandler))
@@ -49,12 +52,6 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("GET /user/login", dynamic.ThenFunc(app.userLoginView))
 	mux.Handle("POST /user/login", dynamic.ThenFunc(app.userLogin))
 	mux.Handle("GET /about", dynamic.ThenFunc(app.aboutView))
-
-	mux.Handle("GET /auth/google/login", dynamic.ThenFunc(app.oauthGoogleLogin))
-	mux.Handle("GET /auth/google/callback", dynamic.ThenFunc(app.oauthGoogleCallback))
-
-	mux.Handle("GET /auth/github/login", dynamic.ThenFunc(app.oauthGithubLogin))
-	mux.Handle("GET /auth/github/callback", dynamic.ThenFunc(app.oauthGithubCallback))
 
 	protected := dynamic.Append(app.requireAuthentication)
 

@@ -1,6 +1,8 @@
 package service
 
 import (
+	"mime/multipart"
+
 	"forum/internal/entities"
 	"forum/internal/repository"
 )
@@ -8,9 +10,8 @@ import (
 type User interface {
 	NewUserAuthForm() userAuthForm
 	NewAccountPasswordUpdateForm() accountPasswordUpdateForm
-	Insert(username, email, password string) (int, error)
-	Authenticate(email, password string) (int, error)
-	OauthAuthenticate(email string) (int, error)
+	Insert(form *userAuthForm) error
+	Authenticate(form *userAuthForm) (int, error)
 	UserExists(id int) (bool, error)
 	GetUserByID(id int) (*entities.User, error)
 	UpdatePassword(userID int, form *accountPasswordUpdateForm) error
@@ -23,7 +24,7 @@ type Post interface {
 	GetUserPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetUserLikedPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetFilteredPaginatedPostsDTO(form *postCreateForm, page, pageSize int, paginationURL string) (*PostsDTO, error)
-	CreatePostWithCategories(form *postCreateForm, userID int) (int, []*entities.Category, error)
+	CreatePostWithCategories(form *postCreateForm, files []*multipart.FileHeader, userID int) (int, []*entities.Category, error)
 	DeletePost(postID int) error
 }
 

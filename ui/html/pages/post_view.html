@@ -15,6 +15,18 @@
     </div>
     {{end}}
 
+    <div class="image-gallery">
+        {{with .Images}}
+          <div class="image-container">
+            {{range .}}
+              <img class="image-item" src="/{{.UrlImage}}" alt="">
+            {{end}}
+          </div>
+        {{end}}
+      </div>
+      
+      
+
     <div class="metadata">
         <form method="POST" action="/">
             <input type="hidden" name="token" value="{{.CSRFToken}}">

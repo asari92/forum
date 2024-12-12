@@ -43,6 +43,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	data.Post = postData.Post
 	data.Comments = postData.Comments
 	data.Categories = postData.Categories
+	data.Images = postData.Images
 	data.ReactionData.Likes = postData.Likes
 	data.ReactionData.Dislikes = postData.Dislikes
 	data.ReactionData.UserReaction = postData.UserReaction
@@ -74,18 +75,20 @@ func (app *Application) postCreateView(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(20*1024*1024 + (10 * 1024))
+	if err != nil {
+		app.Logger.Error("Uploaded file is too big", "error", err)
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+
+	}
+
 	sess := app.SessionFromContext(r)
 	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
 	if !ok || userId < 1 {
 		err := errors.New("get userID in postCreate")
 		app.Logger.Error("get userid from session", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
-		return
-	}
-
-	err := r.ParseForm()
-	if err != nil {
-		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 
@@ -103,8 +106,11 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 	form.Title = r.PostForm.Get("title")
 	form.Content = r.PostForm.Get("content")
 	form.Categories = categoryIDs
+	files := r.MultipartForm.File["image"]
 
-	postId, allCategories, err := app.Service.Post.CreatePostWithCategories(&form, userId)
+    
+
+	postId, allCategories, err := app.Service.Post.CreatePostWithCategories(&form,files,userId)
 	if err != nil {
 		app.Logger.Error("insert post and categories", "error", err)
 		if errors.Is(err, entities.ErrInvalidCredentials) {
@@ -123,7 +129,7 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-
+	
 	err = sess.Set(FlashSessionKey, "Post successfully created!")
 	if err != nil {
 		// кажется тут не нужна ошибка, достаточно логирования

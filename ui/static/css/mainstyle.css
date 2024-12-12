@@ -653,3 +653,65 @@ h1 a:hover {
     display: flex;
     align-items: center; /* Выравнивание чекбокса и текста по центру */
 }
+
+/* Global settings for the image gallery */
+/* Global settings for the image gallery */
+/* General settings for the gallery container */
+.image-gallery {
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+    margin: 0 auto;
+    max-width: 100%; /* Ensure the gallery container spans the full width */
+    background-color: #f9f9f9; /* Subtle background color */
+    border-radius: 16px; /* Rounded corners around the gallery */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+    width: 100%; /* Full width of its parent container */
+    box-sizing: border-box; /* Includes padding in the width calculation */
+  }
+  
+  /* Container for images */
+  .image-container {
+    display: flex;
+    flex-wrap: wrap; /* Allows images to wrap into the next row */
+    gap: 20px; /* Space between the images */
+    width: 100%; /* Ensures container takes up full width */
+    justify-content: center; /* Center the images */
+  }
+  
+  /* Styling for individual images */
+  .image-item {
+    display: block;
+    width: 100%; /* Ensure each image takes up full width */
+    max-width: 500px; /* Increased max-width for larger images */
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 12px; /* Rounded corners */
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); /* Soft shadow */
+    transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+    object-fit: cover; /* Ensure the image fills the container */
+  }
+  
+  /* Hover effect for images */
+  .image-item:hover {
+    transform: scale(1.08); /* Slightly stronger zoom effect on hover */
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15); /* Darker shadow */
+    filter: brightness(1.1); /* Lighten the image */
+  }
+  
+  /* Responsive design */
+  @media screen and (max-width: 768px) {
+    .image-gallery {
+      padding: 20px; /* Reduce padding on smaller screens */
+    }
+  
+    .image-container {
+      justify-content: space-between; /* Spread images on smaller screens */
+    }
+  
+    .image-item {
+      width: 100%; /* Make images full width on smaller screens */
+      max-width: 100%; /* Allow images to fill the container */
+      border-radius: 8px; /* Maintain rounded corners on small screens */
+    }
+  }
+  
