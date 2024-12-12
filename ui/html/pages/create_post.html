@@ -38,8 +38,10 @@
     </div>
     <div>
         <div>
-            {{if .ImageError}}
-            <p class="error">The project requires handling JPEG, PNG, and GIF images with a maximum size limit of 20 MB.</p>
+            {{if .Form}}
+            {{with .Form.FieldErrors.image}}
+                <label class='error'>{{.}}</label>
+            {{end}}
             {{end}}
             <label for="image-upload">upload image</label>
             <input type="file" id="image-upload" name="image" multiple style="display: none;">

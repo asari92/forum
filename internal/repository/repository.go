@@ -16,9 +16,8 @@ type UserRepository interface {
 
 type PostRepository interface {
 	Exists(id int) (bool, error)
-	InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error)
+	InsertPostWithCategories(title, content string, userID int, categoryIDs []int, filePaths []string) (int, error)
 	GetPost(postID int) (*entities.Post, error)
-	InsertImageByPost(postID int, imageUrl string) error
 	GetImagesByPost(postID int) ([]*entities.Image, error)
 	GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error)
 	GetUserPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)

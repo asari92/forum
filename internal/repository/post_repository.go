@@ -20,16 +20,6 @@ func NewPostSqlite3(db *sql.DB) *PostSqlite3 {
 	}
 }
 
-func (r *PostSqlite3) InsertImageByPost(postID int, imageUrl string) error {
-	stmt := `INSERT INTO post_images (post_id, image_url)
-	VALUES (?,?)`
-	_, err := r.DB.Exec(stmt, postID, imageUrl)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (r *PostSqlite3) GetImagesByPost(postID int) ([]*entities.Image, error) {
 	stmt := `SELECT image_url FROM post_images
 	WHERE post_id = ?`
@@ -64,7 +54,7 @@ func (r *PostSqlite3) Exists(id int) (bool, error) {
 	return exists, err
 }
 
-func (r *PostSqlite3) InsertPostWithCategories(title, content string, userID int, categoryIDs []int) (int, error) {
+func (r *PostSqlite3) InsertPostWithCategories(title, content string, userID int, categoryIDs []int, filePaths []string) (int, error) {
 	// Начинаем транзакцию
 	tx, err := r.DB.Begin()
 	if err != nil {
@@ -97,6 +87,16 @@ func (r *PostSqlite3) InsertPostWithCategories(title, content string, userID int
 		_, err := tx.Exec(stmt, postID, categoryID)
 		if err != nil {
 			return 0, err
+		}
+	}
+
+	if len(filePaths) != 0 {
+		stmt = `INSERT INTO post_images (post_id, image_url) VALUES (?,?)`
+		for _, imageUrl := range filePaths {
+			_, err := tx.Exec(stmt, postID, imageUrl)
+			if err != nil {
+				return 0, err
+			}
 		}
 	}
 

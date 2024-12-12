@@ -19,13 +19,12 @@ type User interface {
 
 type Post interface {
 	NewPostCreateForm() postCreateForm
-	UploadImages(files []*multipart.FileHeader, postId int) error
 	GetPostDTO(postID int, userID int) (*PostDTO, error)
 	GetAllPaginatedPostsDTO(page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetUserPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetUserLikedPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetFilteredPaginatedPostsDTO(form *postCreateForm, page, pageSize int, paginationURL string) (*PostsDTO, error)
-	CreatePostWithCategories(form *postCreateForm, userID int) (int, []*entities.Category, error)
+	CreatePostWithCategories(form *postCreateForm, files []*multipart.FileHeader, userID int) (int, []*entities.Category, error)
 	DeletePost(postID int) error
 }
 

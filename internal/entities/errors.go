@@ -16,4 +16,7 @@ var (
 	ErrInvalidUser      = errors.New("invalid user")
 	ErrInvalidToken     = errors.New("invalid session token")
 	ErrInvalidCSRFToken = errors.New("invalid csrf token")
+
+	ErrUnsupportedFileType = errors.New("unsupported file type")
+	ErrFileSizeTooLarge    = errors.New("file size larger than max")
 )

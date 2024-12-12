@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"mime/multipart"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -16,6 +16,8 @@ import (
 
 	"github.com/gofrs/uuid"
 )
+
+const uploadDir = "uploads"
 
 // Use Case структура
 type PostUseCase struct {
@@ -63,86 +65,6 @@ func NewPostUseCase(repo *repository.Repository) *PostUseCase {
 		postReactionRepo:    repo.PostReactionRepository,
 		userRepo:            repo.UserRepository,
 	}
-}
-
-func (uc *PostUseCase) UploadImages(files []*multipart.FileHeader, postId int) error {
-	uploadDir := "uploads"
-
-	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
-		err := os.MkdirAll(uploadDir, os.ModePerm)
-		if err != nil {
-			return fmt.Errorf("error creating upload directory: %v", err)
-		}
-	}
-
-	validFiles := []*multipart.FileHeader{}
-	for _, fileHeader := range files {
-		if fileHeader.Size > 20*1024*1024 {
-			return entities.ErrInvalidCredentials
-		}
-
-		file, err := fileHeader.Open()
-		if err != nil {
-			return fmt.Errorf("error opening file %s: %v", fileHeader.Filename, err)
-		}
-		defer file.Close()
-
-		buf := make([]byte, 512)
-		_, err = file.Read(buf)
-		if err != nil {
-			return fmt.Errorf("error reading file %s: %v", fileHeader.Filename, err)
-		}
-
-		mimeType := http.DetectContentType(buf)
-		validMimeTypes := map[string]bool{
-			"image/jpeg": true,
-			"image/png":  true,
-			"image/gif":  true,
-		}
-
-		if !validMimeTypes[mimeType] {
-			return entities.ErrInvalidCredentials
-		}
-
-		validFiles = append(validFiles, fileHeader)
-	}
-
-	// Сохраняем файлы в папку
-	for _, fileHeader := range validFiles {
-		file, err := fileHeader.Open()
-		if err != nil {
-			return fmt.Errorf("error opening file %s: %v", fileHeader.Filename, err)
-		}
-		defer file.Close()
-
-		fileId, err := uuid.NewV4()
-		if err != nil {
-			return fmt.Errorf("error generating UUID: %v", err)
-		}
-		fileExtension := path.Ext(fileHeader.Filename)
-		safeFilename := fmt.Sprintf("%s%s", fileId.String(), fileExtension)
-
-		filePath := path.Join(uploadDir, safeFilename)
-
-		outFile, err := os.Create(filePath)
-		if err != nil {
-			return fmt.Errorf("error creating file %s: %v", safeFilename, err)
-		}
-		defer outFile.Close()
-
-		_, err = io.Copy(outFile, file)
-		if err != nil {
-			return fmt.Errorf("error saving file %s: %v", safeFilename, err)
-		}
-
-		err = uc.postRepo.InsertImageByPost(postId, filePath)
-		if err != nil {
-			return err
-		}
-
-	}
-
-	return nil
 }
 
 func (uc *PostUseCase) NewPostCreateForm() postCreateForm {
@@ -408,7 +330,7 @@ func (uc *PostUseCase) GetFilteredPaginatedPostsDTO(form *postCreateForm, page, 
 }
 
 // Создание поста с категориями
-func (uc *PostUseCase) CreatePostWithCategories(form *postCreateForm, userID int) (int, []*entities.Category, error) {
+func (uc *PostUseCase) CreatePostWithCategories(form *postCreateForm, files []*multipart.FileHeader, userID int) (int, []*entities.Category, error) {
 	// валидировать все данные
 	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
 	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
@@ -424,6 +346,19 @@ func (uc *PostUseCase) CreatePostWithCategories(form *postCreateForm, userID int
 
 	form.validateCategories(allCategories)
 
+	if len(files) != 0 {
+		err = validator.ValidateImageFiles(files)
+		if err != nil {
+			if err.Error() == entities.ErrUnsupportedFileType.Error() {
+				form.AddFieldError("image", "The project requires handling JPEG, PNG, GIF images")
+			} else if err.Error() == entities.ErrFileSizeTooLarge.Error() {
+				form.AddFieldError("image", "Maximum file size limit is 20 MB")
+			} else {
+				return 0, allCategories, err
+			}
+		}
+	}
+
 	if !form.Valid() {
 		return 0, allCategories, entities.ErrInvalidCredentials
 	}
@@ -436,12 +371,70 @@ func (uc *PostUseCase) CreatePostWithCategories(form *postCreateForm, userID int
 		return 0, allCategories, entities.ErrNoRecord
 	}
 
-	postID, err := uc.postRepo.InsertPostWithCategories(form.Title, form.Content, userID, form.Categories)
-	if err != nil {
-		return 0, allCategories, err
+	filePaths := []string{}
+	if len(files) != 0 {
+		filePaths, err = uploadImages(files)
+		if err != nil {
+			return 0, allCategories, err
+		}
 	}
 
+	postID, err := uc.postRepo.InsertPostWithCategories(form.Title, form.Content, userID, form.Categories, filePaths)
+	if err != nil {
+		for _, filePath := range filePaths {
+			err := os.Remove(filePath)
+			if err != nil {
+				slog.Error("deleting file", "error", fmt.Sprintf("failed to delete file %s: %v", filePath, err))
+			}
+		}
+		return 0, allCategories, err
+	}
 	return postID, allCategories, nil
+}
+
+func uploadImages(files []*multipart.FileHeader) ([]string, error) {
+	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
+		err := os.MkdirAll(uploadDir, os.ModePerm)
+		if err != nil {
+			return nil, fmt.Errorf("error creating upload directory: %v", err)
+		}
+	}
+
+	pathFiles := []string{}
+
+	// Сохраняем файлы в папку
+	for _, fileHeader := range files {
+		file, err := fileHeader.Open()
+		if err != nil {
+			return nil, fmt.Errorf("error opening file %s: %v", fileHeader.Filename, err)
+		}
+		defer file.Close()
+
+		fileId, err := uuid.NewV4()
+		if err != nil {
+			return nil, fmt.Errorf("error generating UUID: %v", err)
+		}
+		fileExtension := path.Ext(fileHeader.Filename)
+		safeFilename := fmt.Sprintf("%s%s", fileId.String(), fileExtension)
+
+		filePath := path.Join(uploadDir, safeFilename)
+
+		outFile, err := os.Create(filePath)
+		if err != nil {
+			return nil, fmt.Errorf("error creating file %s: %v", safeFilename, err)
+		}
+		defer outFile.Close()
+
+		_, err = io.Copy(outFile, file)
+		if err != nil {
+			return nil, fmt.Errorf("error saving file %s: %v", safeFilename, err)
+		}
+
+		pathFiles = append(pathFiles, filePath)
+
+	}
+
+	return pathFiles, nil
 }
 
 // Удаление поста

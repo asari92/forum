@@ -41,7 +41,6 @@ type templateData struct {
 	Post            *entities.Post
 	Posts           []*entities.Post
 	Images          []*entities.Image
-	ImageError      bool
 	Comments        []*entities.Comment
 	Form            any
 	Flash           string

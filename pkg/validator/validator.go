@@ -2,11 +2,18 @@ package validator
 
 import (
 	"errors"
+	"fmt"
+	"mime/multipart"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
+)
+
+const (
+	maxImageSize = 20 * 1024 * 1024
 )
 
 var (
@@ -105,4 +112,38 @@ func ValidateID(id string) (int, error) {
 	}
 
 	return ID, nil
+}
+
+func ValidateImageFiles(files []*multipart.FileHeader) error {
+	for _, fileHeader := range files {
+		if fileHeader.Size > maxImageSize {
+			return errors.New("file size larger than max")
+		}
+
+		file, err := fileHeader.Open()
+		if err != nil {
+			return fmt.Errorf("error opening file %s: %v", fileHeader.Filename, err)
+		}
+		defer file.Close()
+
+		buf := make([]byte, 512)
+		_, err = file.Read(buf)
+		if err != nil {
+			return fmt.Errorf("error reading file %s: %v", fileHeader.Filename, err)
+		}
+
+		mimeType := http.DetectContentType(buf)
+		validMimeTypes := map[string]bool{
+			"image/jpeg": true,
+			"image/jpg":  true,
+			"image/png":  true,
+			"image/gif":  true,
+		}
+
+		if !validMimeTypes[mimeType] {
+			return errors.New("unsupported file type")
+		}
+
+	}
+	return nil
 }
