@@ -29,32 +29,55 @@ func (r *UserSqlite3) Exists(id int) (bool, error) {
 	return exists, err
 }
 
-func (r *UserSqlite3) Insert(username, email, password string) error {
+func (r *UserSqlite3) Insert(username, email, password string) (int, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	stmt := `INSERT INTO users (username, email, password, created)
     VALUES(?, ?, ?, datetime('now'))`
 
-	_, err = r.DB.Exec(stmt, username, email, string(hashedPassword))
+	result, err := r.DB.Exec(stmt, username, email, string(hashedPassword))
 	if err != nil {
 		var sqliteError sqlite3.Error
 		if errors.As(err, &sqliteError) {
 			if sqliteError.Code == sqlite3.ErrConstraint {
 				if strings.Contains(sqliteError.Error(), "users.email") {
-					return entities.ErrDuplicateEmail
+					return 0, entities.ErrDuplicateEmail
 				}
 				if strings.Contains(sqliteError.Error(), "users.username") {
-					return entities.ErrDuplicateUsername
+					return 0, entities.ErrDuplicateUsername
 				}
 			}
 		}
-		return err
+		return 0, err
 	}
 
-	return nil
+	// Получаем ID вставленного поста
+	userID, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(userID), nil
+}
+
+func (r *UserSqlite3) OauthAuthenticate(email string) (int, error) {
+	var id int
+
+	stmt := "SELECT id FROM users WHERE email = ?"
+
+	err := r.DB.QueryRow(stmt, email).Scan(&id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, entities.ErrInvalidCredentials
+		} else {
+			return 0, err
+		}
+	}
+
+	return id, nil
 }
 
 func (r *UserSqlite3) Authenticate(email, password string) (int, error) {

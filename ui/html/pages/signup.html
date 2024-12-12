@@ -3,6 +3,9 @@
 {{define "main"}}
 <form action='/user/signup' method='POST' novalidate>
     <input type="hidden" name="token" value="{{.CSRFToken}}">
+    {{range .Form.NonFieldErrors}}
+    <div class='error'>{{.}}</div>
+    {{end}}
     <div>
         <label>Username:</label>
         {{with .Form.FieldErrors.username}}
@@ -28,4 +31,6 @@
         <input type='submit' value='Signup'>
     </div>
 </form>
+<a href="/auth/google/login">Войти через Google</a>
+<a href="/auth/github/login">Войти через Github</a>
 {{end}}

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"forum/internal/entities"
+	"forum/pkg/validator"
 )
 
 func (app *Application) userSignupView(w http.ResponseWriter, r *http.Request) {
@@ -31,11 +32,31 @@ func (app *Application) userSignup(w http.ResponseWriter, r *http.Request) {
 	form.Email = r.PostForm.Get("email")
 	form.Password = r.PostForm.Get("password")
 
-	err = app.Service.User.Insert(&form)
+	form.CheckField(validator.Matches(form.Username, validator.UsernameRX), "username", "This field must be a valid username")
+	form.CheckField(validator.NotBlank(form.Username), "username", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Username, 100), "username", "This field cannot be more than 100 characters long")
+
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")
+	form.CheckField(validator.MaxChars(form.Email, 100), "email", "This field cannot be more than 100 characters long")
+
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+	form.CheckField(validator.NotHaveAnySpaces(form.Password), "password", "This field cannot have any spaces")
+	form.CheckField(validator.MinChars(form.Password, 8), "password", "This field must be at least 8 characters long")
+	form.CheckField(validator.MaxChars(form.Password, 100), "password", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.Matches(form.Password, validator.PasswordRX), "password", "This field must contain only letters, digits and these symbols !_.@#$%^&*")
+
+	if !form.Valid() {
+		form.AddFieldError("insert user credentials", "invalid credentials")
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
+		return
+	}
+
+	_, err = app.Service.User.Insert(form.Username, form.Email, form.Password)
 	if err != nil {
-		if errors.Is(err, entities.ErrInvalidCredentials) {
-			form.AddFieldError("insert user credentials", "invalid credentials")
-		} else if errors.Is(err, entities.ErrDuplicateEmail) {
+		if errors.Is(err, entities.ErrDuplicateEmail) {
 			form.AddFieldError("email", "Email address is already in use")
 		} else if errors.Is(err, entities.ErrDuplicateUsername) {
 			form.AddFieldError("username", "Username is already in use")
@@ -60,8 +81,8 @@ func (app *Application) userSignup(w http.ResponseWriter, r *http.Request) {
 	err = sess.Set(FlashSessionKey, "Your signup was successful. Please log in.")
 	if err != nil {
 		app.Logger.Error("set flashsessionkey", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
-		return
+		// app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		// return
 	}
 
 	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
@@ -90,21 +111,37 @@ func (app *Application) userLogin(w http.ResponseWriter, r *http.Request) {
 	form.Email = r.PostForm.Get("email")
 	form.Password = r.PostForm.Get("password")
 
+	// Валидация данных
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")
+	form.CheckField(validator.MaxChars(form.Email, 100), "email", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+	form.CheckField(validator.MinChars(form.Password, 8), "password", "This field must be at least 8 characters long")
+	form.CheckField(validator.MaxChars(form.Password, 100), "password", "This field cannot be more than 100 characters long")
+
+	if !form.Valid() {
+		form.AddNonFieldError("Email or password is incorrect")
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, http.StatusUnprocessableEntity, "login.html", data)
+		return
+	}
+
 	// Check whether the credentials are valid. If they're not, add a generic
 	// non-field error message and re-display the login page.
-	userID, err := app.Service.User.Authenticate(&form)
+	userID, err := app.Service.User.Authenticate(form.Email, form.Password)
 	if err != nil {
 		if errors.Is(err, entities.ErrInvalidCredentials) {
 			form.AddNonFieldError("Email or password is incorrect")
 			data := app.newTemplateData(r)
 			data.Form = form
 			app.render(w, http.StatusUnprocessableEntity, "login.html", data)
+			return
 		} else {
 			app.Logger.Error("get id Authenticate user", "error", err)
 			app.render(w, http.StatusInternalServerError, Errorpage, nil)
 			return
 		}
-		return
 	}
 
 	sess := app.SessionFromContext(r)
@@ -136,8 +173,8 @@ func (app *Application) userLogin(w http.ResponseWriter, r *http.Request) {
 	err = sess.Set(FlashSessionKey, "Your log in was successful.")
 	if err != nil {
 		app.Logger.Error("Set FlashSessionKey", "error", err)
-		app.render(w, http.StatusInternalServerError, Errorpage, nil)
-		return
+		// app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		// return
 	}
 
 	err = app.SessionManager.RenewToken(w, r, userID)

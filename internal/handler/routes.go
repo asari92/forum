@@ -50,6 +50,12 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("POST /user/login", dynamic.ThenFunc(app.userLogin))
 	mux.Handle("GET /about", dynamic.ThenFunc(app.aboutView))
 
+	mux.Handle("GET /auth/google/login", dynamic.ThenFunc(app.oauthGoogleLogin))
+	mux.Handle("GET /auth/google/callback", dynamic.ThenFunc(app.oauthGoogleCallback))
+
+	mux.Handle("GET /auth/github/login", dynamic.ThenFunc(app.oauthGithubLogin))
+	mux.Handle("GET /auth/github/callback", dynamic.ThenFunc(app.oauthGithubCallback))
+
 	protected := dynamic.Append(app.requireAuthentication)
 
 	mux.Handle("POST /post/view/{id}", protected.ThenFunc(app.postReaction))

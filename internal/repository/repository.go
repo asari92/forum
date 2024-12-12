@@ -8,8 +8,9 @@ import (
 
 type UserRepository interface {
 	Exists(id int) (bool, error)
-	Insert(username, email, password string) error
+	Insert(username, email, password string) (int, error)
 	Authenticate(email, password string) (int, error)
+	OauthAuthenticate(email string) (int, error)
 	Get(id int) (*entities.User, error)
 	UpdatePassword(id int, currentPassword, newPassword string) error
 }
