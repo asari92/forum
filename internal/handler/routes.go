@@ -69,6 +69,6 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("POST /account/password/update", protected.ThenFunc(app.accountPasswordUpdate))
 	mux.Handle("POST /user/logout", protected.ThenFunc(app.userLogout))
 
-	standard := New(app.recoverPanic, app.logRequest, secureHeaders)
+	standard := New(app.recoverPanic, app.logRequest, secureHeaders, app.rateLimiting)
 	return standard.Then(mux)
 }

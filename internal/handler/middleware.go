@@ -3,10 +3,11 @@ package handler
 import (
 	"context"
 	"fmt"
+	"forum/internal/session"
 	"net/http"
 	"runtime/debug"
-
-	"forum/internal/session"
+	"sync"
+	"time"
 )
 
 // Middleware type for handling HTTP requests
@@ -48,6 +49,8 @@ func secureHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "deny")
 		w.Header().Set("X-XSS-Protection", "0")
+
+		w.Header().Set("Cache-Control", "public, max-age=2592000") // 1 месяц кэша
 		next.ServeHTTP(w, r)
 	})
 }
@@ -202,4 +205,62 @@ func (app *Application) requireAuthentication(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+type rateLimiter struct {
+	visitors      sync.Map
+	rate          int           // Количество запросов
+	burstInterval time.Duration // Интервал времени для сброса
+}
+
+type visitor struct {
+	lastSeen time.Time
+	count    int
+}
+
+// NewRateLimiter создает новый rateLimiter
+func NewRateLimiter(rate int, interval time.Duration) *rateLimiter {
+	rl := &rateLimiter{
+		rate:          rate,
+		burstInterval: interval,
+	}
+	go rl.cleanupVisitors()
+	return rl
+}
+
+// Middleware реализует ограничение скорости
+func (app *Application) rateLimiting(next http.Handler) http.Handler {
+	// Создаем Rate Limiter
+	rl := NewRateLimiter(10, 1*time.Minute) // 10 запросов в минуту
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ip := r.RemoteAddr
+		v, _ := rl.visitors.LoadOrStore(ip, &visitor{lastSeen: time.Now(), count: 0})
+
+		vis := v.(*visitor)
+		vis.lastSeen = time.Now()
+
+		if vis.count >= rl.rate {
+			app.Logger.Error("Too many requests", "from", ip)
+			app.render(w, http.StatusTooManyRequests, Errorpage, nil)
+			return
+		}
+
+		vis.count++
+		next.ServeHTTP(w, r)
+	})
+}
+
+// cleanupVisitors очищает старые записи
+func (rl *rateLimiter) cleanupVisitors() {
+	for range time.NewTicker(rl.burstInterval).C {
+		now := time.Now()
+		rl.visitors.Range(func(key, value any) bool {
+			vis := value.(*visitor)
+			if now.Sub(vis.lastSeen) > rl.burstInterval {
+				rl.visitors.Delete(key)
+			}
+			return true
+		})
+	}
 }
