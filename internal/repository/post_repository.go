@@ -240,6 +240,47 @@ func (r *PostSqlite3) GetUserPaginatedPosts(userId, page, pageSize int) ([]*enti
 	return posts, nil
 }
 
+func (r *PostSqlite3) GetUserCommentedPosts(userId, page, pageSize int) ([]*entities.Post, error) {
+	offset := (page - 1) * pageSize
+
+	stmt := `SELECT p.id, p.title, p.content, p.user_id, p.created FROM posts as p INNER JOIN comments as c ON p.id = c.post_id
+	WHERE c.user_id = ?
+	LIMIT ? OFFSET ?`
+
+	// запрашиваем на одну запись больше, чем pageSize
+	rows, err := r.DB.Query(stmt, userId, pageSize+1, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	posts := []*entities.Post{}
+	var created string
+
+	for rows.Next() {
+		p := &entities.Post{}
+		err = rows.Scan(&p.ID, &p.Title, &p.Content, &p.UserID, &created)
+		if err != nil {
+			return nil, err
+		}
+
+		postTime, err := time.Parse("2006-01-02 15:04:05", created)
+		if err != nil {
+			return nil, err
+		}
+		p.Created = postTime.Format(time.RFC3339)
+		posts = append(posts, p)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+
+
+
 func (r *PostSqlite3) GetUserLikedPaginatedPosts(userId, page, pageSize int) ([]*entities.Post, error) {
 	offset := (page - 1) * pageSize
 

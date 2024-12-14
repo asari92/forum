@@ -231,6 +231,44 @@ func (uc *PostUseCase) GetUserLikedPostsDTO(userID, page, pageSize int, paginati
 	}, nil
 }
 
+
+func (uc *PostUseCase) GetUserCommentedPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error) {
+	exists, err := uc.userRepo.Exists(userID)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, entities.ErrNoRecord
+	}
+
+	// Получаем посты, которые пользователь лайкнул
+	posts, err := uc.postRepo.GetUserCommentedPosts(userID, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	// Получаем пользователя
+	user, err := uc.userRepo.Get(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Проверяем наличие следующей страницы
+	hasNextPage := len(posts) > pageSize
+	if hasNextPage {
+		posts = posts[:pageSize]
+	}
+
+	return &PostsDTO{
+		User:          user,
+		Posts:         posts,
+		HasNextPage:   hasNextPage,
+		CurrentPage:   page,
+		PaginationURL: paginationURL,
+	}, nil
+}
+
+
 // Получение всех постов с пагинацией
 func (uc *PostUseCase) GetAllPaginatedPostsDTO(page, pageSize int, paginationURL string) (*PostsDTO, error) {
 	// Получаем посты для нужной страницы.

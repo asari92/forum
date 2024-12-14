@@ -108,9 +108,7 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 	form.Categories = categoryIDs
 	files := r.MultipartForm.File["image"]
 
-    
-
-	postId, allCategories, err := app.Service.Post.CreatePostWithCategories(&form,files,userId)
+	postId, allCategories, err := app.Service.Post.CreatePostWithCategories(&form, files, userId)
 	if err != nil {
 		app.Logger.Error("insert post and categories", "error", err)
 		if errors.Is(err, entities.ErrInvalidCredentials) {
@@ -129,7 +127,7 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	
+
 	err = sess.Set(FlashSessionKey, "Post successfully created!")
 	if err != nil {
 		// кажется тут не нужна ошибка, достаточно логирования
@@ -226,6 +224,52 @@ func (app *Application) userLikedPostsView(w http.ResponseWriter, r *http.Reques
 		CurrentPage:      userLikedPostsDTO.CurrentPage,
 		HasNextPage:      userLikedPostsDTO.HasNextPage,
 		PaginationAction: userLikedPostsDTO.PaginationURL,
+	}
+	app.render(w, http.StatusOK, "user_posts.html", data)
+}
+
+func (app *Application) userCommentedPostsView(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userID < 1 {
+		err := errors.New("get userID in userCommentedPostsView")
+		app.Logger.Error("get userid", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	page := 1
+	pageSize := 10
+
+	if p, err := validator.ValidateID(r.PostFormValue("page")); err == nil {
+		page = p
+	}
+
+	paginationURL := "/user/commented"
+	userCommentedPostsDTO, err := app.Service.Post.GetUserCommentedPostsDTO(userID, page, pageSize, paginationURL)
+	if err != nil {
+		app.Logger.Error("get user commented posts", "error", err)
+		if errors.Is(err, entities.ErrNoRecord) {
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
+		} else {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		}
+		return
+	}
+
+	data := app.newTemplateData(r)
+	data.Posts = userCommentedPostsDTO.Posts
+	data.Header = fmt.Sprintf("Posts commented by %s", userCommentedPostsDTO.User.Username)
+	data.Pagination = pagination{
+		CurrentPage:      userCommentedPostsDTO.CurrentPage,
+		HasNextPage:      userCommentedPostsDTO.HasNextPage,
+		PaginationAction: userCommentedPostsDTO.PaginationURL,
 	}
 	app.render(w, http.StatusOK, "user_posts.html", data)
 }

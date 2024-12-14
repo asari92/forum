@@ -35,6 +35,40 @@ func (c *CommentSqlite3) InsertComment(postID, userID int, content string) error
 	return nil
 }
 
+func (r *CommentSqlite3) GetUserCommentsByPosts(postId, userId int) ([]*entities.Comment, error) {
+	stmt := `SELECT c.id, post_id, username, content, c.created 
+	FROM comments as c INNER JOIN users as u ON c.user_id = u.id
+	WHERE u.id = ? AND c.post_id = ?`
+	rows, err := r.DB.Query(stmt, userId, postId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var comments []*entities.Comment
+	for rows.Next() {
+		comment := &entities.Comment{}
+		var created string
+
+		if err := rows.Scan(&comment.ID, &comment.PostID, &comment.UserName, &comment.Content, &created); err != nil {
+			return nil, err
+		}
+
+		commentTime, err := time.Parse("2006-01-02 15:04:05", created)
+		if err != nil {
+			return nil, err
+		}
+
+		comment.Created = commentTime.Format(time.RFC3339)
+		comments = append(comments, comment)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return comments, nil
+}
+
 func (c *CommentSqlite3) GetComments(postID int) ([]*entities.Comment, error) {
 	stmt := `SELECT comments.id, post_id, username, content, comments.created  
 	FROM comments LEFT JOIN users ON users.id = comments.user_id

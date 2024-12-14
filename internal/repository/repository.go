@@ -21,6 +21,7 @@ type PostRepository interface {
 	GetPost(postID int) (*entities.Post, error)
 	GetImagesByPost(postID int) ([]*entities.Image, error)
 	GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error)
+	GetUserCommentedPosts(userId, page, pageSize int) ([]*entities.Post, error)
 	GetUserPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
 	GetUserLikedPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
 	GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post, error)
@@ -38,6 +39,7 @@ type CommentRepository interface {
 	Exists(id int) (bool, error)
 	InsertComment(postID, userID int, content string) error
 	GetComments(postID int) ([]*entities.Comment, error)
+	GetUserCommentsByPosts(postId, userId int) ([]*entities.Comment, error)
 }
 
 type CommentReactionRepository interface {
