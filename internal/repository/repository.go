@@ -26,6 +26,7 @@ type PostRepository interface {
 	GetUserLikedPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
 	GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post, error)
 	DeletePost(postID int) error
+	UpdatePost(title, content string) error
 }
 
 type PostReactionRepository interface {

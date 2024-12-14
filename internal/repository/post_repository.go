@@ -110,7 +110,7 @@ func (r *PostSqlite3) InsertPostWithCategories(title, content string, userID int
 }
 
 func (r *PostSqlite3) GetPost(postID int) (*entities.Post, error) {
-	stmt := `SELECT posts.id,title,username,content, posts.created 
+	stmt := `SELECT posts.id,title,username, posts.user_id, content, posts.created 
 	FROM posts LEFT JOIN users ON posts.user_id = users.id
     WHERE posts.id = ?`
 
@@ -120,7 +120,7 @@ func (r *PostSqlite3) GetPost(postID int) (*entities.Post, error) {
 	var created string
 	var username sql.NullString
 
-	err := row.Scan(&p.ID, &p.Title, &username, &p.Content, &created)
+	err := row.Scan(&p.ID, &p.Title, &username, &p.UserID, &p.Content, &created)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, entities.ErrNoRecord
@@ -279,8 +279,6 @@ func (r *PostSqlite3) GetUserCommentedPosts(userId, page, pageSize int) ([]*enti
 	return posts, nil
 }
 
-
-
 func (r *PostSqlite3) GetUserLikedPaginatedPosts(userId, page, pageSize int) ([]*entities.Post, error) {
 	offset := (page - 1) * pageSize
 
@@ -366,5 +364,12 @@ func (r *PostSqlite3) GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post
 func (r *PostSqlite3) DeletePost(postID int) error {
 	stmt := `DELETE FROM posts WHERE id = ?`
 	_, err := r.DB.Exec(stmt, postID)
+	return err
+}
+
+func (r *PostSqlite3) UpdatePost(title, content string) error {
+	stmt := `UPDATE posts
+	SET title = ?, content = ?`
+	_, err := r.DB.Exec(stmt, title, content)
 	return err
 }

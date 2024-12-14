@@ -231,7 +231,6 @@ func (uc *PostUseCase) GetUserLikedPostsDTO(userID, page, pageSize int, paginati
 	}, nil
 }
 
-
 func (uc *PostUseCase) GetUserCommentedPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error) {
 	exists, err := uc.userRepo.Exists(userID)
 	if err != nil {
@@ -267,7 +266,6 @@ func (uc *PostUseCase) GetUserCommentedPostsDTO(userID, page, pageSize int, pagi
 		PaginationURL: paginationURL,
 	}, nil
 }
-
 
 // Получение всех постов с пагинацией
 func (uc *PostUseCase) GetAllPaginatedPostsDTO(page, pageSize int, paginationURL string) (*PostsDTO, error) {
@@ -476,7 +474,7 @@ func uploadImages(files []*multipart.FileHeader) ([]string, error) {
 }
 
 // Удаление поста
-func (uc *PostUseCase) DeletePost(postID int) error {
+func (uc *PostUseCase) DeletePost(postID, userID int) error {
 	exists, err := uc.postRepo.Exists(postID)
 	if err != nil {
 		return err
@@ -485,7 +483,15 @@ func (uc *PostUseCase) DeletePost(postID int) error {
 		return entities.ErrNoRecord
 	}
 
-	return uc.postRepo.DeletePost(postID)
+	post, err := uc.postRepo.GetPost(postID)
+	if err != nil {
+		return err
+	}
+
+	if post.UserID == userID {
+		return uc.postRepo.DeletePost(postID)
+	}
+	return nil
 }
 
 func (form *postCreateForm) validateCategories(allCategories []*entities.Category) {

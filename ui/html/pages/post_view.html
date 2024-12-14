@@ -39,6 +39,33 @@
         </form>
     </div>
     {{$CSRFToken := .CSRFToken}}
+
+
+
+
+    {{if .IsAuthenticated}}
+    <div>
+        <p class="error-message" style="color: red; font-size: 16px;">You can only delete your own post.</p>
+    </div>
+
+    {{with .Post}}
+
+    <div>
+        <form action="/post/delete" method="POST">
+            <input type="hidden" name="token" value="{{$CSRFToken}}"> <!-- CSRF token -->
+            <input type="hidden" name="post_id" value="{{.ID}}">
+            <button type="submit" class="btn btn-delete delete-button">Delete post</button>
+        </form>
+    </div>
+    
+
+
+    
+
+    {{end}}
+
+    {{end}}
+
     <!-- Лайки и дизлайки -->
     <div class='reaction-buttons'>
         
@@ -89,6 +116,10 @@
             </button>
             {{end}}
         </form>
+        
+      
+
+
 
 
     {{with .Comments}}
