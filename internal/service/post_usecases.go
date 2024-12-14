@@ -428,6 +428,61 @@ func (uc *PostUseCase) CreatePostWithCategories(form *postCreateForm, files []*m
 	return postID, allCategories, nil
 }
 
+func (uc *PostUseCase) UpdatePostWithImage(form *postCreateForm, postID int, files []*multipart.FileHeader, userID int) error {
+	// валидировать все данные
+	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
+
+	form.CheckField(validator.Matches(form.Title, validator.TextRX), "title", "This field must contain only english or russian letters")
+	form.CheckField(validator.Matches(form.Content, validator.TextRX), "content", "This field must contain only english or russian letters")
+
+	if len(files) != 0 {
+		err := validator.ValidateImageFiles(files)
+		if err != nil {
+			if err.Error() == entities.ErrUnsupportedFileType.Error() {
+				form.AddFieldError("image", "The project requires handling JPEG, PNG, GIF images")
+			} else if err.Error() == entities.ErrFileSizeTooLarge.Error() {
+				form.AddFieldError("image", "Maximum file size limit is 20 MB")
+			} else {
+				return err
+			}
+		}
+	}
+
+	if !form.Valid() {
+		return entities.ErrInvalidCredentials
+	}
+
+	exists, err := uc.userRepo.Exists(userID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
+
+	filePaths := []string{}
+	if len(files) != 0 {
+		filePaths, err = uploadImages(files)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = uc.postRepo.UpdatePostWithImage(form.Title, form.Content, postID, filePaths)
+	if err != nil {
+		for _, filePath := range filePaths {
+			err := os.Remove(filePath)
+			if err != nil {
+				slog.Error("deleting file", "error", fmt.Sprintf("failed to delete file %s: %v", filePath, err))
+			}
+		}
+		return err
+	}
+	return nil
+}
+
 func uploadImages(files []*multipart.FileHeader) ([]string, error) {
 	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
 		err := os.MkdirAll(uploadDir, os.ModePerm)

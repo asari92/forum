@@ -28,6 +28,7 @@ type Post interface {
 	GetFilteredPaginatedPostsDTO(form *postCreateForm, page, pageSize int, paginationURL string) (*PostsDTO, error)
 	CreatePostWithCategories(form *postCreateForm, files []*multipart.FileHeader, userID int) (int, []*entities.Category, error)
 	DeletePost(postID, userID int) error 
+	UpdatePostWithImage(form *postCreateForm, postID int, files []*multipart.FileHeader, userID int) error
 }
 
 type Reaction interface {

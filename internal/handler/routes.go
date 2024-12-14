@@ -59,6 +59,8 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("GET /auth/github/callback", dynamic.ThenFunc(app.oauthGithubCallback))
 
 	protected := dynamic.Append(app.requireAuthentication)
+	mux.Handle("GET /post/edit/{id}", protected.ThenFunc(app.editPostView))
+	mux.Handle("POST /post/edit/{id}", protected.ThenFunc(app.editPost))
 
 	mux.Handle("POST /post/view/{id}", protected.ThenFunc(app.postReaction))
 	mux.Handle("POST /post/delete", protected.ThenFunc(app.DeletePost))

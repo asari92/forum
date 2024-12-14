@@ -51,7 +51,6 @@ func secureHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-Frame-Options", "deny")
 		w.Header().Set("X-XSS-Protection", "0")
 
-		w.Header().Set("Cache-Control", "public, max-age=2592000") // 1 месяц кэша
 		next.ServeHTTP(w, r)
 	})
 }

@@ -58,6 +58,35 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "post_view.html", data)
 }
 
+func (app *Application) editPostView(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in editPostView")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	postID, err := validator.ValidateID(r.URL.Query().Get("post_id"))
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	postDTO, err := app.Service.GetPostDTO(postID, userId)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Передаем данные в шаблон
+	data := app.newTemplateData(r)
+	data.Post = postDTO.Post
+
+	app.render(w, http.StatusOK, "editpost.html", data)
+}
+
 func (app *Application) postCreateView(w http.ResponseWriter, r *http.Request) {
 	categories, err := app.Service.Category.GetAll()
 	if err != nil {
@@ -167,6 +196,67 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/post/view/%d", postId), http.StatusSeeOther)
+}
+
+func (app *Application) editPost(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(20*1024*1024 + (10 * 1024))
+	if err != nil {
+		app.Logger.Error("Uploaded file is too big", "error", err)
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+
+	}
+
+	postID, err := validator.ValidateID(r.PathValue("id"))
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in postCreate")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	// postID, err := validator.ValidateID(r.PostForm.Get("post_id"))
+	// if err != nil {
+	// 	app.render(w, http.StatusBadRequest, Errorpage, nil)
+	// 	return
+	// }
+
+	form := app.Service.Post.NewPostCreateForm()
+	form.Title = r.PostForm.Get("title")
+	form.Content = r.PostForm.Get("content")
+	files := r.MultipartForm.File["image"]
+
+	err = app.Service.Post.UpdatePostWithImage(&form, postID, files, userId)
+	if err != nil {
+		app.Logger.Error("insert post and categories", "error", err)
+		if errors.Is(err, entities.ErrInvalidCredentials) {
+			data := app.newTemplateData(r)
+			// data.Post = &entities.Post{}
+			// data.Post.ID = postID
+			data.Form = form
+			app.render(w, http.StatusUnprocessableEntity, "editpost.html", data)
+		} else if errors.Is(err, entities.ErrNoRecord) {
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
+		} else {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		}
+		return
+	}
+
+	err = sess.Set(FlashSessionKey, "Post successfully update!")
+	if err != nil {
+		// кажется тут не нужна ошибка, достаточно логирования
+		app.Logger.Error("Session error during set flash", "error", err)
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/post/view/%d", postID), http.StatusSeeOther)
 }
 
 func (app *Application) userPostsView(w http.ResponseWriter, r *http.Request) {

@@ -109,6 +109,48 @@ func (r *PostSqlite3) InsertPostWithCategories(title, content string, userID int
 	return int(postID), nil
 }
 
+func (r *PostSqlite3) UpdatePostWithImage(title, content string, postID int, filePaths []string) error {
+	// Начинаем транзакцию
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return err
+	}
+
+	// В случае ошибки откатываем транзакцию
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	stmt := `UPDATE posts
+	SET title = ?, content = ?
+	WHERE id = ?`
+
+	_, err = tx.Exec(stmt, title, content, postID)
+	if err != nil {
+		return err
+	}
+
+	if len(filePaths) != 0 {
+		stmt = `INSERT INTO post_images (post_id, image_url) VALUES (?,?)`
+		for _, imageUrl := range filePaths {
+			_, err := tx.Exec(stmt, postID, imageUrl)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Фиксируем транзакцию
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *PostSqlite3) GetPost(postID int) (*entities.Post, error) {
 	stmt := `SELECT posts.id,title,username, posts.user_id, content, posts.created 
 	FROM posts LEFT JOIN users ON posts.user_id = users.id
@@ -367,9 +409,3 @@ func (r *PostSqlite3) DeletePost(postID int) error {
 	return err
 }
 
-func (r *PostSqlite3) UpdatePost(title, content string) error {
-	stmt := `UPDATE posts
-	SET title = ?, content = ?`
-	_, err := r.DB.Exec(stmt, title, content)
-	return err
-}
