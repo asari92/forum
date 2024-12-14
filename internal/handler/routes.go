@@ -1,9 +1,10 @@
 package handler
 
 import (
-	"forum/ui"
 	"net/http"
 	"os"
+
+	"forum/ui"
 )
 
 // Кастомная файловая система, которая запрещает доступ к директориям
@@ -33,10 +34,10 @@ func (app *Application) Routes() http.Handler {
 	mux := http.NewServeMux()
 
 	fileServer := http.FileServer(neuteredFileSystem{http.FS(ui.Files)})
-	mux.Handle("GET /static/", fileServer)
+	mux.Handle("GET /static/", cacheControlMiddleware(fileServer))
 
 	uploadServer := http.FileServer(http.Dir("./uploads"))
-	mux.Handle("GET /uploads/", http.StripPrefix("/uploads/", uploadServer))
+	mux.Handle("GET /uploads/", http.StripPrefix("/uploads/", cacheControlMiddleware(uploadServer)))
 
 	dynamic := New(app.verifyCSRF, app.sessionMiddleware, app.authenticate)
 

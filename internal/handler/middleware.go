@@ -3,11 +3,12 @@ package handler
 import (
 	"context"
 	"fmt"
-	"forum/internal/session"
 	"net/http"
 	"runtime/debug"
 	"sync"
 	"time"
+
+	"forum/internal/session"
 )
 
 // Middleware type for handling HTTP requests
@@ -50,7 +51,6 @@ func secureHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-Frame-Options", "deny")
 		w.Header().Set("X-XSS-Protection", "0")
 
-		w.Header().Set("Cache-Control", "public, max-age=2592000") // 1 месяц кэша
 		next.ServeHTTP(w, r)
 	})
 }
@@ -231,7 +231,7 @@ func NewRateLimiter(rate int, interval time.Duration) *rateLimiter {
 // Middleware реализует ограничение скорости
 func (app *Application) rateLimiting(next http.Handler) http.Handler {
 	// Создаем Rate Limiter
-	rl := NewRateLimiter(10, 1*time.Minute) // 10 запросов в минуту
+	rl := NewRateLimiter(30, 1*time.Minute) // 10 запросов в минуту
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := r.RemoteAddr
@@ -263,4 +263,13 @@ func (rl *rateLimiter) cleanupVisitors() {
 			return true
 		})
 	}
+}
+
+// Middleware для добавления заголовков кэширования
+func cacheControlMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Устанавливаем заголовки для кэширования
+		w.Header().Set("Cache-Control", "public, max-age=10800") // Кэширование на 3 часа
+		next.ServeHTTP(w, r)
+	})
 }
