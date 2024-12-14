@@ -46,17 +46,17 @@ func (app *Application) render(w http.ResponseWriter, status int, page string, d
 	buf := new(bytes.Buffer)
 
 	if page == Errorpage {
-		data := &templateData{
-			AppError: AppError{StatusCode: status, Message: http.StatusText(status)},
+		if data == nil {
+			data = &templateData{
+				AppError: AppError{StatusCode: status, Message: http.StatusText(status)},
+			}
 		}
 		err := ts.Execute(buf, data)
 		if err != nil {
 			app.Logger.Error("Server error occured", "render error", err)
 			app.serverError(w)
 			return
-
 		}
-
 	} else {
 		// Write the template to the buffer, instead of straight to the
 		// http.ResponseWriter. If there's an error, call our serverError() helper

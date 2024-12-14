@@ -108,9 +108,7 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 	form.Categories = categoryIDs
 	files := r.MultipartForm.File["image"]
 
-    
-
-	postId, allCategories, err := app.Service.Post.CreatePostWithCategories(&form,files,userId)
+	_, allCategories, err := app.Service.Post.CreatePostWithCategories(&form, files, userId)
 	if err != nil {
 		app.Logger.Error("insert post and categories", "error", err)
 		if errors.Is(err, entities.ErrInvalidCredentials) {
@@ -129,14 +127,14 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	
-	err = sess.Set(FlashSessionKey, "Post successfully created!")
+
+	err = sess.Set(FlashSessionKey, "Your post will be published after passing moderation")
 	if err != nil {
 		// кажется тут не нужна ошибка, достаточно логирования
 		app.Logger.Error("Session error during set flash", "error", err)
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/post/view/%d", postId), http.StatusSeeOther)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (app *Application) userPostsView(w http.ResponseWriter, r *http.Request) {

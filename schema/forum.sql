@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS posts(
   content TEXT NOT NULL,
   user_id INTEGER NOT NULL,
   created TEXT NOT NULL,
+  is_approved BOOLEAN DEFAULT FALSE, -- для модерации
   CONSTRAINT users_posts
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE No action
       ON UPDATE No action
@@ -82,6 +83,7 @@ CREATE TABLE IF NOT EXISTS users(
   username TEXT NOT NULL,
   email TEXT NOT NULL,
   password TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'user', -- user, moderator, admin
   created TEXT NOT NULL
 );
 

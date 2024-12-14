@@ -6,4 +6,11 @@ type User struct {
 	Email          string
 	HashedPassword []byte
 	Created        string
+	Role           string // "user", "moderator", "admin"
 }
+
+const (
+	RoleUser      = "user"
+	RoleModerator = "moderator"
+	RoleAdmin     = "admin"
+)
