@@ -40,6 +40,8 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := app.newTemplateData(r)
+	data.User = &entities.User{}
+	data.User.ID = userID
 	data.Post = postData.Post
 	data.Comments = postData.Comments
 	data.Categories = postData.Categories

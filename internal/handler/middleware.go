@@ -3,11 +3,12 @@ package handler
 import (
 	"context"
 	"fmt"
-	"forum/internal/session"
 	"net/http"
 	"runtime/debug"
 	"sync"
 	"time"
+
+	"forum/internal/session"
 )
 
 // Middleware type for handling HTTP requests
@@ -231,7 +232,7 @@ func NewRateLimiter(rate int, interval time.Duration) *rateLimiter {
 // Middleware реализует ограничение скорости
 func (app *Application) rateLimiting(next http.Handler) http.Handler {
 	// Создаем Rate Limiter
-	rl := NewRateLimiter(10, 1*time.Minute) // 10 запросов в минуту
+	rl := NewRateLimiter(30, 1*time.Minute) // 30 запросов в минуту
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := r.RemoteAddr
