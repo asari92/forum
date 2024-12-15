@@ -39,6 +39,16 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userRole, ok := sess.Get(UserRoleSessionKey).(string)
+	if !ok {
+		userRole = ""
+	}
+
+	if postData.Post.IsApproved == false && !(userRole == entities.RoleModerator || userRole == entities.RoleAdmin || userID == postData.Post.UserID) {
+		app.render(w, http.StatusForbidden, Errorpage, &templateData{AppError: AppError{Message: "This post is under moderation", StatusCode: http.StatusForbidden}})
+		return
+	}
+
 	data := app.newTemplateData(r)
 	data.Post = postData.Post
 	data.Comments = postData.Comments
@@ -108,7 +118,7 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 	form.Categories = categoryIDs
 	files := r.MultipartForm.File["image"]
 
-	_, allCategories, err := app.Service.Post.CreatePostWithCategories(&form, files, userId)
+	postID, allCategories, err := app.Service.Post.CreatePostWithCategories(&form, files, userId)
 	if err != nil {
 		app.Logger.Error("insert post and categories", "error", err)
 		if errors.Is(err, entities.ErrInvalidCredentials) {
@@ -134,7 +144,7 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 		app.Logger.Error("Session error during set flash", "error", err)
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/post/view/%d", postID), http.StatusSeeOther)
 }
 
 func (app *Application) userPostsView(w http.ResponseWriter, r *http.Request) {

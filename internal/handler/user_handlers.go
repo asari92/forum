@@ -54,7 +54,7 @@ func (app *Application) userSignup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = app.Service.User.Insert(form.Username, form.Email, form.Password)
+	_, err = app.Service.User.Insert(form.Username, form.Email, form.Password, entities.RoleUser)
 	if err != nil {
 		if errors.Is(err, entities.ErrDuplicateEmail) {
 			form.AddFieldError("email", "Email address is already in use")
@@ -129,7 +129,7 @@ func (app *Application) userLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Check whether the credentials are valid. If they're not, add a generic
 	// non-field error message and re-display the login page.
-	userID, err := app.Service.User.Authenticate(form.Email, form.Password)
+	user, err := app.Service.User.Authenticate(form.Email, form.Password)
 	if err != nil {
 		if errors.Is(err, entities.ErrInvalidCredentials) {
 			form.AddNonFieldError("Email or password is incorrect")
@@ -153,9 +153,16 @@ func (app *Application) userLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Add the ID of the current user to the session, so that they are now
 	// 'logged in'.
-	err = sess.Set(AuthUserIDSessionKey, userID)
+	err = sess.Set(AuthUserIDSessionKey, user.ID)
 	if err != nil {
 		app.Logger.Error("set AuthUserIDSessionKey", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	err = sess.Set(UserRoleSessionKey, user.Role)
+	if err != nil {
+		app.Logger.Error("set UserRoleSessionKey", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
@@ -177,7 +184,7 @@ func (app *Application) userLogin(w http.ResponseWriter, r *http.Request) {
 		// return
 	}
 
-	err = app.SessionManager.RenewToken(w, r, userID)
+	err = app.SessionManager.RenewToken(w, r, user.ID)
 	if err != nil {
 		app.Logger.Error("renewtoken", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)

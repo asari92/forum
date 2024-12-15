@@ -112,7 +112,7 @@ func (r *PostSqlite3) InsertPostWithCategories(title, content string, userID int
 func (r *PostSqlite3) GetPost(postID int) (*entities.Post, error) {
 	stmt := `SELECT posts.id,title,content,posts.created,is_approved,users.id,username 
 	FROM posts LEFT JOIN users ON posts.user_id = users.id
-    WHERE posts.id = ? AND is_approved = true`
+    WHERE posts.id = ?`
 
 	row := r.DB.QueryRow(stmt, postID)
 
@@ -144,40 +144,40 @@ func (r *PostSqlite3) GetPost(postID int) (*entities.Post, error) {
 	return p, nil
 }
 
-func (r *PostSqlite3) GetUnapprovedPost(postID int) (*entities.Post, error) {
-	stmt := `SELECT posts.id,title,content,posts.created,is_approved,users.id,username 
-	FROM posts LEFT JOIN users ON posts.user_id = users.id
-    WHERE posts.id = ? AND is_approved = false`
+// func (r *PostSqlite3) GetUnapprovedPost(postID int) (*entities.Post, error) {
+// 	stmt := `SELECT posts.id,title,content,posts.created,is_approved,users.id,username
+// 	FROM posts LEFT JOIN users ON posts.user_id = users.id
+//     WHERE posts.id = ? AND is_approved = false`
 
-	row := r.DB.QueryRow(stmt, postID)
+// 	row := r.DB.QueryRow(stmt, postID)
 
-	p := &entities.Post{}
-	var created string
-	var username sql.NullString
+// 	p := &entities.Post{}
+// 	var created string
+// 	var username sql.NullString
 
-	err := row.Scan(&p.ID, &p.Title, &p.Content, &created, &p.IsApproved, &p.UserID, &username)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, entities.ErrNoRecord
-		} else {
-			return nil, err
-		}
-	}
+// 	err := row.Scan(&p.ID, &p.Title, &p.Content, &created, &p.IsApproved, &p.UserID, &username)
+// 	if err != nil {
+// 		if errors.Is(err, sql.ErrNoRows) {
+// 			return nil, entities.ErrNoRecord
+// 		} else {
+// 			return nil, err
+// 		}
+// 	}
 
-	if username.Valid {
-		p.UserName = username.String
-	} else {
-		p.UserName = "Deleted User"
-	}
+// 	if username.Valid {
+// 		p.UserName = username.String
+// 	} else {
+// 		p.UserName = "Deleted User"
+// 	}
 
-	postTime, err := time.Parse("2006-01-02 15:04:05", created)
-	if err != nil {
-		return nil, err
-	}
-	p.Created = postTime.Format(time.RFC3339)
+// 	postTime, err := time.Parse("2006-01-02 15:04:05", created)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	p.Created = postTime.Format(time.RFC3339)
 
-	return p, nil
-}
+// 	return p, nil
+// }
 
 // Получение постов по категориям с пагинацией
 func (r *PostSqlite3) GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error) {

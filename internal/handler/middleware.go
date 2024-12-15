@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"forum/internal/entities"
 	"forum/internal/session"
 )
 
@@ -202,6 +203,25 @@ func (app *Application) requireAuthentication(next http.Handler) http.Handler {
 		// require authentication are not stored in the users browser cache (or
 		// other intermediary cache).
 		w.Header().Add("Cache-Control", "no-store")
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *Application) requireModeration(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sess := app.SessionFromContext(r)
+		userRole, ok := sess.Get(UserRoleSessionKey).(string)
+		if !ok {
+			app.Logger.Error("cannot extract user role from session in requireModeration")
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			return
+		}
+		if !(userRole == entities.RoleModerator || userRole == entities.RoleAdmin) {
+			app.Logger.Warn("user role not moderator or admin in requireModeration")
+			app.render(w, http.StatusForbidden, Errorpage, nil)
+			return
+		}
 
 		next.ServeHTTP(w, r)
 	})

@@ -8,9 +8,9 @@ import (
 
 type UserRepository interface {
 	Exists(id int) (bool, error)
-	Insert(username, email, password string) (int, error)
-	OauthAuthenticate(email string) (int, error)
-	Authenticate(email, password string) (int, error)
+	Insert(username, email, password, role string) (int, error)
+	OauthAuthenticate(email string) (*entities.User, error)
+	Authenticate(email, password string) (*entities.User, error)
 	Get(id int) (*entities.User, error)
 	UpdatePassword(id int, currentPassword, newPassword string) error
 }
@@ -20,13 +20,13 @@ type PostRepository interface {
 	InsertPostWithCategories(title, content string, userID int, categoryIDs []int, filePaths []string) (int, error)
 
 	GetPost(postID int) (*entities.Post, error)
-	GetUnapprovedPost(postID int) (*entities.Post, error)
+	// GetUnapprovedPost(postID int) (*entities.Post, error)
 
 	GetImagesByPost(postID int) ([]*entities.Image, error)
 	GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error)
 	GetUserPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
 	GetUserLikedPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
-	
+
 	GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post, error)
 	GetAllPaginatedUnapprovedPosts(page, pageSize int) ([]*entities.Post, error)
 

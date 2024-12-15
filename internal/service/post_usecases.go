@@ -152,6 +152,87 @@ func (uc *PostUseCase) GetPostDTO(postID int, userID int) (*PostDTO, error) {
 	}, nil
 }
 
+// func (uc *PostUseCase) GetUnapprovedPostDTO(postID int, userID int) (*PostDTO, error) {
+// 	exists, err := uc.postRepo.Exists(postID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	if !exists {
+// 		return nil, entities.ErrNoRecord
+// 	}
+
+// 	post, err := uc.postRepo.GetUnapprovedPost(postID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	categories, err := uc.categoryRepo.GetCategoriesForPost(postID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	likes, dislikes, err := uc.postReactionRepo.GetReactionsCount(postID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	images, err := uc.postRepo.GetImagesByPost(postID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	var userReaction *entities.PostReaction
+// 	if userID > 0 {
+// 		userReaction, err = uc.postReactionRepo.GetUserReaction(userID, postID) // Получите реакцию пользователя
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 	}
+
+// 	comments, err := uc.commentRepo.GetComments(postID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	for _, comment := range comments {
+// 		if userID > 0 {
+// 			userReaction, err := uc.commentReactionRepo.GetUserReaction(userID, comment.ID)
+// 			if err != nil {
+// 				return nil, err
+// 			}
+// 			if userReaction != nil {
+// 				if userReaction.IsLike {
+// 					comment.UserReaction = 1
+// 				} else {
+// 					comment.UserReaction = -1
+// 				}
+// 			}
+// 		}
+
+// 		like, err := uc.commentReactionRepo.GetLikesCount(comment.ID)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		comment.Like = like
+
+// 		dislike, err := uc.commentReactionRepo.GetDislikesCount(comment.ID)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		comment.Dislike = dislike
+// 	}
+
+// 	return &PostDTO{
+// 		Post:         post,
+// 		Categories:   categories,
+// 		Likes:        likes,
+// 		Dislikes:     dislikes,
+// 		Images:       images,
+// 		Comments:     comments,
+// 		UserReaction: userReaction,
+// 	}, nil
+// }
+
 // Получение постов пользователя с пагинацией
 func (uc *PostUseCase) GetUserPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error) {
 	exists, err := uc.userRepo.Exists(userID)
@@ -235,6 +316,34 @@ func (uc *PostUseCase) GetUserLikedPostsDTO(userID, page, pageSize int, paginati
 func (uc *PostUseCase) GetAllPaginatedPostsDTO(page, pageSize int, paginationURL string) (*PostsDTO, error) {
 	// Получаем посты для нужной страницы.
 	posts, err := uc.postRepo.GetAllPaginatedPosts(page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	// Проверяем, есть ли следующая страница
+	hasNextPage := len(posts) > pageSize
+	// Если постов больше, чем pageSize, обрезаем список до pageSize
+	if hasNextPage {
+		posts = posts[:pageSize]
+	}
+
+	categories, err := uc.categoryRepo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	return &PostsDTO{
+		Posts:         posts,
+		HasNextPage:   hasNextPage,
+		CurrentPage:   page,
+		PaginationURL: paginationURL,
+		Categories:    categories,
+	}, nil
+}
+
+func (uc *PostUseCase) GetAllPaginatedUnapprovedPostsDTO(page, pageSize int, paginationURL string) (*PostsDTO, error) {
+	// Получаем посты для нужной страницы.
+	posts, err := uc.postRepo.GetAllPaginatedUnapprovedPosts(page, pageSize)
 	if err != nil {
 		return nil, err
 	}

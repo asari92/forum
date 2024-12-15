@@ -10,9 +10,9 @@ import (
 type User interface {
 	NewUserAuthForm() userAuthForm
 	NewAccountPasswordUpdateForm() accountPasswordUpdateForm
-	Insert(username, email, password string) (int, error)
-	Authenticate(email, password string) (int, error)
-	OauthAuthenticate(email string) (int, error)
+	Insert(username, email, password, role string) (int, error)
+	Authenticate(email, password string) (*entities.User, error)
+	OauthAuthenticate(email string) (*entities.User, error)
 	UserExists(id int) (bool, error)
 	GetUserByID(id int) (*entities.User, error)
 	UpdatePassword(userID int, form *accountPasswordUpdateForm) error
@@ -21,7 +21,9 @@ type User interface {
 type Post interface {
 	NewPostCreateForm() postCreateForm
 	GetPostDTO(postID int, userID int) (*PostDTO, error)
+	// GetUnapprovedPostDTO(postID int, userID int) (*PostDTO, error)
 	GetAllPaginatedPostsDTO(page, pageSize int, paginationURL string) (*PostsDTO, error)
+	GetAllPaginatedUnapprovedPostsDTO(page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetUserPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetUserLikedPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetFilteredPaginatedPostsDTO(form *postCreateForm, page, pageSize int, paginationURL string) (*PostsDTO, error)

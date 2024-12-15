@@ -38,15 +38,15 @@ func (uc *UserUseCase) NewAccountPasswordUpdateForm() accountPasswordUpdateForm 
 	return accountPasswordUpdateForm{}
 }
 
-func (u *UserUseCase) Insert(username, email, password string) (int, error) {
-	return u.userRepo.Insert(username, email, password)
+func (u *UserUseCase) Insert(username, email, password, role string) (int, error) {
+	return u.userRepo.Insert(username, email, password, role)
 }
 
-func (u *UserUseCase) Authenticate(email, password string) (int, error) {
+func (u *UserUseCase) Authenticate(email, password string) (*entities.User, error) {
 	return u.userRepo.Authenticate(email, password)
 }
 
-func (u *UserUseCase) OauthAuthenticate(email string) (int, error) {
+func (u *UserUseCase) OauthAuthenticate(email string) (*entities.User, error) {
 	return u.userRepo.OauthAuthenticate(email)
 }
 

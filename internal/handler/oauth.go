@@ -131,7 +131,7 @@ func (app *Application) oauthGithubCallback(w http.ResponseWriter, r *http.Reque
 func (app *Application) oauthAuthentication(w http.ResponseWriter, r *http.Request, userInfo *userInfo) {
 	sess := app.SessionFromContext(r)
 
-	userID, err := app.Service.User.OauthAuthenticate(userInfo.Email)
+	user, err := app.Service.User.OauthAuthenticate(userInfo.Email)
 	if err != nil {
 		if errors.Is(err, entities.ErrInvalidCredentials) {
 		} else {
@@ -141,11 +141,11 @@ func (app *Application) oauthAuthentication(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	if userID < 1 {
+	if user.ID < 1 {
 		if userInfo.Login != "" {
 			userInfo.Name = userInfo.Login
 		}
-		userID, err = app.Service.User.Insert(userInfo.Name, userInfo.Email, "")
+		user.ID, err = app.Service.User.Insert(userInfo.Name, userInfo.Email, "", entities.RoleUser)
 		if err != nil {
 			if errors.Is(err, entities.ErrDuplicateUsername) {
 				err = sess.Set(FlashSessionKey, "Sorry, but this username is already in use, you must register with email and password or change name in your google account.")
@@ -178,9 +178,16 @@ func (app *Application) oauthAuthentication(w http.ResponseWriter, r *http.Reque
 
 	// Add the ID of the current user to the session, so that they are now
 	// 'logged in'.
-	err = sess.Set(AuthUserIDSessionKey, userID)
+	err = sess.Set(AuthUserIDSessionKey, user.ID)
 	if err != nil {
 		app.Logger.Error("set AuthUserIDSessionKey", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	err = sess.Set(UserRoleSessionKey, user.Role)
+	if err != nil {
+		app.Logger.Error("set UserRoleSessionKey", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)
 		return
 	}
@@ -200,7 +207,7 @@ func (app *Application) oauthAuthentication(w http.ResponseWriter, r *http.Reque
 		app.Logger.Warn("Set FlashSessionKey", "error", err)
 	}
 
-	err = app.SessionManager.RenewToken(w, r, userID)
+	err = app.SessionManager.RenewToken(w, r, user.ID)
 	if err != nil {
 		app.Logger.Error("renewtoken", "error", err)
 		app.render(w, http.StatusInternalServerError, Errorpage, nil)

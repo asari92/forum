@@ -5,6 +5,10 @@
     {{with .User}}
      <table>
         <tr>
+            <th>Role</th>
+            <td>{{.Role}}</td>
+        </tr>
+        <tr>
             <th>Username</th>
             <td>{{.Username}}</td>
         </tr>
@@ -28,6 +32,12 @@
             <th>My liked posts</th>
             <td><a href="/user/liked">Show liked posts</a></td>
         </tr>
+        {{if or (eq .Role "moderator") (eq .Role "admin")}}
+        <tr>
+            <th>Unapproved posts</th>
+            <td><a href="/moderation/posts/unapproved">Show unapproved posts</a></td>
+        </tr>
+        {{end}}
     </table>
     {{end }}
 {{end}}

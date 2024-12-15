@@ -29,16 +29,16 @@ func (r *UserSqlite3) Exists(id int) (bool, error) {
 	return exists, err
 }
 
-func (r *UserSqlite3) Insert(username, email, password string) (int, error) {
+func (r *UserSqlite3) Insert(username, email, password, role string) (int, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
 		return 0, err
 	}
 
-	stmt := `INSERT INTO users (username, email, password, created)
-    VALUES(?, ?, ?, datetime('now'))`
+	stmt := `INSERT INTO users (username, email, password, role, created)
+    VALUES(?, ?, ?, ?, datetime('now'))`
 
-	result, err := r.DB.Exec(stmt, username, email, string(hashedPassword))
+	result, err := r.DB.Exec(stmt, username, email, string(hashedPassword), role)
 	if err != nil {
 		var sqliteError sqlite3.Error
 		if errors.As(err, &sqliteError) {
@@ -63,59 +63,58 @@ func (r *UserSqlite3) Insert(username, email, password string) (int, error) {
 	return int(userID), nil
 }
 
-func (r *UserSqlite3) OauthAuthenticate(email string) (int, error) {
-	var id int
+func (r *UserSqlite3) OauthAuthenticate(email string) (*entities.User, error) {
+	u := &entities.User{}
 
-	stmt := "SELECT id FROM users WHERE email = ?"
+	stmt := "SELECT id, role FROM users WHERE email = ?"
 
-	err := r.DB.QueryRow(stmt, email).Scan(&id)
+	err := r.DB.QueryRow(stmt, email).Scan(&u.ID, &u.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, entities.ErrInvalidCredentials
+			return nil, entities.ErrInvalidCredentials
 		} else {
-			return 0, err
+			return nil, err
 		}
 	}
 
-	return id, nil
+	return u, nil
 }
 
-func (r *UserSqlite3) Authenticate(email, password string) (int, error) {
-	var id int
-	var hashedPassword []byte
+func (r *UserSqlite3) Authenticate(email, password string) (*entities.User, error) {
+	u := &entities.User{}
 
-	stmt := "SELECT id, password FROM users WHERE email = ?"
+	stmt := "SELECT id, role, password FROM users WHERE email = ?"
 
-	err := r.DB.QueryRow(stmt, email).Scan(&id, &hashedPassword)
+	err := r.DB.QueryRow(stmt, email).Scan(&u.ID, &u.Role, &u.HashedPassword)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, entities.ErrInvalidCredentials
+			return nil, entities.ErrInvalidCredentials
 		} else {
-			return 0, err
+			return nil, err
 		}
 	}
 
-	err = bcrypt.CompareHashAndPassword(hashedPassword, []byte(password))
+	err = bcrypt.CompareHashAndPassword(u.HashedPassword, []byte(password))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return 0, entities.ErrInvalidCredentials
+			return nil, entities.ErrInvalidCredentials
 		} else {
-			return 0, err
+			return nil, err
 		}
 	}
 
-	return id, nil
+	return u, nil
 }
 
 func (r *UserSqlite3) Get(id int) (*entities.User, error) {
-	stmt := `SELECT id, username, email, created FROM users WHERE id = ?`
+	stmt := `SELECT id, username, email, created, role FROM users WHERE id = ?`
 
 	row := r.DB.QueryRow(stmt, id)
 
 	u := &entities.User{}
 	var created string
 
-	err := row.Scan(&u.ID, &u.Username, &u.Email, &created)
+	err := row.Scan(&u.ID, &u.Username, &u.Email, &created, &u.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, entities.ErrNoRecord
