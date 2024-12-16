@@ -20,6 +20,7 @@ type User interface {
 
 type Post interface {
 	NewPostCreateForm() postCreateForm
+	NewCommentForm() CommentForm
 	GetPostDTO(postID int, userID int) (*PostDTO, error)
 	GetAllPaginatedPostsDTO(page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetUserPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error)
@@ -30,6 +31,7 @@ type Post interface {
 	DeletePost(postID, userID int) error 
 	UpdatePostWithImage(form *postCreateForm, postID int, files []*multipart.FileHeader, userID int) error
 	DeleteComment(commentID, userID int) error
+	UpdateComment(form *CommentForm, commentID, userID int) error
 }
 
 type Reaction interface {

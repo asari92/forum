@@ -56,6 +56,12 @@ type postCreateForm struct {
 	validator.Validator
 }
 
+type CommentForm struct {
+	Content string
+	validator.Validator
+
+}
+
 func NewPostUseCase(repo *repository.Repository) *PostUseCase {
 	return &PostUseCase{
 		categoryRepo:        repo.CategoryRepository,
@@ -70,6 +76,11 @@ func NewPostUseCase(repo *repository.Repository) *PostUseCase {
 func (uc *PostUseCase) NewPostCreateForm() postCreateForm {
 	return postCreateForm{Categories: []int{}}
 }
+
+func (uc *PostUseCase) NewCommentForm() CommentForm {
+	return CommentForm{}
+}
+
 
 func (uc *PostUseCase) GetPostDTO(postID int, userID int) (*PostDTO, error) {
 	exists, err := uc.postRepo.Exists(postID)
@@ -483,6 +494,35 @@ func (uc *PostUseCase) UpdatePostWithImage(form *postCreateForm, postID int, fil
 	return nil
 }
 
+
+
+func (uc *PostUseCase) UpdateComment(form *CommentForm, commentID, userID int) error {
+	// валидировать все данные
+	
+	form.CheckField(validator.NotBlank(form.Content), "comment", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Content, validator.TextRX), "comment", "This field must contain only english or russian letters")
+
+	if !form.Valid() {
+		return entities.ErrInvalidCredentials
+	}
+
+	exists, err := uc.userRepo.Exists(userID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
+
+	
+	err = uc.commentRepo.UpdateComment(commentID, form.Content)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+
 func uploadImages(files []*multipart.FileHeader) ([]string, error) {
 	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
 		err := os.MkdirAll(uploadDir, os.ModePerm)
@@ -549,9 +589,7 @@ func (uc *PostUseCase) DeletePost(postID, userID int) error {
 	return nil
 }
 
-
 func (uc *PostUseCase) DeleteComment(commentID, userID int) error {
-	
 
 	comment, err := uc.commentRepo.GetComment(commentID)
 	if err != nil {
@@ -589,3 +627,5 @@ func (form *postCreateForm) validateCategories(allCategories []*entities.Categor
 		form.AddFieldError("categories", "Need one or more category")
 	}
 }
+
+

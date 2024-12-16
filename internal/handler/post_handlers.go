@@ -87,6 +87,39 @@ func (app *Application) editPostView(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "editpost.html", data)
 }
 
+func (app *Application) editCommentView(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in editPostView")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	commentID, err := validator.ValidateID((r.URL.Query().Get("comment_id")))
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	content := r.URL.Query().Get("content")
+	postID, err := validator.ValidateID((r.URL.Query().Get("post_id")))
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	// Передаем данные в шаблон
+	data := app.newTemplateData(r)
+	data.Comment = &entities.Comment{}
+	data.Comment.Content = content
+	data.Comment.PostID = postID
+	data.Comment.ID = commentID
+
+	app.render(w, http.StatusOK, "editcomment.html", data)
+}
+
 func (app *Application) postCreateView(w http.ResponseWriter, r *http.Request) {
 	categories, err := app.Service.Category.GetAll()
 	if err != nil {
@@ -281,6 +314,69 @@ func (app *Application) editPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = sess.Set(FlashSessionKey, "Post successfully update!")
+	if err != nil {
+		// кажется тут не нужна ошибка, достаточно логирования
+		app.Logger.Error("Session error during set flash", "error", err)
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/post/view/%d", postID), http.StatusSeeOther)
+}
+
+
+func (app *Application) editComment(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	postID, err := validator.ValidateID(r.PostForm.Get("post_id"))
+
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	commentID, err := validator.ValidateID(r.PostForm.Get("comment_id"))
+
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	content := r.PostForm.Get("content")
+    
+	form := app.Service.Post.NewCommentForm()
+	form.Content = content
+
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in EditComment")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	err = app.Service.Post.UpdateComment(&form, commentID, userId)
+	if err != nil {
+		app.Logger.Error("update comment", "error", err)
+		if errors.Is(err, entities.ErrInvalidCredentials) {
+			data := app.newTemplateData(r)
+			data.Form = form
+			data.Comment = &entities.Comment{}
+			data.Comment.ID = commentID
+			data.Comment.PostID = postID
+			app.render(w, http.StatusUnprocessableEntity, "editcomment.html", data)
+		} else if errors.Is(err, entities.ErrNoRecord) {
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
+		} else {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		}
+		return
+	}
+
+	err = sess.Set(FlashSessionKey, "Comment successfully update!")
 	if err != nil {
 		// кажется тут не нужна ошибка, достаточно логирования
 		app.Logger.Error("Session error during set flash", "error", err)

@@ -61,6 +61,10 @@ func (app *Application) Routes() http.Handler {
 	protected := dynamic.Append(app.requireAuthentication)
 	mux.Handle("GET /post/edit/{post_id}", protected.ThenFunc(app.editPostView))
 	mux.Handle("POST /post/edit/{post_id}", protected.ThenFunc(app.editPost))
+	mux.Handle("GET /comment/edit", protected.ThenFunc(app.editCommentView))
+	mux.Handle("POST /comment/edit", protected.ThenFunc(app.editComment))
+
+
 
 	mux.Handle("POST /post/view/{id}", protected.ThenFunc(app.postReaction))
 	mux.Handle("POST /post/delete", protected.ThenFunc(app.DeletePost))

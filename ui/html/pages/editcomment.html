@@ -1,0 +1,17 @@
+{{define "title"}}Update comment{{end}}
+
+{{define "main"}}
+<form action='/comment/edit' method='POST'>
+    <input type="hidden" name="token" value="{{.CSRFToken}}">
+    <input type="hidden" name="post_id" value="{{if .Comment}}{{.Comment.PostID}}{{end}}">
+    <input type="hidden" name="comment_id" value="{{if .Comment}}{{.Comment.ID}}{{end}}">
+
+    {{if .Form}}
+        {{with .Form.FieldErrors.comment}}
+            <label class='error'>{{.}}</label>
+        {{end}}
+        {{end}}
+    <textarea name='content' required>{{if .Comment}}{{.Comment.Content}}{{end}}</textarea>
+    <input type='submit' value='Update comment'>
+</form>
+{{end}}

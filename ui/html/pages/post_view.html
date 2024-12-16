@@ -116,8 +116,11 @@
             </form>
             
             <!-- Обновление комментария -->
-            <form action="/comment/edit/{{.ID}}" method="GET">
+            <form action="/comment/edit" method="GET">
                 <input type="hidden" name="token" value="{{$CSRFToken}}">
+                <input type="hidden" name="comment_id" value="{{.ID}}">
+                <input type="hidden" name="post_id" value="{{.PostID}}">
+                <input type="hidden" name="content" value="{{.Content}}">
                 <button type="submit" class="btn btn-delete delete-button">Update Comment</button>
             </form>
             {{end}}
