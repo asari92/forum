@@ -1,10 +1,8 @@
 {{define "title"}}Create a New Post{{end}}
 
 {{define "main"}}
-<form action='/post/edit/{{.Post.ID}}' method='POST' enctype="multipart/form-data">
+<form action='/post/edit/{{if .Post}}{{.Post.ID}}{{end}}' method='POST' enctype="multipart/form-data">
     <input type="hidden" name="token" value="{{.CSRFToken}}">
-
-    <input type="hidden" name="post_id" value="{{if .Post}}{{.Post.ID}}{{end}}">
 
 
     <div>

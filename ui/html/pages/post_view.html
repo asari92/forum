@@ -63,9 +63,8 @@
     </div>
 
     <div>
-        <form action="/post/edit/{{.Post.ID}}" method="GET">
+        <form action="/post/edit/{{.ID}}" method="GET">
             <input type="hidden" name="token" value="{{$CSRFToken}}"> <!-- CSRF token -->
-            <input type="hidden" name="post_id" value="{{.ID}}">
             <button type="submit" class="btn btn-delete delete-button">Update post</button>
         </form>
     </div>

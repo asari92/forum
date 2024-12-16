@@ -68,7 +68,7 @@ func (app *Application) editPostView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postID, err := validator.ValidateID(r.URL.Query().Get("post_id"))
+	postID, err := validator.ValidateID(r.PathValue("post_id"))
 	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
@@ -206,8 +206,8 @@ func (app *Application) editPost(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
+	postID, err := validator.ValidateID(r.PathValue("post_id"))
 
-	postID, err := validator.ValidateID(r.PathValue("id"))
 	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
@@ -222,12 +222,6 @@ func (app *Application) editPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// postID, err := validator.ValidateID(r.PostForm.Get("post_id"))
-	// if err != nil {
-	// 	app.render(w, http.StatusBadRequest, Errorpage, nil)
-	// 	return
-	// }
-
 	form := app.Service.Post.NewPostCreateForm()
 	form.Title = r.PostForm.Get("title")
 	form.Content = r.PostForm.Get("content")
@@ -235,12 +229,12 @@ func (app *Application) editPost(w http.ResponseWriter, r *http.Request) {
 
 	err = app.Service.Post.UpdatePostWithImage(&form, postID, files, userId)
 	if err != nil {
-		app.Logger.Error("insert post and categories", "error", err)
+		app.Logger.Error("update post and image", "error", err)
 		if errors.Is(err, entities.ErrInvalidCredentials) {
 			data := app.newTemplateData(r)
-			// data.Post = &entities.Post{}
-			// data.Post.ID = postID
 			data.Form = form
+			data.Post = &entities.Post{}
+			data.Post.ID = postID
 			app.render(w, http.StatusUnprocessableEntity, "editpost.html", data)
 		} else if errors.Is(err, entities.ErrNoRecord) {
 			app.render(w, http.StatusBadRequest, Errorpage, nil)
