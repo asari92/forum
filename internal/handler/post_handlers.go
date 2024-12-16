@@ -135,6 +135,42 @@ func (app *Application) DeletePost(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+func (app *Application) DeleteComment(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in postCreate")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+	err := r.ParseForm()
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+	comment_id, err := validator.ValidateID(r.PostForm.Get("comment_id"))
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	post_id, err := validator.ValidateID(r.PostForm.Get("post_id"))
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	err = app.Service.DeleteComment(comment_id, userId)
+	if err != nil {
+
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/post/view/%d", post_id), http.StatusSeeOther)
+}
+
 func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(20*1024*1024 + (10 * 1024))
 	if err != nil {

@@ -29,6 +29,7 @@ type Post interface {
 	CreatePostWithCategories(form *postCreateForm, files []*multipart.FileHeader, userID int) (int, []*entities.Category, error)
 	DeletePost(postID, userID int) error 
 	UpdatePostWithImage(form *postCreateForm, postID int, files []*multipart.FileHeader, userID int) error
+	DeleteComment(commentID, userID int) error
 }
 
 type Reaction interface {

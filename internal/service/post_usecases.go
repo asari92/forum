@@ -549,6 +549,21 @@ func (uc *PostUseCase) DeletePost(postID, userID int) error {
 	return nil
 }
 
+
+func (uc *PostUseCase) DeleteComment(commentID, userID int) error {
+	
+
+	comment, err := uc.commentRepo.GetComment(commentID)
+	if err != nil {
+		return err
+	}
+
+	if comment.UserID == userID {
+		return uc.commentRepo.DeleteComment(commentID)
+	}
+	return nil
+}
+
 func (form *postCreateForm) validateCategories(allCategories []*entities.Category) {
 	categoryIDs := []int{}
 	if len(form.Categories) == 0 {

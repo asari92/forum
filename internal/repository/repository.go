@@ -41,6 +41,9 @@ type CommentRepository interface {
 	InsertComment(postID, userID int, content string) error
 	GetComments(postID int) ([]*entities.Comment, error)
 	GetUserCommentsByPosts(postId, userId int) ([]*entities.Comment, error)
+	UpdateComment(commentID int, content string) error
+	DeleteComment(commentID int) error
+	GetComment(commentId int) (*entities.Comment, error)
 }
 
 type CommentReactionRepository interface {
