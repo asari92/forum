@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
+	"forum/internal/entities"
 	"forum/pkg/validator"
 )
 
@@ -37,4 +39,46 @@ func (app *Application) moderationUnapprovedPostsView(w http.ResponseWriter, r *
 		PaginationAction: unapprovedPostsDTO.PaginationURL,
 	}
 	app.render(w, http.StatusOK, "user_posts.html", data)
+}
+
+func (app *Application) moderationApprovePost(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userID < 1 {
+		err := errors.New("get userID in accountPasswordUpdate")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	postID, err := validator.ValidateID(r.PathValue("post_id"))
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	err = app.Service.Post.ApprovePost(postID)
+	if err != nil {
+		app.Logger.Error("post approval", "error", err)
+		if errors.Is(err, entities.ErrNoRecord) {
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
+		} else {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		}
+		return
+	}
+
+	err = sess.Set(FlashSessionKey, "Post successfully aprroved!")
+	if err != nil {
+		// кажется тут не нужна ошибка, достаточно логирования
+		app.Logger.Error("Session error during set flash", "error", err)
+	}
+
+	http.Redirect(w, r, "/moderation/posts/unapproved", http.StatusSeeOther)
 }

@@ -49,6 +49,7 @@ type templateData struct {
 	ReactionData    *ReactionData
 	Header          string
 	Pagination      any
+	Role            string
 }
 
 func contains(s []int, e int) bool {

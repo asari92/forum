@@ -147,7 +147,6 @@
     {{end}}
 </div>
 
-
     {{if .IsAuthenticated}}
     <!-- Форма для создания комментария -->
     <div class="comment-section">
@@ -165,5 +164,28 @@
     {{else}}
     <p class="custom-paragraph">You must <a href="/user/signup">signup</a> or <a href="/user/login">login</a> to leave a comment</p>
     {{end}}
+
+    {{if or (eq .Role "moderator") (eq .Role "admin")}}
+        {{if .Post.IsApproved}}
+        <div class="moderation-section">
+            <h3>Complain about the post</h3>
+            <form method="POST" action="" class="report-form">
+                <input type="hidden" name="token" value="{{.CSRFToken}}">
+                <input type="hidden" name="post_id" value="{{.Post.ID}}">
+                <textarea name="report_message" placeholder="Write your report here..." required class="report-input"></textarea>
+                <button type="submit" class="report-submit-btn">Report</button>
+            </form>
+        </div>
+        {{else}}
+        <div class="moderation-section">
+            <h3>Approval</h3>
+            <form method="POST" action="/moderation/post/{{.Post.ID}}" class="approval-form">
+                <input type="hidden" name="token" value="{{.CSRFToken}}">
+                <button type="submit" class="approve-submit-btn">Approve</button>
+            </form>
+        </div>
+        {{end}}
+    {{end}}
+
 {{end}}
 

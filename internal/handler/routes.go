@@ -59,7 +59,8 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("GET /auth/github/callback", dynamic.ThenFunc(app.oauthGithubCallback))
 
 	protected := dynamic.Append(app.requireAuthentication)
-
+	
+	
 	mux.Handle("POST /post/view/{id}", protected.ThenFunc(app.postReaction))
 	mux.Handle("GET /post/create", protected.ThenFunc(app.postCreateView))
 	mux.Handle("POST /post/create", protected.ThenFunc(app.postCreate))
@@ -69,10 +70,11 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("GET /account/password/update", protected.ThenFunc(app.accountPasswordUpdateView))
 	mux.Handle("POST /account/password/update", protected.ThenFunc(app.accountPasswordUpdate))
 	mux.Handle("POST /user/logout", protected.ThenFunc(app.userLogout))
-
+	
 	moderated := protected.Append(app.requireModeration)
-
+	
 	mux.Handle("GET /moderation/posts/unapproved", moderated.ThenFunc(app.moderationUnapprovedPostsView))
+	mux.Handle("POST /moderation/post/{post_id}", protected.ThenFunc(app.moderationApprovePost))
 
 	standard := New(app.recoverPanic, app.logRequest, secureHeaders, app.rateLimiting)
 	return standard.Then(mux)

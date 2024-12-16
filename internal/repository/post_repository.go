@@ -397,6 +397,12 @@ func (r *PostSqlite3) GetAllPaginatedUnapprovedPosts(page, pageSize int) ([]*ent
 	return posts, nil
 }
 
+func (r *PostSqlite3) ApprovePost(postID int) error {
+	stmt := "UPDATE posts SET is_approved = true WHERE id = ?"
+	_, err := r.DB.Exec(stmt, postID)
+	return err
+}
+
 // Удаление поста
 func (r *PostSqlite3) DeletePost(postID int) error {
 	stmt := `DELETE FROM posts WHERE id = ?`

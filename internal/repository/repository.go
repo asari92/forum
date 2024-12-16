@@ -30,6 +30,7 @@ type PostRepository interface {
 	GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post, error)
 	GetAllPaginatedUnapprovedPosts(page, pageSize int) ([]*entities.Post, error)
 
+	ApprovePost(postID int) error
 	DeletePost(postID int) error
 }
 

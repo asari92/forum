@@ -401,7 +401,7 @@ func (uc *PostUseCase) GetFilteredPaginatedPostsDTO(form *postCreateForm, page, 
 		PostsDTO.Posts = posts
 		PostsDTO.HasNextPage = hasNextPage
 
-		return PostsDTO, entities.ErrInvalidCredentials
+		return PostsDTO, nil
 	}
 
 	// Получаем посты с пагинацией
@@ -544,6 +544,18 @@ func uploadImages(files []*multipart.FileHeader) ([]string, error) {
 	}
 
 	return pathFiles, nil
+}
+
+func (uc *PostUseCase) ApprovePost(postID int) error {
+	exists, err := uc.postRepo.Exists(postID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
+
+	return uc.postRepo.ApprovePost(postID)
 }
 
 // Удаление поста
