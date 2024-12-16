@@ -8,7 +8,6 @@
         <time class="timezone" data-time="{{.Created}}"></time>
         <br>
         <h1 class="post-title">{{.Title}}</h1>
-
     </div>
     <div class="post-content">
         <pre><code>{{.Content}}</code></pre>
@@ -169,21 +168,33 @@
         {{if .Post.IsApproved}}
         <div class="moderation-section">
             <h3>Complain about the post</h3>
-            <form method="POST" action="" class="report-form">
+            <form method="POST" action="/moderation/report/{{.Post.ID}}" class="report-form">
                 <input type="hidden" name="token" value="{{.CSRFToken}}">
                 <input type="hidden" name="post_id" value="{{.Post.ID}}">
-                <textarea name="report_message" placeholder="Write your report here..." required class="report-input"></textarea>
+                <textarea name="report_reason" placeholder="Write your report here..." required class="report-input"></textarea>
                 <button type="submit" class="report-submit-btn">Report</button>
             </form>
         </div>
-        {{else}}
-        <div class="moderation-section">
-            <h3>Approval</h3>
-            <form method="POST" action="/moderation/post/{{.Post.ID}}" class="approval-form">
-                <input type="hidden" name="token" value="{{.CSRFToken}}">
-                <button type="submit" class="approve-submit-btn">Approve</button>
-            </form>
-        </div>
+        {{else}} 
+            {{if .Report}}
+            <div class='metadata'>
+                <span>report by {{.Report.UserID}}</span>   
+                <time class="timezone" data-time="{{.Report.Created}}"></time>
+                <br>
+            </div>
+            <div class="post-content">
+                <h2>Report reason:</h2>
+                <pre><code>{{.Report.Reason}}</code></pre>
+            </div>
+            {{else}}
+            <div class="moderation-section">
+                <h3>Approval</h3>
+                <form method="POST" action="/moderation/approve/{{.Post.ID}}" class="approval-form">
+                    <input type="hidden" name="token" value="{{.CSRFToken}}">
+                    <button type="submit" class="approve-submit-btn">Approve</button>
+                </form>
+            </div>
+            {{end}}
         {{end}}
     {{end}}
 

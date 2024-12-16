@@ -13,6 +13,7 @@ type ReactionUseCase struct {
 	postRepo            repository.PostRepository
 	postReactionRepo    repository.PostReactionRepository
 	userRepo            repository.UserRepository
+	reportRepo          repository.ReportRepository
 }
 
 type reactionForm struct {
@@ -31,6 +32,7 @@ func NewReactionUseCase(repo *repository.Repository) *ReactionUseCase {
 		postRepo:            repo.PostRepository,
 		postReactionRepo:    repo.PostReactionRepository,
 		userRepo:            repo.UserRepository,
+		reportRepo:          repo.ReportRepository,
 	}
 }
 
@@ -116,4 +118,38 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 	}
 
 	return nil
+}
+
+func (uc *ReactionUseCase) CreateReport(userID, postID int, reason string) error {
+	exists, err := uc.userRepo.Exists(userID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
+
+	exists, err = uc.postRepo.Exists(postID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
+
+	err = uc.reportRepo.CreateReport(userID, postID, reason)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (uc *ReactionUseCase) GetPostReport(postID int) (*entities.Report, error) {
+	report, err := uc.reportRepo.GetPostReport(postID)
+	if err != nil {
+		return nil, err
+	}
+
+	return report, nil
 }

@@ -82,3 +82,46 @@ func (app *Application) moderationApprovePost(w http.ResponseWriter, r *http.Req
 
 	http.Redirect(w, r, "/moderation/posts/unapproved", http.StatusSeeOther)
 }
+
+func (app *Application) moderationReportPost(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userID < 1 {
+		err := errors.New("get userID in accountPasswordUpdate")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	postID, err := validator.ValidateID(r.PathValue("post_id"))
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	reason := r.PostForm.Get("report_reason")
+	if !validator.Matches(reason, validator.TextRX) {
+		app.render(w, http.StatusBadRequest, Errorpage,
+			&templateData{AppError: AppError{Message: "Report reason must contain only english or russian letters", StatusCode: http.StatusBadRequest}})
+		return
+	}
+
+	err = app.Service.Reaction.CreateReport(userID, postID, reason)
+	if err != nil {
+		app.Logger.Error("create report", "error", err)
+		if errors.Is(err, entities.ErrNoRecord) {
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
+		} else {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		}
+		return
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+}

@@ -44,9 +44,22 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		userRole = ""
 	}
 
-	if !postData.Post.IsApproved && !(userRole == entities.RoleModerator || userRole == entities.RoleAdmin || userID == postData.Post.UserID) {
-		app.render(w, http.StatusForbidden, Errorpage, &templateData{AppError: AppError{Message: "This post is under moderation", StatusCode: http.StatusForbidden}})
-		return
+	var report *entities.Report
+	if !postData.Post.IsApproved {
+		if !(userRole == entities.RoleModerator || userRole == entities.RoleAdmin || userID == postData.Post.UserID) {
+			app.render(w, http.StatusForbidden, Errorpage,
+				&templateData{AppError: AppError{Message: "This post is under moderation", StatusCode: http.StatusForbidden}})
+			return
+		}
+		report, err = app.Service.Reaction.GetPostReport(postID)
+		if err != nil {
+			app.Logger.Error("get post report", "error", err)
+			if errors.Is(err, entities.ErrNoRecord) {
+			} else {
+				app.render(w, http.StatusInternalServerError, Errorpage, nil)
+				return
+			}
+		}
 	}
 
 	data := app.newTemplateData(r)
@@ -59,6 +72,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	data.ReactionData.UserReaction = postData.UserReaction
 	data.Form = sess.Get(ReactionFormSessionKey)
 	data.Role = userRole
+	data.Report = report
 	err = sess.Delete(ReactionFormSessionKey)
 	if err != nil {
 		app.Logger.Error("Session error during delete reaction form", "error", err)

@@ -74,7 +74,9 @@ func (app *Application) Routes() http.Handler {
 	moderated := protected.Append(app.requireModeration)
 	
 	mux.Handle("GET /moderation/posts/unapproved", moderated.ThenFunc(app.moderationUnapprovedPostsView))
-	mux.Handle("POST /moderation/post/{post_id}", protected.ThenFunc(app.moderationApprovePost))
+	mux.Handle("POST /moderation/approve/{post_id}", protected.ThenFunc(app.moderationApprovePost))
+	mux.Handle("POST /moderation/report/{post_id}", protected.ThenFunc(app.moderationReportPost))
+
 
 	standard := New(app.recoverPanic, app.logRequest, secureHeaders, app.rateLimiting)
 	return standard.Then(mux)

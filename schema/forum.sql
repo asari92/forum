@@ -41,6 +41,9 @@ CREATE TABLE IF NOT EXISTS comments(
       ON UPDATE No action
 );
 
+CREATE INDEX IF NOT EXISTS comments_idx_post_id ON comments(post_id);
+
+
 CREATE TABLE IF NOT EXISTS post_categories(
   category_id INTEGER NOT NULL,
   post_id INTEGER NOT NULL,
@@ -89,3 +92,17 @@ CREATE TABLE IF NOT EXISTS users(
 
 CREATE UNIQUE INDEX IF NOT EXISTS users_uc_email ON users(email);
 CREATE UNIQUE INDEX IF NOT EXISTS users_uc_username ON users(username);
+
+CREATE TABLE IF NOT EXISTS reports(
+  id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  post_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  reason TEXT NOT NULL,
+  created TEXT NOT NULL,
+  CONSTRAINT posts_comments
+  FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE Cascade
+    ON UPDATE No action
+  CONSTRAINT users_posts
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE No action
+      ON UPDATE No action
+);

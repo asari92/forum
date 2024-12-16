@@ -35,6 +35,8 @@ type Post interface {
 type Reaction interface {
 	NewReactionForm() reactionForm
 	UpdatePostReaction(userID, postID int, form *reactionForm) error
+	CreateReport(userID, postID int, reason string) error
+	GetPostReport(postID int) (*entities.Report, error)
 }
 
 type Category interface {

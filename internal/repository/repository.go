@@ -41,6 +41,11 @@ type PostReactionRepository interface {
 	GetReactionsCount(postID int) (likes int, dislikes int, err error)
 }
 
+type ReportRepository interface {
+	CreateReport(userID, postID int, reason string) error
+	GetPostReport(postID int) (*entities.Report, error)
+}
+
 type CommentRepository interface {
 	Exists(id int) (bool, error)
 	InsertComment(postID, userID int, content string) error
@@ -72,6 +77,7 @@ type Repository struct {
 	CommentRepository
 	CommentReactionRepository
 	CategoryRepository
+	ReportRepository
 }
 
 func NewRepository(db *sql.DB) *Repository {
@@ -82,5 +88,6 @@ func NewRepository(db *sql.DB) *Repository {
 		CommentRepository:         NewCommentSqlite3(db),
 		CommentReactionRepository: NewCommentReactionSqlite3(db),
 		CategoryRepository:        NewCategorySqlite3(db),
+		ReportRepository:          NewReportSqlite3(db),
 	}
 }
