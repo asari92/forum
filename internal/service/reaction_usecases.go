@@ -105,24 +105,31 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 			}
 
 		} else {
+
 			if userReaction == nil {
 				err = uc.postReactionRepo.AddNotification(ownerID, postID, userID, action)
 				if err != nil {
 					return err
 				}
-			}else if userReaction.IsLike != like {
-				newA
+			} else if userReaction.IsLike != like {
+				var oldAction string
+				if userReaction.IsLike {
+					oldAction = "like"
+				} else {
+					oldAction = "dislike"
+				}
 
+				err = uc.postReactionRepo.UpdateNotification(ownerID, postID, userID, oldAction, action)
+				if err != nil {
+					return err
+				}
 
 			}
-
-			
 
 			err = uc.postReactionRepo.AddReaction(userID, postID, like)
 			if err != nil {
 				return err
 			}
-			
 
 		}
 	} else if form.CommentIsLike != "" {

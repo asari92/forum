@@ -37,6 +37,7 @@ type PostReactionRepository interface {
 	GetReactionsCount(postID int) (likes int, dislikes int, err error)
 	AddNotification(userID, postID, triggerUserID int, actionType string) error
 	RemoveNotification(userID, postID, triggerUserID int, actionType string) error
+	UpdateNotification(userID, postID, triggerUserID int, oldAction, newAction string) error
 }
 
 type CommentRepository interface {
