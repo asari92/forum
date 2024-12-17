@@ -7,6 +7,22 @@ CREATE TABLE IF NOT EXISTS categories(
   CONSTRAINT category_name_uk UNIQUE(name)
 );
 
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    user_id INTEGER,          -- Владелец поста, который получает уведомление
+    post_id INTEGER,          -- ID поста
+    action_type TEXT,         -- 'like', 'dislike', или 'comment'
+    trigger_user_id INTEGER,  -- ID пользователя, который вызвал уведомление
+    status TEXT DEFAULT 'unread', -- unread/read
+    created TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (trigger_user_id) REFERENCES users(id) ON DELETE CASCADE
+
+);
+
+
 CREATE TABLE IF NOT EXISTS comment_reactions(
   user_id INTEGER NOT NULL,
   comment_id INTEGER NOT NULL,

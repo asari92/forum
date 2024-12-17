@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"forum/internal/entities"
 	"forum/internal/repository"
 	"forum/pkg/validator"
@@ -57,6 +59,11 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 		return entities.ErrNoRecord
 	}
 
+	ownerID, err := uc.postRepo.GetPostOwner(postID)
+	if err != nil {
+		return err
+	}
+
 	if form.Comment != "" {
 		form.CheckField(validator.NotBlank(form.Comment), "comment", "This field cannot be blank")
 		form.CheckField(validator.Matches(form.Comment, validator.TextRX), "comment", "This field must contain only english or russian letters")
@@ -67,9 +74,20 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 		if err != nil {
 			return err
 		}
+		err = uc.postReactionRepo.AddNotification(ownerID, postID, userID, "comment")
+		if err != nil {
+			return err
+		}
+
 	} else if form.PostIsLike != "" {
 		// Преобразуем isLike в bool
 		like := form.PostIsLike == "true"
+		var action string
+		if like {
+			action = "like"
+		} else {
+			action = "dislike"
+		}
 
 		var userReaction *entities.PostReaction
 		userReaction, err := uc.postReactionRepo.GetUserReaction(userID, postID) // Получите реакцию пользователя
@@ -82,11 +100,39 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 			if err != nil {
 				return err
 			}
+			fmt.Println(action)
+			err = uc.postReactionRepo.RemoveNotification(ownerID, postID, userID, action)
+			if err != nil {
+				return err
+			}
+
 		} else {
+
+			if userReaction == nil {
+				err = uc.postReactionRepo.AddNotification(ownerID, postID, userID, action)
+				if err != nil {
+					return err
+				}
+			} else if userReaction.IsLike != like {
+				var oldAction string
+				if userReaction.IsLike {
+					oldAction = "like"
+				} else {
+					oldAction = "dislike"
+				}
+
+				err = uc.postReactionRepo.UpdateNotification(ownerID, postID, userID, oldAction, action)
+				if err != nil {
+					return err
+				}
+
+			}
+
 			err = uc.postReactionRepo.AddReaction(userID, postID, like)
 			if err != nil {
 				return err
 			}
+
 		}
 	} else if form.CommentIsLike != "" {
 		reaction := form.CommentIsLike == "true"
@@ -105,6 +151,7 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 		}
 
 		if commentReaction != nil && reaction == commentReaction.IsLike {
+
 			err = uc.commentReactionRepo.RemoveReaction(userID, form.CommentID)
 			if err != nil {
 				return err

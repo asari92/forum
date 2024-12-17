@@ -1,0 +1,40 @@
+{{define "title"}}Create a New Post{{end}}
+
+{{define "main"}}
+<form action='/post/edit/{{if .Post}}{{.Post.ID}}{{end}}' method='POST' enctype="multipart/form-data">
+    <input type="hidden" name="token" value="{{.CSRFToken}}">
+
+
+    <div>
+        <label>Title:</label>
+        {{if .Form}}
+        {{with .Form.FieldErrors.title}}
+            <label class='error'>{{.}}</label>
+        {{end}}
+        {{end}}
+        <input type='text' name='title' value='{{if .Form}}{{.Form.Title}}{{else}}{{if .Post}}{{.Post.Title}}{{end}}{{end}}'>
+    </div>
+    <div>
+        <label>Content:</label>
+        {{if .Form}}
+        {{with .Form.FieldErrors.content}}
+            <label class='error'>{{.}}</label>
+        {{end}}
+        {{end}}
+        <textarea name='content'>{{if .Form}}{{.Form.Content}}{{else}}{{if .Post}}{{.Post.Content}}{{end}}{{end}}</textarea>
+    </div>
+   
+        <div>
+            {{if .Form}}
+            {{with .Form.FieldErrors.image}}
+                <label class='error'>{{.}}</label>
+            {{end}}
+            {{end}}
+            <label for="image-upload">upload image</label>
+            <input type="file" id="image-upload" name="image" multiple style="display: none;">
+
+        </div>
+        <input type='submit' value='Publish post'>
+    </div>
+</form>
+{{end}}

@@ -21,6 +21,10 @@
             <td><time class="timezone" data-time="{{.Created}}"></time></td>
         </tr>
         <tr>
+            <th>Account notification</th>
+            <td><a href="/account/notification">Show notification</a></td>
+        </tr>
+        <tr>
             <th>Password</th>
             <td><a href="/account/password/update">Change password</a></td>
         </tr>
@@ -31,6 +35,10 @@
         <tr>
             <th>My liked posts</th>
             <td><a href="/user/liked">Show liked posts</a></td>
+        </tr>
+        <tr>
+            <th>My commented posts</th>
+            <td><a href="/user/commented">Show commented posts</a></td>
         </tr>
         {{if or (eq .Role "moderator") (eq .Role "admin")}}
         <tr>

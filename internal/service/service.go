@@ -20,16 +20,22 @@ type User interface {
 
 type Post interface {
 	NewPostCreateForm() postCreateForm
+	NewCommentForm() CommentForm
 	GetPostDTO(postID int, userID int) (*PostDTO, error)
 	// GetUnapprovedPostDTO(postID int, userID int) (*PostDTO, error)
 	GetAllPaginatedPostsDTO(page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetAllPaginatedUnapprovedPostsDTO(page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetUserPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error)
+	GetUserCommentedPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetUserLikedPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetFilteredPaginatedPostsDTO(form *postCreateForm, page, pageSize int, paginationURL string) (*PostsDTO, error)
 	CreatePostWithCategories(form *postCreateForm, files []*multipart.FileHeader, userID int) (int, []*entities.Category, error)
+	UpdatePostWithImage(form *postCreateForm, postID int, files []*multipart.FileHeader, userID int) error
+	DeleteComment(commentID, userID int) error
+	UpdateComment(form *CommentForm, commentID, userID int) error
+	GetUserNotifications(userID int) ([]*entities.Notification, error)
 	ApprovePost(postID int) error
-	DeletePost(postID int) error
+	DeletePost(postID, userID int) error
 }
 
 type Reaction interface {

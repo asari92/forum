@@ -22,9 +22,7 @@
             {{end}}
           </div>
         {{end}}
-      </div>
-      
-      
+    </div>
 
     <div class="metadata">
         <form method="POST" action="/">
@@ -38,61 +36,76 @@
         </form>
     </div>
     {{$CSRFToken := .CSRFToken}}
+    {{$userid := .User.ID}}
+
+    {{if eq .User.ID .Post.UserID}}
+    {{with .Post}}
+    <div>
+        <p class="error-message" style="color: red; font-size: 16px;">You can only delete your own post.</p>
+    </div>
+
+    <div>
+        <form action="/post/delete" method="POST">
+            <input type="hidden" name="token" value="{{$CSRFToken}}">
+            <input type="hidden" name="post_id" value="{{.ID}}">
+            <button type="submit" class="btn btn-delete delete-button">Delete post</button>
+        </form>
+    </div>
+
+    <div>
+        <p class="error-message" style="color: red; font-size: 16px;">You can only update your own post.</p>
+    </div>
+
+    <div>
+        <form action="/post/edit/{{.ID}}" method="GET">
+            <input type="hidden" name="token" value="{{$CSRFToken}}">
+            <button type="submit" class="btn btn-delete delete-button">Update post</button>
+        </form>
+    </div>
+    {{end}}
+    {{end}}
+
     <!-- Лайки и дизлайки -->
     <div class='reaction-buttons'>
-        
-
         <form method="POST" action="/post/view/{{.Post.ID}}">
             <input type="hidden" name="token" value="{{.CSRFToken}}">
             {{if eq .ReactionData.GetUserReaction 1}}
             <!-- Кнопка лайка -->
             <button type="submit" name="post_is_like" value="true" class="like-button">
-                <span class="icon icon-like-active">
-                    {{.ReactionData.Likes}} 👍
-                </span>
+                <span class="icon icon-like-active">{{.ReactionData.Likes}} 👍</span>
             </button>
             
             <!-- Кнопка дизлайка -->
             <button type="submit" name="post_is_like" value="false" class="dislike-button">
-                <span class="icon icon-neutral">
-                    {{.ReactionData.Dislikes}} 👎🏿
-                </span>
+                <span class="icon icon-neutral">{{.ReactionData.Dislikes}} 👎🏿</span>
             </button>
             {{else if eq .ReactionData.GetUserReaction -1}}
             <!-- Кнопка лайка -->
             <button type="submit" name="post_is_like" value="true" class="like-button">
-                <span class="icon icon-neutral">
-                    {{.ReactionData.Likes}} 👍🏿
-                </span>
+                <span class="icon icon-neutral">{{.ReactionData.Likes}} 👍🏿</span>
             </button>
             
             <!-- Кнопка дизлайка -->
             <button type="submit" name="post_is_like" value="false" class="dislike-button">
-                <span class="icon icon-dislike-active">
-                    {{.ReactionData.Dislikes}} 👎
-                </span>
+                <span class="icon icon-dislike-active">{{.ReactionData.Dislikes}} 👎</span>
             </button>
             {{else}}
             <!-- Кнопка лайка -->
             <button type="submit" name="post_is_like" value="true" class="like-button">
-                <span class="icon icon-neutral">
-                    {{.ReactionData.Likes}} 👍🏿
-                </span>
+                <span class="icon icon-neutral">{{.ReactionData.Likes}} 👍🏿</span>
             </button>
             
             <!-- Кнопка дизлайка -->
             <button type="submit" name="post_is_like" value="false" class="dislike-button">
-                <span class="icon icon-neutral">
-                    {{.ReactionData.Dislikes}} 👎🏿
-                </span>
+                <span class="icon icon-neutral">{{.ReactionData.Dislikes}} 👎🏿</span>
             </button>
             {{end}}
         </form>
-
+    </div>
 
     {{with .Comments}}
     <ul class="comment-list">
-        <h3> Comments</h3>
+        <h3>Comments</h3>
         {{range .}}
         <li class="comment">
             <div class="comment-metadata">
@@ -100,41 +113,50 @@
                 <time class="comment-time timezone" data-time="{{.Created}}"></time>
             </div>
             <div class="comment-content">{{.Content}}</div>
+
+            {{if eq .UserID $userid}}
+            <!-- Удаление комментария -->
+            <form action="/comment/delete" method="POST">
+                <input type="hidden" name="token" value="{{$CSRFToken}}">
+                <input type="hidden" name="comment_id" value="{{.ID}}">
+                <input type="hidden" name="post_id" value="{{.PostID}}">
+
+                <button type="submit" class="btn btn-delete delete-button">Delete Comment</button>
+            </form>
+            
+            <!-- Обновление комментария -->
+            <form action="/comment/edit" method="GET">
+                <input type="hidden" name="token" value="{{$CSRFToken}}">
+                <input type="hidden" name="comment_id" value="{{.ID}}">
+                <input type="hidden" name="post_id" value="{{.PostID}}">
+                <input type="hidden" name="content" value="{{.Content}}">
+                <button type="submit" class="btn btn-delete delete-button">Update Comment</button>
+            </form>
+            {{end}}
+
             <form method="POST" action="/post/view/{{.PostID}}">
                 <input type="hidden" name="token" value="{{$CSRFToken}}">
                 <input type="hidden" name="comment_id" value="{{.ID}}">
                 {{if eq .UserReaction 1}}
                 <button type="submit" name="comment_is_like" value="true">
-                    <span class="icon icon-like-active">
-                        {{.Like}} 👍
-                    </span>    
+                    <span class="icon icon-like-active">{{.Like}} 👍</span>
                 </button>
                 <button type="submit" name="comment_is_like" value="false">
-                    <span class="icon icon-neutral">
-                        {{.Dislike}} 👎🏿
-                    </span>    
+                    <span class="icon icon-neutral">{{.Dislike}} 👎🏿</span>
                 </button>
                 {{else if eq .UserReaction -1}}
                 <button type="submit" name="comment_is_like" value="true">
-                    <span class="icon icon-neutral">
-                        {{.Like}} 👍🏿
-                    </span>    
+                    <span class="icon icon-neutral">{{.Like}} 👍🏿</span>
                 </button>
                 <button type="submit" name="comment_is_like" value="false">
-                    <span class="icon icon-dislike-active">
-                        {{.Dislike}} 👎
-                    </span>    
+                    <span class="icon icon-dislike-active">{{.Dislike}} 👎</span>
                 </button>
                 {{else}}
                 <button type="submit" name="comment_is_like" value="true">
-                    <span class="icon icon-neutral">
-                        {{.Like}} 👍🏿
-                    </span>    
+                    <span class="icon icon-neutral">{{.Like}} 👍🏿</span>
                 </button>
                 <button type="submit" name="comment_is_like" value="false">
-                    <span class="icon icon-neutral">
-                        {{.Dislike}} 👎🏿
-                    </span>    
+                    <span class="icon icon-neutral">{{.Dislike}} 👎🏿</span>
                 </button>
                 {{end}}
             </form>
@@ -199,4 +221,3 @@
     {{end}}
 
 {{end}}
-
