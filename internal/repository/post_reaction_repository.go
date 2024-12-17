@@ -14,6 +14,17 @@ func NewPostReactionSqlite3(db *sql.DB) *PostReactionSqlite3 {
 	return &PostReactionSqlite3{DB: db}
 }
 
+func (r *PostReactionSqlite3) GetNotifications(userID int) ([]*entities.Notification, error) {
+	stmt := ``
+	_, err := r.DB.Exec(stmt, userID, postID, actionType, triggerUserID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+
+
 func (r *PostReactionSqlite3) AddNotification(userID, postID, triggerUserID int, actionType string) error {
 	stmt := `INSERT INTO notifications (user_id, post_id, action_type, trigger_user_id, created)
 	VALUES (?,?,?,?, datetime('now'))`
