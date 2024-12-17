@@ -20,6 +20,23 @@ func NewPostSqlite3(db *sql.DB) *PostSqlite3 {
 	}
 }
 
+func (r *PostSqlite3) GetPostOwner(postID int) (int, error) {
+	stmt := `SELECT user_id FROM posts
+	WHERE id = ?
+	`
+	var ownerID int
+	row := r.DB.QueryRow(stmt, postID)
+	err := row.Scan(&ownerID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, entities.ErrNoRecord
+		} else {
+			return 0, err
+		}
+	}
+	return ownerID, nil
+}
+
 func (r *PostSqlite3) GetImagesByPost(postID int) ([]*entities.Image, error) {
 	stmt := `SELECT image_url FROM post_images
 	WHERE post_id = ?`
@@ -109,8 +126,50 @@ func (r *PostSqlite3) InsertPostWithCategories(title, content string, userID int
 	return int(postID), nil
 }
 
+func (r *PostSqlite3) UpdatePostWithImage(title, content string, postID int, filePaths []string) error {
+	// Начинаем транзакцию
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return err
+	}
+
+	// В случае ошибки откатываем транзакцию
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	stmt := `UPDATE posts
+	SET title = ?, content = ?
+	WHERE id = ?`
+
+	_, err = tx.Exec(stmt, title, content, postID)
+	if err != nil {
+		return err
+	}
+
+	if len(filePaths) != 0 {
+		stmt = `INSERT INTO post_images (post_id, image_url) VALUES (?,?)`
+		for _, imageUrl := range filePaths {
+			_, err := tx.Exec(stmt, postID, imageUrl)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Фиксируем транзакцию
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *PostSqlite3) GetPost(postID int) (*entities.Post, error) {
-	stmt := `SELECT posts.id,title,username,content, posts.created 
+	stmt := `SELECT posts.id,title,username, posts.user_id, content, posts.created 
 	FROM posts LEFT JOIN users ON posts.user_id = users.id
     WHERE posts.id = ?`
 
@@ -120,7 +179,7 @@ func (r *PostSqlite3) GetPost(postID int) (*entities.Post, error) {
 	var created string
 	var username sql.NullString
 
-	err := row.Scan(&p.ID, &p.Title, &username, &p.Content, &created)
+	err := row.Scan(&p.ID, &p.Title, &username, &p.UserID, &p.Content, &created)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, entities.ErrNoRecord
@@ -206,6 +265,45 @@ func (r *PostSqlite3) GetUserPaginatedPosts(userId, page, pageSize int) ([]*enti
 	stmt := `SELECT id, title, content, user_id, created FROM posts
 	WHERE user_id = ?
     ORDER BY id DESC
+	LIMIT ? OFFSET ?`
+
+	// запрашиваем на одну запись больше, чем pageSize
+	rows, err := r.DB.Query(stmt, userId, pageSize+1, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	posts := []*entities.Post{}
+	var created string
+
+	for rows.Next() {
+		p := &entities.Post{}
+		err = rows.Scan(&p.ID, &p.Title, &p.Content, &p.UserID, &created)
+		if err != nil {
+			return nil, err
+		}
+
+		postTime, err := time.Parse("2006-01-02 15:04:05", created)
+		if err != nil {
+			return nil, err
+		}
+		p.Created = postTime.Format(time.RFC3339)
+		posts = append(posts, p)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+
+func (r *PostSqlite3) GetUserCommentedPosts(userId, page, pageSize int) ([]*entities.Post, error) {
+	offset := (page - 1) * pageSize
+
+	stmt := `SELECT p.id, p.title, p.content, p.user_id, p.created FROM posts as p INNER JOIN comments as c ON p.id = c.post_id
+	WHERE c.user_id = ?
 	LIMIT ? OFFSET ?`
 
 	// запрашиваем на одну запись больше, чем pageSize

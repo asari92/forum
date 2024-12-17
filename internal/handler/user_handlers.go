@@ -9,6 +9,37 @@ import (
 	"forum/pkg/validator"
 )
 
+func (app *Application) notificationView(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in editPostView")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+	notifications, err := app.Service.Post.GetUserNotifications(userId)
+	if err != nil {
+		if errors.Is(err, entities.ErrNoRecord) {
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
+		} else {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		}
+		return
+	}
+
+	data := app.newTemplateData(r)
+	data.Notifications = notifications
+
+	data.Form = sess.Get(ReactionFormSessionKey)
+	err = sess.Delete(ReactionFormSessionKey)
+	if err != nil {
+		app.Logger.Error("Session error during delete reaction form", "error", err)
+	}
+
+	app.render(w, http.StatusOK, "notification.html", data)
+}
+
 func (app *Application) userSignupView(w http.ResponseWriter, r *http.Request) {
 	if !strings.Contains(r.Referer(), "/user/signup") && !strings.Contains(r.Referer(), "/user/login") {
 		sess := app.SessionFromContext(r)

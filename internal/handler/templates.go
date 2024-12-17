@@ -41,7 +41,9 @@ type templateData struct {
 	Post            *entities.Post
 	Posts           []*entities.Post
 	Images          []*entities.Image
+	Comment         *entities.Comment
 	Comments        []*entities.Comment
+	Notifications   []*entities.Notification
 	Form            any
 	Flash           string
 	IsAuthenticated bool

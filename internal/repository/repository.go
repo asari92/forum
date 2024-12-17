@@ -16,15 +16,18 @@ type UserRepository interface {
 }
 
 type PostRepository interface {
+	GetPostOwner(postID int) (int, error)
 	Exists(id int) (bool, error)
 	InsertPostWithCategories(title, content string, userID int, categoryIDs []int, filePaths []string) (int, error)
 	GetPost(postID int) (*entities.Post, error)
 	GetImagesByPost(postID int) ([]*entities.Image, error)
 	GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error)
+	GetUserCommentedPosts(userId, page, pageSize int) ([]*entities.Post, error)
 	GetUserPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
 	GetUserLikedPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
 	GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post, error)
 	DeletePost(postID int) error
+	UpdatePostWithImage(title, content string, postID int, filePaths []string) error
 }
 
 type PostReactionRepository interface {
@@ -32,12 +35,21 @@ type PostReactionRepository interface {
 	RemoveReaction(userID, postID int) error
 	GetUserReaction(userID, postID int) (*entities.PostReaction, error)
 	GetReactionsCount(postID int) (likes int, dislikes int, err error)
+	AddNotification(userID, postID, triggerUserID int, actionType string) error
+	RemoveNotification(userID, postID, triggerUserID int, actionType string) error
+	UpdateNotification(userID, postID, triggerUserID int, oldAction, newAction string) error
+	GetNotifications(userID int) ([]*entities.Notification, error)
+	UpdateNotificationStatus(userID int) error
 }
 
 type CommentRepository interface {
 	Exists(id int) (bool, error)
 	InsertComment(postID, userID int, content string) error
 	GetComments(postID int) ([]*entities.Comment, error)
+	GetUserCommentsByPosts(postId, userId int) ([]*entities.Comment, error)
+	UpdateComment(commentID int, content string) error
+	DeleteComment(commentID int) error
+	GetComment(commentId int) (*entities.Comment, error)
 }
 
 type CommentReactionRepository interface {

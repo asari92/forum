@@ -1,9 +1,10 @@
 package handler
 
 import (
-	"forum/ui"
 	"net/http"
 	"os"
+
+	"forum/ui"
 )
 
 // Кастомная файловая система, которая запрещает доступ к директориям
@@ -58,13 +59,28 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("GET /auth/github/callback", dynamic.ThenFunc(app.oauthGithubCallback))
 
 	protected := dynamic.Append(app.requireAuthentication)
+	mux.Handle("GET /account/notification", protected.ThenFunc(app.notificationView))
+
+	mux.Handle("GET /post/edit/{post_id}", protected.ThenFunc(app.editPostView))
+	mux.Handle("POST /post/edit/{post_id}", protected.ThenFunc(app.editPost))
+	mux.Handle("GET /comment/edit", protected.ThenFunc(app.editCommentView))
+	mux.Handle("POST /comment/edit", protected.ThenFunc(app.editComment))
+
+
 
 	mux.Handle("POST /post/view/{id}", protected.ThenFunc(app.postReaction))
+	mux.Handle("POST /post/delete", protected.ThenFunc(app.DeletePost))
+	mux.Handle("POST /comment/delete", protected.ThenFunc(app.DeleteComment))
+
 	mux.Handle("GET /post/create", protected.ThenFunc(app.postCreateView))
 	mux.Handle("POST /post/create", protected.ThenFunc(app.postCreate))
 	mux.Handle("GET /account/view", protected.ThenFunc(app.accountView))
 	mux.Handle("GET /user/liked", protected.ThenFunc(app.userLikedPostsView))
+	mux.Handle("GET /user/commented", protected.ThenFunc(app.userCommentedPostsView))
+
 	mux.Handle("POST /user/liked", protected.ThenFunc(app.userLikedPostsView))
+	mux.Handle("POST /user/commented", protected.ThenFunc(app.userCommentedPostsView))
+
 	mux.Handle("GET /account/password/update", protected.ThenFunc(app.accountPasswordUpdateView))
 	mux.Handle("POST /account/password/update", protected.ThenFunc(app.accountPasswordUpdate))
 	mux.Handle("POST /user/logout", protected.ThenFunc(app.userLogout))

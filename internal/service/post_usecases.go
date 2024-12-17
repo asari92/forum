@@ -56,6 +56,11 @@ type postCreateForm struct {
 	validator.Validator
 }
 
+type CommentForm struct {
+	Content string
+	validator.Validator
+}
+
 func NewPostUseCase(repo *repository.Repository) *PostUseCase {
 	return &PostUseCase{
 		categoryRepo:        repo.CategoryRepository,
@@ -69,6 +74,10 @@ func NewPostUseCase(repo *repository.Repository) *PostUseCase {
 
 func (uc *PostUseCase) NewPostCreateForm() postCreateForm {
 	return postCreateForm{Categories: []int{}}
+}
+
+func (uc *PostUseCase) NewCommentForm() CommentForm {
+	return CommentForm{}
 }
 
 func (uc *PostUseCase) GetPostDTO(postID int, userID int) (*PostDTO, error) {
@@ -194,6 +203,28 @@ func (uc *PostUseCase) GetUserPostsDTO(userID, page, pageSize int, paginationURL
 	}, nil
 }
 
+func (uc *PostUseCase) GetUserNotifications(userID int) ([]*entities.Notification, error) {
+	exists, err := uc.userRepo.Exists(userID)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, entities.ErrNoRecord
+	}
+
+	notifications, err := uc.postReactionRepo.GetNotifications(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = uc.postReactionRepo.UpdateNotificationStatus(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return notifications, nil
+}
+
 // Получение постов, которые пользователь лайкнул
 func (uc *PostUseCase) GetUserLikedPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error) {
 	exists, err := uc.userRepo.Exists(userID)
@@ -206,6 +237,42 @@ func (uc *PostUseCase) GetUserLikedPostsDTO(userID, page, pageSize int, paginati
 
 	// Получаем посты, которые пользователь лайкнул
 	posts, err := uc.postRepo.GetUserLikedPaginatedPosts(userID, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	// Получаем пользователя
+	user, err := uc.userRepo.Get(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Проверяем наличие следующей страницы
+	hasNextPage := len(posts) > pageSize
+	if hasNextPage {
+		posts = posts[:pageSize]
+	}
+
+	return &PostsDTO{
+		User:          user,
+		Posts:         posts,
+		HasNextPage:   hasNextPage,
+		CurrentPage:   page,
+		PaginationURL: paginationURL,
+	}, nil
+}
+
+func (uc *PostUseCase) GetUserCommentedPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error) {
+	exists, err := uc.userRepo.Exists(userID)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, entities.ErrNoRecord
+	}
+
+	// Получаем посты, которые пользователь лайкнул
+	posts, err := uc.postRepo.GetUserCommentedPosts(userID, page, pageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -392,6 +459,86 @@ func (uc *PostUseCase) CreatePostWithCategories(form *postCreateForm, files []*m
 	return postID, allCategories, nil
 }
 
+func (uc *PostUseCase) UpdatePostWithImage(form *postCreateForm, postID int, files []*multipart.FileHeader, userID int) error {
+	// валидировать все данные
+	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
+
+	form.CheckField(validator.Matches(form.Title, validator.TextRX), "title", "This field must contain only english or russian letters")
+	form.CheckField(validator.Matches(form.Content, validator.TextRX), "content", "This field must contain only english or russian letters")
+
+	if len(files) != 0 {
+		err := validator.ValidateImageFiles(files)
+		if err != nil {
+			if err.Error() == entities.ErrUnsupportedFileType.Error() {
+				form.AddFieldError("image", "The project requires handling JPEG, PNG, GIF images")
+			} else if err.Error() == entities.ErrFileSizeTooLarge.Error() {
+				form.AddFieldError("image", "Maximum file size limit is 20 MB")
+			} else {
+				return err
+			}
+		}
+	}
+
+	if !form.Valid() {
+		return entities.ErrInvalidCredentials
+	}
+
+	exists, err := uc.userRepo.Exists(userID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
+
+	filePaths := []string{}
+	if len(files) != 0 {
+		filePaths, err = uploadImages(files)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = uc.postRepo.UpdatePostWithImage(form.Title, form.Content, postID, filePaths)
+	if err != nil {
+		for _, filePath := range filePaths {
+			err := os.Remove(filePath)
+			if err != nil {
+				slog.Error("deleting file", "error", fmt.Sprintf("failed to delete file %s: %v", filePath, err))
+			}
+		}
+		return err
+	}
+	return nil
+}
+
+func (uc *PostUseCase) UpdateComment(form *CommentForm, commentID, userID int) error {
+	// валидировать все данные
+
+	form.CheckField(validator.NotBlank(form.Content), "comment", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Content, validator.TextRX), "comment", "This field must contain only english or russian letters")
+
+	if !form.Valid() {
+		return entities.ErrInvalidCredentials
+	}
+
+	exists, err := uc.userRepo.Exists(userID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
+
+	err = uc.commentRepo.UpdateComment(commentID, form.Content)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func uploadImages(files []*multipart.FileHeader) ([]string, error) {
 	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
 		err := os.MkdirAll(uploadDir, os.ModePerm)
@@ -438,7 +585,7 @@ func uploadImages(files []*multipart.FileHeader) ([]string, error) {
 }
 
 // Удаление поста
-func (uc *PostUseCase) DeletePost(postID int) error {
+func (uc *PostUseCase) DeletePost(postID, userID int) error {
 	exists, err := uc.postRepo.Exists(postID)
 	if err != nil {
 		return err
@@ -447,7 +594,36 @@ func (uc *PostUseCase) DeletePost(postID int) error {
 		return entities.ErrNoRecord
 	}
 
-	return uc.postRepo.DeletePost(postID)
+	post, err := uc.postRepo.GetPost(postID)
+	if err != nil {
+		return err
+	}
+
+	if post.UserID == userID {
+		return uc.postRepo.DeletePost(postID)
+	}
+	return nil
+}
+
+func (uc *PostUseCase) DeleteComment(commentID, userID int) error {
+	comment, err := uc.commentRepo.GetComment(commentID)
+	if err != nil {
+		return err
+	}
+
+	ownerID, err := uc.postRepo.GetPostOwner(comment.PostID)
+	if err != nil {
+		return err
+	}
+
+	if comment.UserID == userID {
+		err = uc.postReactionRepo.RemoveNotification(ownerID, comment.PostID, userID, "comment")
+		if err != nil {
+			return err
+		}
+		return uc.commentRepo.DeleteComment(commentID)
+	}
+	return nil
 }
 
 func (form *postCreateForm) validateCategories(allCategories []*entities.Category) {

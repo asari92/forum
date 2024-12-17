@@ -715,3 +715,39 @@ h1 a:hover {
     }
   }
   
+
+/* Ensure the button has a visible background and text color */
+.delete-button {
+    display: inline-block;            /* Убедитесь, что кнопка отображается как элемент */
+    padding: 10px 20px;               /* Отступы внутри кнопки */
+    font-size: 16px;                  /* Размер шрифта */
+    color: #ffffff;                   /* Белый текст */
+    background-color: #d9534f;        /* Красный фон */
+    border: none;                     /* Без рамки */
+    border-radius: 5px;               /* Закругленные углы */
+    cursor: pointer;                  /* Указатель мыши меняется на руку */
+    transition: background-color 0.3s; /* Плавное изменение фона при наведении */
+}
+
+.delete-button:hover {
+    background-color: #c9302c;        /* Темный красный при наведении */
+}
+
+.delete-button:focus {
+    outline: none;                    /* Убираем фокусное кольцо */
+}
+
+.delete-button:active {
+    background-color: #ac2925;        /* Еще более темный красный при нажатии */
+}
+
+.delete-button:disabled {
+    background-color: #e0e0e0;        /* Серый цвет для неактивной кнопки */
+    color: #bdbdbd;                   /* Тусклый текст для неактивной кнопки */
+    cursor: not-allowed;              /* Курсор не активен */
+}
+
+
+.error-message {
+    color: red;
+}
