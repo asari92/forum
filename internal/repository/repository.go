@@ -39,6 +39,7 @@ type PostReactionRepository interface {
 	RemoveNotification(userID, postID, triggerUserID int, actionType string) error
 	UpdateNotification(userID, postID, triggerUserID int, oldAction, newAction string) error
 	GetNotifications(userID int) ([]*entities.Notification, error)
+	UpdateNotificationStatus(userID int) error
 }
 
 type CommentRepository interface {

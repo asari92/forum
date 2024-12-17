@@ -203,6 +203,28 @@ func (uc *PostUseCase) GetUserPostsDTO(userID, page, pageSize int, paginationURL
 	}, nil
 }
 
+func (uc *PostUseCase) GetUserNotifications(userID int) ([]*entities.Notification, error) {
+	exists, err := uc.userRepo.Exists(userID)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, entities.ErrNoRecord
+	}
+
+	notifications, err := uc.postReactionRepo.GetNotifications(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = uc.postReactionRepo.UpdateNotificationStatus(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return notifications, nil
+}
+
 // Получение постов, которые пользователь лайкнул
 func (uc *PostUseCase) GetUserLikedPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error) {
 	exists, err := uc.userRepo.Exists(userID)

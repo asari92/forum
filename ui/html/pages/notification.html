@@ -1,0 +1,22 @@
+{{define "title"}}Notifications{{end}}
+
+{{define "main"}}
+<h1>Your Notifications</h1>
+
+{{if .Notifications}}
+    <ul>
+        {{range .Notifications}}
+        <li>
+            <strong>Action:</strong> {{.Action}}<br>
+            <strong>Triggered by:</strong> {{.TriggerUserName}}<br>
+            <strong>Post Title:</strong> {{.PostTitle}}<br>
+            <strong>Post Content:</strong> {{.PostContent}}<br>
+            <small>Created at: {{.Created}}</small>
+        </li>
+        <hr>
+        {{end}}
+    </ul>
+{{else}}
+    <p>No notifications available.</p>
+{{end}}
+{{end}}
