@@ -16,6 +16,7 @@ type UserRepository interface {
 }
 
 type PostRepository interface {
+	GetPostOwner(postID int) (int, error)
 	Exists(id int) (bool, error)
 	InsertPostWithCategories(title, content string, userID int, categoryIDs []int, filePaths []string) (int, error)
 	GetPost(postID int) (*entities.Post, error)
@@ -34,6 +35,8 @@ type PostReactionRepository interface {
 	RemoveReaction(userID, postID int) error
 	GetUserReaction(userID, postID int) (*entities.PostReaction, error)
 	GetReactionsCount(postID int) (likes int, dislikes int, err error)
+	AddNotification(userID, postID, triggerUserID int, actionType string) error
+	RemoveNotification(userID, postID, triggerUserID int, actionType string) error
 }
 
 type CommentRepository interface {

@@ -20,6 +20,23 @@ func NewPostSqlite3(db *sql.DB) *PostSqlite3 {
 	}
 }
 
+func (r *PostSqlite3) GetPostOwner(postID int) (int, error) {
+	stmt := `SELECT user_id FROM posts
+	WHERE id = ?
+	`
+	var ownerID int
+	row := r.DB.QueryRow(stmt, postID)
+	err := row.Scan(&ownerID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, entities.ErrNoRecord
+		} else {
+			return 0, err
+		}
+	}
+	return ownerID, nil
+}
+
 func (r *PostSqlite3) GetImagesByPost(postID int) ([]*entities.Image, error) {
 	stmt := `SELECT image_url FROM post_images
 	WHERE post_id = ?`
@@ -408,4 +425,3 @@ func (r *PostSqlite3) DeletePost(postID int) error {
 	_, err := r.DB.Exec(stmt, postID)
 	return err
 }
-

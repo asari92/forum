@@ -14,6 +14,26 @@ func NewPostReactionSqlite3(db *sql.DB) *PostReactionSqlite3 {
 	return &PostReactionSqlite3{DB: db}
 }
 
+func (r *PostReactionSqlite3) AddNotification(userID, postID, triggerUserID int, actionType string) error {
+	stmt := `INSERT INTO notifications (user_id, post_id, action_type, trigger_user_id, created)
+	VALUES (?,?,?,?, datetime('now'))`
+	_, err := r.DB.Exec(stmt, userID, postID, actionType, triggerUserID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *PostReactionSqlite3) RemoveNotification(userID, postID, triggerUserID int, actionType string) error {
+	stmt := `DELETE FROM notifications
+	WHERE user_id = ? AND post_id = ? AND trigger_user_id = ? AND action_type = ?`
+	_, err := r.DB.Exec(stmt, userID, postID, triggerUserID, actionType)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r *PostReactionSqlite3) AddReaction(userID, postID int, isLike bool) error {
 	stmt := `INSERT INTO post_reactions (user_id, post_id, is_like)
               VALUES (?, ?, ?)
