@@ -60,7 +60,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	sessionManager, err := session.NewManager("memory", "gosessionid", 600)
+	sessionManager, err := session.NewManager("memory", "gosessionid", 3600)
 	if err != nil {
 		logger.Error("Failed to create session manager", "error", err)
 		os.Exit(1)

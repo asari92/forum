@@ -251,7 +251,7 @@ func NewRateLimiter(rate int, interval time.Duration) *rateLimiter {
 // Middleware реализует ограничение скорости
 func (app *Application) rateLimiting(next http.Handler) http.Handler {
 	// Создаем Rate Limiter
-	rl := NewRateLimiter(60, 1*time.Minute) // 60 запросов в минуту
+	rl := NewRateLimiter(120, 1*time.Minute) // 60 запросов в минуту
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := r.RemoteAddr

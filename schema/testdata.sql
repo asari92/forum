@@ -1,5 +1,7 @@
 -- Вставка пользователей в таблицу users
 INSERT INTO users (username, email, password, role, created) VALUES
+('admin', 'admin@mail.com', '12345678', 'admin', '2024-01-01 15:00:00'),
+('moder', 'moder@mail.com', '12345678', 'moderator', '2024-01-01 15:00:00'),
 ('MusicLover1', 'musiclover1@example.com', 'password1', 'user', '2024-08-01 15:00:00'),
 ('JazzFanatic', 'jazzfan@example.com', 'password2', 'user', '2024-08-01 15:00:00'),
 ('VinylCollector', 'vinylcollector@example.com', 'password3', 'user', '2024-08-01 15:00:00'),
