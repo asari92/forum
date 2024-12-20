@@ -53,6 +53,7 @@ type templateData struct {
 	Pagination      any
 	Role            string
 	Report          *entities.Report
+	Reports         []*entities.Report
 }
 
 func contains(s []int, e int) bool {

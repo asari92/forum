@@ -227,6 +227,26 @@ func (app *Application) requireModeration(next http.Handler) http.Handler {
 	})
 }
 
+func (app *Application) requireAdministration(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sess := app.SessionFromContext(r)
+		userRole, ok := sess.Get(UserRoleSessionKey).(string)
+		if !ok {
+			app.Logger.Error("cannot extract user role from session in requireAdministration")
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			return
+		}
+		if !(userRole == entities.RoleAdmin) {
+			app.Logger.Warn("user role not moderator or admin in requireAdministration")
+			app.render(w, http.StatusForbidden, Errorpage, nil)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+
 type rateLimiter struct {
 	visitors      sync.Map
 	rate          int           // Количество запросов

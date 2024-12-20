@@ -1,0 +1,30 @@
+{{define "title"}}{{.Header}}{{end}}
+
+{{define "main"}}
+    <h2>{{.Header}}</h2>
+    {{if .Reports}}
+     <table>
+        <tr>
+            <th>ID</th>
+            <th>by moderationID</th>
+            <th>Created</th>
+            <th>Reason</th>
+            <th>Link to post</th>
+        </tr>
+        {{range .Reports}}
+        <tr>
+            <td>#{{.ID}}</td>
+            <td>{{.UserID}}</td>
+            <td><time class="timezone" data-time="{{.Created}}"></time></td>
+            <td>#{{.Reason}}</td>
+            <td><a href='/post/view/{{.PostID}}'>{{.PostID}}</a></td>
+        </tr>
+        {{end}}
+    </table>
+    {{else}}
+        <p>There's nothing to see here... yet!</p>
+    {{end}}
+
+    <!-- Включаем частичный шаблон пагинации -->
+    {{template "pagination" .}}
+{{end}}

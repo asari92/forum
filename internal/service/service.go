@@ -43,6 +43,7 @@ type Reaction interface {
 	UpdatePostReaction(userID, postID int, form *reactionForm) error
 	CreateReport(userID, postID int, reason string) error
 	GetPostReport(postID int) (*entities.Report, error)
+	GetAllPaginatedPostReportsDTO(page, pageSize int, paginationURL string) (*ReportsDTO, error)
 }
 
 type Category interface {

@@ -53,6 +53,7 @@ type PostReactionRepository interface {
 type ReportRepository interface {
 	CreateReport(userID, postID int, reason string) error
 	GetPostReport(postID int) (*entities.Report, error)
+	GetAllPaginatedPostReports(page, pageSize int) ([]*entities.Report, error)
 }
 
 type CommentRepository interface {

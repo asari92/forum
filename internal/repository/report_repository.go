@@ -52,3 +52,41 @@ func (r *ReportSqlite3) GetPostReport(postID int) (*entities.Report, error) {
 
 	return report, nil
 }
+
+func (r *ReportSqlite3) GetAllPaginatedPostReports(page, pageSize int) ([]*entities.Report, error) {
+	offset := (page - 1) * pageSize // Вычисляем смещение для текущей страницы
+
+	stmt := `SELECT id, post_id, user_id, reason, created FROM reports
+             LIMIT ? OFFSET ?`
+
+	rows, err := r.DB.Query(stmt, pageSize+1, offset) // Лимит на одну запись больше
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	reports := []*entities.Report{}
+	var created string
+
+	for rows.Next() {
+		report := &entities.Report{}
+		err = rows.Scan(&report.ID, &report.PostID, &report.UserID, &report.Reason, &created)
+		if err != nil {
+			return nil, err
+		}
+
+		reportTime, err := time.Parse("2006-01-02 15:04:05", created)
+		if err != nil {
+			return nil, err
+		}
+		report.Created = reportTime.Format(time.RFC3339)
+
+		reports = append(reports, report)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return reports, nil
+}

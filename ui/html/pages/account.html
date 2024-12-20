@@ -46,6 +46,12 @@
             <td><a href="/moderation/posts/unapproved">Show unapproved posts</a></td>
         </tr>
         {{end}}
+        {{if eq .Role "admin"}}
+        <tr>
+            <th>All post reports from moderators</th>
+            <td><a href="/administration/reports">Show post reports</a></td>
+        </tr>
+        {{end}}
     </table>
     {{end }}
 {{end}}
