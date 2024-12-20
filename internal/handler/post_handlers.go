@@ -58,6 +58,55 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "post_view.html", data)
 }
 
+func (app *Application) commentedPostView(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	postID, err := validator.ValidateID(r.PathValue("id"))
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	sess := app.SessionFromContext(r)
+	userID, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok {
+		userID = 0
+	}
+
+	postData, err := app.Service.Post.GetCommentedPostDTO(postID, userID)
+	if err != nil {
+		app.Logger.Error("get post data", "error", err)
+		if errors.Is(err, entities.ErrNoRecord) {
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
+		} else {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		}
+		return
+	}
+
+	data := app.newTemplateData(r)
+	data.User = &entities.User{}
+	data.User.ID = userID
+	data.Post = postData.Post
+	data.Comments = postData.Comments
+	data.Categories = postData.Categories
+	data.Images = postData.Images
+	data.ReactionData.Likes = postData.Likes
+	data.ReactionData.Dislikes = postData.Dislikes
+	data.ReactionData.UserReaction = postData.UserReaction
+	data.Form = sess.Get(ReactionFormSessionKey)
+	err = sess.Delete(ReactionFormSessionKey)
+	if err != nil {
+		app.Logger.Error("Session error during delete reaction form", "error", err)
+	}
+
+	app.render(w, http.StatusOK, "post_view.html", data)
+}
+
 func (app *Application) editPostView(w http.ResponseWriter, r *http.Request) {
 	sess := app.SessionFromContext(r)
 	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
@@ -322,7 +371,6 @@ func (app *Application) editPost(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/post/view/%d", postID), http.StatusSeeOther)
 }
 
-
 func (app *Application) editComment(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
@@ -345,7 +393,7 @@ func (app *Application) editComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	content := r.PostForm.Get("content")
-    
+
 	form := app.Service.Post.NewCommentForm()
 	form.Content = content
 
@@ -519,5 +567,5 @@ func (app *Application) userCommentedPostsView(w http.ResponseWriter, r *http.Re
 		HasNextPage:      userCommentedPostsDTO.HasNextPage,
 		PaginationAction: userCommentedPostsDTO.PaginationURL,
 	}
-	app.render(w, http.StatusOK, "user_posts.html", data)
+	app.render(w, http.StatusOK, "commented_posts.html", data)
 }

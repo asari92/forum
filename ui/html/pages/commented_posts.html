@@ -1,0 +1,26 @@
+{{define "title"}}{{.Header}}{{end}}
+
+{{define "main"}}
+    <h2>{{.Header}}</h2>
+    {{if .Posts}}
+     <table>
+        <tr>
+            <th>Title</th>
+            <th>Created</th>
+            <th>ID</th>
+        </tr>
+        {{range .Posts}}
+        <tr>
+            <td><a href='/commented-post/view/{{.ID}}'>{{.Title}}</a></td>
+            <td><time class="timezone" data-time="{{.Created}}"></time></td>
+            <td>#{{.ID}}</td>
+        </tr>
+        {{end}}
+    </table>
+    {{else}}
+        <p>There's nothing to see here... yet!</p>
+    {{end}}
+
+    <!-- Включаем частичный шаблон пагинации -->
+    {{template "pagination" .}}
+{{end}}
