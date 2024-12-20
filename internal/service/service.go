@@ -22,7 +22,7 @@ type Post interface {
 	NewPostCreateForm() postCreateForm
 	NewCommentForm() CommentForm
 	GetPostDTO(postID int, userID int) (*PostDTO, error)
-	// GetUnapprovedPostDTO(postID int, userID int) (*PostDTO, error)
+	GetCommentedPostDTO(postID int, userID int) (*PostDTO, error)
 	GetAllPaginatedPostsDTO(page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetAllPaginatedUnapprovedPostsDTO(page, pageSize int, paginationURL string) (*PostsDTO, error)
 	GetUserPostsDTO(userID, page, pageSize int, paginationURL string) (*PostsDTO, error)

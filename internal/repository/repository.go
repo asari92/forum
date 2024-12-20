@@ -35,6 +35,7 @@ type PostRepository interface {
 	ApprovePost(postID int) error
 	DeletePost(postID int) error
 	UpdatePostWithImage(title, content string, postID int, filePaths []string) error
+	
 }
 
 type PostReactionRepository interface {
