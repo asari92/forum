@@ -28,6 +28,7 @@ type PostRepository interface {
 	GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post, error)
 	DeletePost(postID int) error
 	UpdatePostWithImage(title, content string, postID int, filePaths []string) error
+	
 }
 
 type PostReactionRepository interface {

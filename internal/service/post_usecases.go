@@ -1,6 +1,7 @@
 package service
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
@@ -160,9 +161,6 @@ func (uc *PostUseCase) GetPostDTO(postID int, userID int) (*PostDTO, error) {
 		UserReaction: userReaction,
 	}, nil
 }
-
-
-
 
 func (uc *PostUseCase) GetCommentedPostDTO(postID int, userID int) (*PostDTO, error) {
 	exists, err := uc.postRepo.Exists(postID)
@@ -684,6 +682,23 @@ func (uc *PostUseCase) DeletePost(postID, userID int) error {
 	}
 
 	if post.UserID == userID {
+		filePaths, err := uc.postRepo.GetImagesByPost(postID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+			} else {
+				return err
+			}
+		}
+
+		if len(filePaths) != 0 {
+			for _, filePath := range filePaths {
+				err := os.Remove(filePath.UrlImage)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
 		return uc.postRepo.DeletePost(postID)
 	}
 	return nil

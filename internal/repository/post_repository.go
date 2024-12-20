@@ -37,33 +37,6 @@ func (r *PostSqlite3) GetPostOwner(postID int) (int, error) {
 	return ownerID, nil
 }
 
-func (r *PostSqlite3) GetImagesByPost(postID int) ([]*entities.Image, error) {
-	stmt := `SELECT image_url FROM post_images
-	WHERE post_id = ?`
-	rows, err := r.DB.Query(stmt, postID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, entities.ErrNoRecord
-		} else {
-			return nil, err
-		}
-	}
-	images := []*entities.Image{}
-	for rows.Next() {
-		image := &entities.Image{}
-		err := rows.Scan(&image.UrlImage)
-		if err != nil {
-			return nil, err
-		}
-		images = append(images, image)
-
-	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-	return images, nil
-}
-
 func (r *PostSqlite3) Exists(id int) (bool, error) {
 	var exists bool
 	stmt := "SELECT EXISTS(SELECT true FROM posts WHERE id = ?)"
@@ -425,3 +398,35 @@ func (r *PostSqlite3) DeletePost(postID int) error {
 	_, err := r.DB.Exec(stmt, postID)
 	return err
 }
+
+func (r *PostSqlite3) GetImagesByPost(postID int) ([]*entities.Image, error) {
+	stmt := `SELECT image_url FROM post_images
+	WHERE post_id = ?`
+	rows, err := r.DB.Query(stmt, postID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, entities.ErrNoRecord
+		} else {
+			return nil, err
+		}
+	}
+	images := []*entities.Image{}
+	for rows.Next() {
+		image := &entities.Image{}
+		err := rows.Scan(&image.UrlImage)
+		if err != nil {
+			return nil, err
+		}
+		images = append(images, image)
+
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return images, nil
+}
+
+
+
+
+
