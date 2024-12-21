@@ -89,7 +89,7 @@ func (r *PostReactionSqlite3) RemoveNotification(userID, postID, triggerUserID i
 func (r *PostReactionSqlite3) UpdateNotification(userID, postID, triggerUserID int, oldAction, newAction string) error {
 	stmt := `UPDATE notifications
 	SET action_type = ?, created = datetime('now')
-	WHERE user_id = ? AND post_id = ? AND trigger_user_id = ? AND action_type = ?, comment_id = NULL`
+	WHERE user_id = ? AND post_id = ? AND trigger_user_id = ? AND action_type = ?`
 	_, err := r.DB.Exec(stmt, newAction, userID, postID, triggerUserID, oldAction)
 	if err != nil {
 		return err
