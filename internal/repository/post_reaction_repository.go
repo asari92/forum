@@ -68,7 +68,7 @@ func (r *PostReactionSqlite3) GetNotifications(userID int) ([]*entities.Notifica
 
 func (r *PostReactionSqlite3) AddNotification(userID, postID, triggerUserID int, actionType string, commentID *int) error {
 	stmt := `INSERT INTO notifications (user_id, post_id, comment_id, action_type, trigger_user_id, created)
-	VALUES (?,?,?,?, datetime('now'))`
+	VALUES (?,?,?,?,?, datetime('now'))`
 	_, err := r.DB.Exec(stmt, userID, postID, commentID, actionType, triggerUserID)
 	if err != nil {
 		return err
@@ -89,7 +89,7 @@ func (r *PostReactionSqlite3) RemoveNotification(userID, postID, triggerUserID i
 func (r *PostReactionSqlite3) UpdateNotification(userID, postID, triggerUserID int, oldAction, newAction string) error {
 	stmt := `UPDATE notifications
 	SET action_type = ?, created = datetime('now')
-	WHERE user_id = ? AND post_id = ? AND trigger_user_id = ? AND action_type = ?`
+	WHERE user_id = ? AND post_id = ? AND trigger_user_id = ? AND action_type = ?, comment_id = NULL`
 	_, err := r.DB.Exec(stmt, newAction, userID, postID, triggerUserID, oldAction)
 	if err != nil {
 		return err
