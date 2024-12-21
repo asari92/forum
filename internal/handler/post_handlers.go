@@ -350,7 +350,6 @@ func (app *Application) editPost(w http.ResponseWriter, r *http.Request) {
 
 	}
 	postID, err := validator.ValidateID(r.PathValue("post_id"))
-
 	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
@@ -404,14 +403,12 @@ func (app *Application) editComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	postID, err := validator.ValidateID(r.PostForm.Get("post_id"))
-
 	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 
 	commentID, err := validator.ValidateID(r.PostForm.Get("comment_id"))
-
 	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
