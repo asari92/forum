@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-
 	"forum/internal/entities"
 	"forum/internal/repository"
 	"forum/pkg/validator"
@@ -78,13 +76,15 @@ func (ruc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reactio
 		if !form.Valid() {
 			return entities.ErrInvalidData
 		}
-		err := ruc.commentRepo.InsertComment(postID, userID, form.Comment)
+		commentId, err := ruc.commentRepo.InsertComment(postID, userID, form.Comment)
 		if err != nil {
 			return err
 		}
-		err = ruc.postReactionRepo.AddNotification(ownerID, postID, userID, "comment")
-		if err != nil {
-			return err
+		if ownerID != userID {
+			err = ruc.postReactionRepo.AddNotification(ownerID, postID, userID, "comment", &commentId)
+			if err != nil {
+				return err
+			}
 		}
 
 	} else if form.PostIsLike != "" {
@@ -108,7 +108,6 @@ func (ruc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reactio
 			if err != nil {
 				return err
 			}
-			fmt.Println(action)
 			err = ruc.postReactionRepo.RemoveNotification(ownerID, postID, userID, action)
 			if err != nil {
 				return err
@@ -117,9 +116,11 @@ func (ruc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reactio
 		} else {
 
 			if userReaction == nil {
-				err = ruc.postReactionRepo.AddNotification(ownerID, postID, userID, action)
-				if err != nil {
-					return err
+				if ownerID != userID {
+					err = ruc.postReactionRepo.AddNotification(ownerID, postID, userID, action, nil)
+					if err != nil {
+						return err
+					}
 				}
 			} else if userReaction.IsLike != like {
 				var oldAction string
@@ -128,10 +129,11 @@ func (ruc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reactio
 				} else {
 					oldAction = "dislike"
 				}
-
-				err = ruc.postReactionRepo.UpdateNotification(ownerID, postID, userID, oldAction, action)
-				if err != nil {
-					return err
+				if ownerID != userID {
+					err = ruc.postReactionRepo.UpdateNotification(ownerID, postID, userID, oldAction, action)
+					if err != nil {
+						return err
+					}
 				}
 
 			}

@@ -4,18 +4,26 @@
 <h1>Your Notifications</h1>
 
 {{if .Notifications}}
-    <ul>
+    <table>
+        <tr>
+            <th>Action</th>
+            <th>Triggered By</th>
+            <th>Post</th>
+            <th>Notification Time</th>
+        </tr>
         {{range .Notifications}}
-        <li>
-            <strong>Action:</strong> {{.Action}}<br>
-            <strong>Triggered by:</strong> {{.TriggerUserName}}<br>
-            <strong>Post Title:</strong> {{.PostTitle}}<br>
-            <strong>Post Content:</strong> {{.PostContent}}<br>
-            <small>Created at: {{.Created}}</small>
-        </li>
-        <hr>
+        <tr>
+            <td class="action-column">{{.Action}}</td>
+            <td class="triggered-by-column">{{.TriggerUserName}}</td>
+            <td>
+                <a href='/post/view/{{.PostID}}'>
+                    {{.PostTitle}}
+                </a>
+            </td>
+            <td><time class="timezone" data-time="{{.Created}}"></time></td>
+        </tr>
         {{end}}
-    </ul>
+    </table>
 {{else}}
     <p>No notifications available.</p>
 {{end}}

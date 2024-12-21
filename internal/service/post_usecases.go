@@ -299,11 +299,6 @@ func (uc *PostUseCase) GetUserNotifications(userID int) ([]*entities.Notificatio
 		return nil, err
 	}
 
-	err = uc.postReactionRepo.UpdateNotificationStatus(userID)
-	if err != nil {
-		return nil, err
-	}
-
 	return notifications, nil
 }
 
@@ -646,6 +641,12 @@ func (uc *PostUseCase) UpdateComment(form *CommentForm, commentID, userID int) e
 	if err != nil {
 		return err
 	}
+
+	err = uc.postReactionRepo.UpdateNotificationTime(commentID)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -750,16 +751,11 @@ func (uc *PostUseCase) DeleteComment(commentID, userID int) error {
 		return err
 	}
 
-	ownerID, err := uc.postRepo.GetPostOwner(comment.PostID)
 	if err != nil {
 		return err
 	}
 
 	if comment.UserID == userID {
-		err = uc.postReactionRepo.RemoveNotification(ownerID, comment.PostID, userID, "comment")
-		if err != nil {
-			return err
-		}
 		return uc.commentRepo.DeleteComment(commentID)
 	}
 	return nil

@@ -54,6 +54,7 @@ func main() {
 		os.Exit(1)
 	}
 
+
 	templateCache, err := handler.NewTemplateCache()
 	if err != nil {
 		logger.Error("Failed to create template cache", "error", err)

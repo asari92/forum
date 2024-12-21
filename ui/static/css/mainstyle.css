@@ -751,3 +751,77 @@ h1 a:hover {
 .error-message {
     color: red;
 }
+
+/* Общие стили для таблицы */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif; /* Четкий стандартный шрифт */
+    background-color: #ffffff; /* Белый фон для лучшей контрастности */
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 2px solid #ddd;
+    font-size: 16px;
+}
+
+th {
+    background-color: #333333; /* Очень темный фон */
+    color: #ffffff; /* Белый текст для контраста */
+    font-weight: bold;
+}
+
+td {
+    color: #000000; /* Черный текст */
+    background-color: #f9f9f9; /* Светло-серый фон */
+}
+
+/* Стиль для столбца Action */
+.action-column {
+    font-weight: bold;
+    color: #000000; /* Черный текст */
+    background-color: #e0f7fa; /* Очень светло-голубой фон */
+    padding: 10px;
+    border-radius: 4px;
+}
+
+/* Стиль для столбца Triggered By */
+.triggered-by-column {
+    color: #000000; /* Черный текст */
+    font-style: normal;
+    font-weight: bold;
+}
+
+/* Стили для ссылок */
+a {
+    color: #0000ff; /* Чисто синий цвет */
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: #00008b; /* Темно-синий цвет при наведении */
+}
+
+/* Стили для текста времени */
+time {
+    color: #000000; /* Черный текст */
+    font-size: 16px;
+}
+
+/* Убираем любые эффекты размытия или прозрачности */
+body, table, th, td, a, time {
+    opacity: 1; /* Полная непрозрачность */
+    filter: none; /* Убираем возможные фильтры */
+    text-shadow: none; /* Убираем тени */
+}
+
+/* Увеличение четкости текста */
+* {
+    -webkit-font-smoothing: antialiased; /* Сглаживание текста */
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility; /* Оптимизация рендеринга */
+}

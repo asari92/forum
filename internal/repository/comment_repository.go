@@ -25,15 +25,19 @@ func (r *CommentSqlite3) Exists(id int) (bool, error) {
 	return exists, err
 }
 
-func (c *CommentSqlite3) InsertComment(postID, userID int, content string) error {
+func (c *CommentSqlite3) InsertComment(postID, userID int, content string) (int, error) {
 	stmt := `INSERT INTO comments (post_id, user_id,content, created)
 	VALUES (?,?,?, datetime('now'))`
-	_, err := c.DB.Exec(stmt, postID, userID, content)
+	res, err := c.DB.Exec(stmt, postID, userID, content)
 	if err != nil {
-		return err
+		return 0, err
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
 	}
 
-	return nil
+	return int(id), nil
 }
 
 func (r *CommentSqlite3) GetUserCommentsByPosts(postId, userId int) ([]*entities.Comment, error) {
@@ -147,7 +151,7 @@ func (r *CommentSqlite3) GetComment(commentId int) (*entities.Comment, error) {
 	row := r.DB.QueryRow(stmt, commentId)
 	c := &entities.Comment{}
 
-	err := row.Scan(&c.ID, &c.PostID, &c.UserID,&c.Content)
+	err := row.Scan(&c.ID, &c.PostID, &c.UserID, &c.Content)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, entities.ErrNoRecord

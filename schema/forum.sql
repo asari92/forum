@@ -13,11 +13,12 @@ CREATE TABLE IF NOT EXISTS notifications (
     user_id INTEGER,          -- Владелец поста, который получает уведомление
     post_id INTEGER,          -- ID поста
     action_type TEXT,         -- 'like', 'dislike', или 'comment'
+    comment_id INTEGER,
     trigger_user_id INTEGER,  -- ID пользователя, который вызвал уведомление
-    status TEXT DEFAULT 'unread', -- unread/read
     created TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
     FOREIGN KEY (trigger_user_id) REFERENCES users(id) ON DELETE CASCADE
 
 );

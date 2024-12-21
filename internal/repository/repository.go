@@ -35,7 +35,6 @@ type PostRepository interface {
 	ApprovePost(postID int) error
 	DeletePost(postID int) error
 	UpdatePostWithImage(title, content string, postID int, filePaths []string) error
-	
 }
 
 type PostReactionRepository interface {
@@ -43,11 +42,11 @@ type PostReactionRepository interface {
 	RemoveReaction(userID, postID int) error
 	GetUserReaction(userID, postID int) (*entities.PostReaction, error)
 	GetReactionsCount(postID int) (likes int, dislikes int, err error)
-	AddNotification(userID, postID, triggerUserID int, actionType string) error
+	AddNotification(userID, postID, triggerUserID int, actionType string, commentID *int) error
 	RemoveNotification(userID, postID, triggerUserID int, actionType string) error
 	UpdateNotification(userID, postID, triggerUserID int, oldAction, newAction string) error
 	GetNotifications(userID int) ([]*entities.Notification, error)
-	UpdateNotificationStatus(userID int) error
+	UpdateNotificationTime(commentID int) error
 }
 
 type ReportRepository interface {
@@ -58,7 +57,7 @@ type ReportRepository interface {
 
 type CommentRepository interface {
 	Exists(id int) (bool, error)
-	InsertComment(postID, userID int, content string) error
+	InsertComment(postID, userID int, content string) (int, error)
 	GetComments(postID int) ([]*entities.Comment, error)
 	GetUserCommentsByPosts(postId, userId int) ([]*entities.Comment, error)
 	UpdateComment(commentID int, content string) error
