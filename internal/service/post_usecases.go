@@ -572,15 +572,25 @@ func (uc *PostUseCase) UpdatePostWithImage(form *postCreateForm, postID int, fil
 
 	form.CheckField(validator.Matches(form.Title, validator.TextRX), "title", "This field must contain only english or russian letters")
 	form.CheckField(validator.Matches(form.Content, validator.TextRX), "content", "This field must contain only english or russian letters")
+	allCategories, err := uc.categoryRepo.GetAll()
+	if err != nil {
+		fmt.Println(1)
+		return err
+	}
 
+	form.validateCategories(allCategories)
 	if len(files) != 0 {
 		err := validator.ValidateImageFiles(files)
 		if err != nil {
+			fmt.Println(2)
+
 			if err.Error() == entities.ErrUnsupportedFileType.Error() {
 				form.AddFieldError("image", "The project requires handling JPEG, PNG, GIF images")
 			} else if err.Error() == entities.ErrFileSizeTooLarge.Error() {
 				form.AddFieldError("image", "Maximum file size limit is 20 MB")
 			} else {
+				fmt.Println(3)
+
 				return err
 			}
 		}
@@ -606,14 +616,17 @@ func (uc *PostUseCase) UpdatePostWithImage(form *postCreateForm, postID int, fil
 		}
 	}
 
-	err = uc.postRepo.UpdatePostWithImage(form.Title, form.Content, postID, filePaths)
+	err = uc.postRepo.UpdatePostWithImage(form.Title, form.Content, postID, filePaths, form.Categories)
 	if err != nil {
+
 		for _, filePath := range filePaths {
 			err := os.Remove(filePath)
 			if err != nil {
+
 				slog.Error("deleting file", "error", fmt.Sprintf("failed to delete file %s: %v", filePath, err))
 			}
 		}
+
 		return err
 	}
 	return nil

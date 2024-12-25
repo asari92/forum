@@ -12,7 +12,7 @@
             <label class='error'>{{.}}</label>
         {{end}}
         {{end}}
-        <input type='text' name='title' value='{{if .Form}}{{.Form.Title}}{{else}}{{if .Post}}{{.Post.Title}}{{end}}{{end}}'>
+        <input type='text' name='title' value='{{if .Form}}{{.Form.Title}}{{end}}'>
     </div>
     <div>
         <label>Content:</label>
@@ -21,7 +21,22 @@
             <label class='error'>{{.}}</label>
         {{end}}
         {{end}}
-        <textarea name='content'>{{if .Form}}{{.Form.Content}}{{else}}{{if .Post}}{{.Post.Content}}{{end}}{{end}}</textarea>
+        <textarea name='content'>{{if .Form}}{{.Form.Content}}{{end}}</textarea>
+    </div>
+    <div>
+        <label>Categories:</label>
+        {{if .Form}}
+        {{with .Form.FieldErrors.categories}}
+            <label class='error'>{{.}}</label>
+        {{end}}
+        {{end}}
+        <!-- Динамическое отображение категорий -->
+        {{range .Categories}}
+        <div>
+            <input type='checkbox' name='categories' value='{{.ID}}' 
+            {{if (contains $.Form.Categories .ID)}}checked{{end}}> {{.Name}}
+        </div>
+        {{end}}
     </div>
    
         <div>

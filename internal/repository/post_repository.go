@@ -99,7 +99,7 @@ func (r *PostSqlite3) InsertPostWithCategories(title, content string, userID int
 	return int(postID), nil
 }
 
-func (r *PostSqlite3) UpdatePostWithImage(title, content string, postID int, filePaths []string) error {
+func (r *PostSqlite3) UpdatePostWithImage(title, content string, postID int, filePaths []string, categoryIDs []int) error {
 	// Начинаем транзакцию
 	tx, err := r.DB.Begin()
 	if err != nil {
@@ -120,6 +120,27 @@ func (r *PostSqlite3) UpdatePostWithImage(title, content string, postID int, fil
 	_, err = tx.Exec(stmt, title, content, postID)
 	if err != nil {
 		return err
+	}
+
+	stmt = `DELETE FROM post_categories
+		WHERE post_id = ?`
+
+	_, err = tx.Exec(stmt, postID)
+	if err != nil {
+		fmt.Println(true)
+		return nil
+	}
+
+	stmt = `INSERT INTO post_categories (category_id, post_id)
+	VALUES (?,?)`
+
+	for _, categoryId := range categoryIDs {
+		_, err := tx.Exec(stmt, categoryId, postID)
+		if err != nil {
+
+			fmt.Println(false)
+			return err
+		}
 	}
 
 	if len(filePaths) != 0 {

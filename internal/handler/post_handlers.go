@@ -142,6 +142,13 @@ func (app *Application) editPostView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	categories, err := app.Service.Category.GetAll() //дальше больше надо будет передавать
+	if err != nil {
+		app.Logger.Error("get all categories", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
 	postID, err := validator.ValidateID(r.PathValue("post_id"))
 	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
@@ -156,6 +163,14 @@ func (app *Application) editPostView(w http.ResponseWriter, r *http.Request) {
 
 	// Передаем данные в шаблон
 	data := app.newTemplateData(r)
+	data.Categories = categories
+	form := app.Service.Post.NewPostCreateForm()
+	for _, category := range postDTO.Categories {
+		form.Categories = append(form.Categories, category.ID)
+	}
+	form.Title = postDTO.Post.Title
+	form.Content = postDTO.Post.Content
+	data.Form = form
 	data.Post = postDTO.Post
 
 	app.render(w, http.StatusOK, "editpost.html", data)
@@ -349,6 +364,12 @@ func (app *Application) editPost(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
+	categories, err := app.Service.Category.GetAll() //дальше больше надо будет передавать
+	if err != nil {
+		app.Logger.Error("get all categories", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
 	postID, err := validator.ValidateID(r.PathValue("post_id"))
 	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
@@ -364,9 +385,20 @@ func (app *Application) editPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var categoryIDs []int
+	for _, id := range r.PostForm["categories"] {
+		intID, err := validator.ValidateID(id)
+		if err != nil {
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
+			return
+		}
+		categoryIDs = append(categoryIDs, intID)
+	}
+
 	form := app.Service.Post.NewPostCreateForm()
 	form.Title = r.PostForm.Get("title")
 	form.Content = r.PostForm.Get("content")
+	form.Categories = categoryIDs
 	files := r.MultipartForm.File["image"]
 
 	err = app.Service.Post.UpdatePostWithImage(&form, postID, files, userId)
@@ -374,6 +406,8 @@ func (app *Application) editPost(w http.ResponseWriter, r *http.Request) {
 		app.Logger.Error("update post and image", "error", err)
 		if errors.Is(err, entities.ErrInvalidCredentials) {
 			data := app.newTemplateData(r)
+			data.Categories = categories
+
 			data.Form = form
 			data.Post = &entities.Post{}
 			data.Post.ID = postID
