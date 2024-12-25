@@ -407,7 +407,9 @@ func (app *Application) editPost(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, entities.ErrInvalidCredentials) {
 			data := app.newTemplateData(r)
 			data.Categories = categories
-
+			if len(form.Categories) == 0 {
+				form.Categories = []int{DefaultCategory}
+			}
 			data.Form = form
 			data.Post = &entities.Post{}
 			data.Post.ID = postID
