@@ -15,6 +15,7 @@ type UserRepository interface {
 	UpdatePassword(id int, currentPassword, newPassword string) error
 	InsertModerationRequest(userId int, reason string) error
 	ExistsModerationRequest(userId int) (bool, error)
+	ListModeratorApplicants() ([]*entities.ModeratorApplicant, error)
 }
 
 type PostRepository interface {

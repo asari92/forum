@@ -179,3 +179,41 @@ func (r *UserSqlite3) ExistsModerationRequest(userId int) (bool, error) {
 	return exists, err
 
 }
+
+func (r *UserSqlite3) ListModeratorApplicants() ([]*entities.ModeratorApplicant, error) {
+	stmt := `SELECT u.id, reason, m.created, username  FROM moderation_requests as m
+	INNER JOIN users as u ON m.user_id = u.id`
+	rows, err := r.DB.Query(stmt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, entities.ErrNoRecord
+		} else {
+			return nil, err
+		}
+	}
+	defer rows.Close()
+
+	var Applicants []*entities.ModeratorApplicant
+	for rows.Next() {
+		applicant := &entities.ModeratorApplicant{}
+		var created string
+
+		if err := rows.Scan(&applicant.ID, &applicant.Reason, &created, &applicant.Username); err != nil {
+			return nil, err
+		}
+
+		commentTime, err := time.Parse("2006-01-02 15:04:05", created)
+		if err != nil {
+			return nil, err
+		}
+
+		applicant.Created = commentTime.Format(time.RFC3339)
+		Applicants = append(Applicants, applicant)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return Applicants, nil
+
+}
