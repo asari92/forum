@@ -66,16 +66,6 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("GET /post/create", protected.ThenFunc(app.postCreateView))
 	mux.Handle("POST /post/create", protected.ThenFunc(app.postCreate))
 
-	mux.Handle("GET /moderation-application", protected.ThenFunc(app.moderationApplicationView))
-	mux.Handle("POST /moderation-application", protected.ThenFunc(app.createModerationApplication))
-	mux.Handle("GET /moderation-applicants", protected.ThenFunc(app.moderationApplicantsView))
-	mux.Handle("GET /moderators/list", protected.ThenFunc(app.moderatorsView))
-	mux.Handle("POST /moderators/delete", protected.ThenFunc(app.deleteModerator))
-
-	
-
-
-
 	mux.Handle("GET /comment/edit", protected.ThenFunc(app.editCommentView))
 	mux.Handle("POST /comment/edit", protected.ThenFunc(app.editComment))
 	mux.Handle("POST /comment/delete", protected.ThenFunc(app.DeleteComment))
@@ -91,6 +81,9 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("POST /user/commented", protected.ThenFunc(app.userCommentedPostsView))
 	mux.Handle("POST /user/logout", protected.ThenFunc(app.userLogout))
 
+	mux.Handle("GET /moderation-application", protected.ThenFunc(app.moderationApplicationView))
+	mux.Handle("POST /moderation-application", protected.ThenFunc(app.createModerationApplication))
+
 	moderated := protected.Append(app.requireModeration)
 	mux.Handle("GET /moderation/posts/unapproved", moderated.ThenFunc(app.moderationUnapprovedPostsView))
 	mux.Handle("POST /moderation/approve/{post_id}", protected.ThenFunc(app.moderationApprovePost))
@@ -98,6 +91,9 @@ func (app *Application) Routes() http.Handler {
 
 	administrated := protected.Append(app.requireAdministration)
 	mux.Handle("GET /administration/reports", administrated.ThenFunc(app.administrationReportsView))
+	mux.Handle("GET /moderation-applicants", administrated.ThenFunc(app.moderationApplicantsView))
+	mux.Handle("GET /moderators/list", administrated.ThenFunc(app.moderatorsView))
+	mux.Handle("POST /moderators/delete", administrated.ThenFunc(app.deleteModerator))
 
 	standard := New(app.recoverPanic, app.logRequest, secureHeaders, app.rateLimiting)
 	return standard.Then(mux)
