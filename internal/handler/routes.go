@@ -68,6 +68,11 @@ func (app *Application) Routes() http.Handler {
 
 	mux.Handle("GET /moderation-application", protected.ThenFunc(app.moderationApplicationView))
 	mux.Handle("POST /moderation-application", protected.ThenFunc(app.createModerationApplication))
+	mux.Handle("GET /moderators/list", protected.ThenFunc(app.moderatorsView))
+	mux.Handle("POST /moderators/delete", protected.ThenFunc(app.deleteModerator))
+
+	
+
 
 
 	mux.Handle("GET /comment/edit", protected.ThenFunc(app.editCommentView))

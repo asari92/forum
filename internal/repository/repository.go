@@ -16,6 +16,8 @@ type UserRepository interface {
 	InsertModerationRequest(userId int, reason string) error
 	ExistsModerationRequest(userId int) (bool, error)
 	ListModeratorApplicants() ([]*entities.ModeratorApplicant, error)
+	GetModerators() ([]*entities.User, error)
+	DeleteModerator(userId int) error
 }
 
 type PostRepository interface {

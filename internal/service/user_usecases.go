@@ -38,6 +38,7 @@ func NewUserUseCase(userRepo repository.UserRepository) *UserUseCase {
 func (uc *UserUseCase) NewUserAuthForm() userAuthForm {
 	return userAuthForm{}
 }
+
 func (uc *UserUseCase) NewModerationForm() ModerationRequestForm {
 	return ModerationRequestForm{}
 }
@@ -100,4 +101,12 @@ func (u *UserUseCase) CreateModerationRequest(userId int, form *ModerationReques
 	}
 
 	return nil
+}
+
+func (u *UserUseCase) GetModerators() ([]*entities.User, error) {
+	return u.userRepo.GetModerators()
+}
+
+func (u *UserUseCase) DeleteModerator(userId int) error {
+	return u.userRepo.DeleteModerator(userId)
 }

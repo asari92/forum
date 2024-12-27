@@ -48,6 +48,7 @@ type templateData struct {
 	Flash           string
 	IsAuthenticated bool
 	User            *entities.User
+	Users           []*entities.User
 	ReactionData    *ReactionData
 	Header          string
 	Pagination      any

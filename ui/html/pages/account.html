@@ -61,6 +61,12 @@
             <td><a href="/administration/reports">Show post reports</a></td>
         </tr>
         {{end}}
+        {{if eq .Role "admin"}}
+        <tr>
+            <th>All moderators</th>
+            <td><a href="/moderators/list">Show moderators list</a></td>
+        </tr>
+        {{end}}
     </table>
     {{end }}
 {{end}}

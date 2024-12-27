@@ -18,6 +18,8 @@ type User interface {
 	UpdatePassword(userID int, form *accountPasswordUpdateForm) error
 	CreateModerationRequest(userId int, form *ModerationRequestForm) error
 	NewModerationForm() ModerationRequestForm
+	GetModerators() ([]*entities.User, error)
+	DeleteModerator(userId int) error
 }
 
 type Post interface {

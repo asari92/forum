@@ -177,7 +177,6 @@ func (r *UserSqlite3) ExistsModerationRequest(userId int) (bool, error) {
 	stmt := `SELECT EXISTS(SELECT 1 FROM moderation_requests WHERE user_id = ?)`
 	err := r.DB.QueryRow(stmt, userId).Scan(&exists)
 	return exists, err
-
 }
 
 func (r *UserSqlite3) ListModeratorApplicants() ([]*entities.ModeratorApplicant, error) {
@@ -215,5 +214,42 @@ func (r *UserSqlite3) ListModeratorApplicants() ([]*entities.ModeratorApplicant,
 		return nil, err
 	}
 	return Applicants, nil
+}
 
+func (r *UserSqlite3) GetModerators() ([]*entities.User, error) {
+	stmt := `SELECT id, username, email, role FROM users
+	WHERE role = ?`
+	rows, err := r.DB.Query(stmt, entities.RoleModerator)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, entities.ErrNoRecord
+		} else {
+			return nil, err
+		}
+	}
+	defer rows.Close()
+
+	var users []*entities.User
+	for rows.Next() {
+		user := &entities.User{}
+
+		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Role); err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
+func (r *UserSqlite3) DeleteModerator(userId int) error {
+	stmt := `UPDATE users
+	SET role = ?
+	WHERE id = ?`
+	_, err := r.DB.Exec(stmt, entities.RoleUser, userId)
+	return err
 }

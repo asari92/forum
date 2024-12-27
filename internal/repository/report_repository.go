@@ -56,7 +56,8 @@ func (r *ReportSqlite3) GetPostReport(postID int) (*entities.Report, error) {
 func (r *ReportSqlite3) GetAllPaginatedPostReports(page, pageSize int) ([]*entities.Report, error) {
 	offset := (page - 1) * pageSize // Вычисляем смещение для текущей страницы
 
-	stmt := `SELECT id, post_id, user_id, reason, created FROM reports
+	stmt := `SELECT reports.id, post_id, username, reason, reports.created FROM reports
+	JOIN users ON reports.user_id = users.id
              LIMIT ? OFFSET ?`
 
 	rows, err := r.DB.Query(stmt, pageSize+1, offset) // Лимит на одну запись больше
@@ -70,7 +71,7 @@ func (r *ReportSqlite3) GetAllPaginatedPostReports(page, pageSize int) ([]*entit
 
 	for rows.Next() {
 		report := &entities.Report{}
-		err = rows.Scan(&report.ID, &report.PostID, &report.UserID, &report.Reason, &created)
+		err = rows.Scan(&report.ID, &report.PostID, &report.ReporterName, &report.Reason, &created)
 		if err != nil {
 			return nil, err
 		}

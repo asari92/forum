@@ -3,13 +3,12 @@ package handler
 import (
 	"context"
 	"fmt"
+	"forum/internal/entities"
+	"forum/internal/session"
 	"net/http"
 	"runtime/debug"
 	"sync"
 	"time"
-
-	"forum/internal/entities"
-	"forum/internal/session"
 )
 
 // Middleware type for handling HTTP requests
@@ -245,7 +244,6 @@ func (app *Application) requireAdministration(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
 
 type rateLimiter struct {
 	visitors      sync.Map
