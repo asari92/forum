@@ -13,6 +13,8 @@ type UserRepository interface {
 	Authenticate(email, password string) (*entities.User, error)
 	Get(id int) (*entities.User, error)
 	UpdatePassword(id int, currentPassword, newPassword string) error
+	InsertModerationRequest(userId int, reason string) error
+	ExistsModerationRequest(userId int) (bool, error)
 }
 
 type PostRepository interface {

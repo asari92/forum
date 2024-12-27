@@ -19,4 +19,7 @@ var (
 
 	ErrUnsupportedFileType = errors.New("unsupported file type")
 	ErrFileSizeTooLarge    = errors.New("file size larger than max")
+
+	ErrFormAlreadySubmitted = errors.New("the form has already been submitted")
+
 )

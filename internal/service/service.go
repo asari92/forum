@@ -16,6 +16,8 @@ type User interface {
 	UserExists(id int) (bool, error)
 	GetUserByID(id int) (*entities.User, error)
 	UpdatePassword(userID int, form *accountPasswordUpdateForm) error
+	CreateModerationRequest(userId int, form *ModerationRequestForm) error
+	NewModerationForm() ModerationRequestForm
 }
 
 type Post interface {

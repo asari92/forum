@@ -161,3 +161,21 @@ func (r *UserSqlite3) UpdatePassword(id int, currentPassword, newPassword string
 	_, err = r.DB.Exec(stmt, string(newHashedPassword), id)
 	return err
 }
+
+func (r *UserSqlite3) InsertModerationRequest(userId int, reason string) error {
+	stmt := `INSERT INTO moderation_requests (user_id, created, reason)
+	VALUES (?, datetime('now'), ?)`
+	_, err := r.DB.Exec(stmt, userId, reason)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *UserSqlite3) ExistsModerationRequest(userId int) (bool, error) {
+	var exists bool
+	stmt := `SELECT EXISTS(SELECT 1 FROM moderation_requests WHERE user_id = ?)`
+	err := r.DB.QueryRow(stmt, userId).Scan(&exists)
+	return exists, err
+
+}

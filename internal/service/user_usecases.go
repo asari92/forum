@@ -17,6 +17,11 @@ type userAuthForm struct {
 	validator.Validator
 }
 
+type ModerationRequestForm struct {
+	Reason string
+	validator.Validator
+}
+
 type accountPasswordUpdateForm struct {
 	CurrentPassword         string
 	NewPassword             string
@@ -32,6 +37,9 @@ func NewUserUseCase(userRepo repository.UserRepository) *UserUseCase {
 
 func (uc *UserUseCase) NewUserAuthForm() userAuthForm {
 	return userAuthForm{}
+}
+func (uc *UserUseCase) NewModerationForm() ModerationRequestForm {
+	return ModerationRequestForm{}
 }
 
 func (uc *UserUseCase) NewAccountPasswordUpdateForm() accountPasswordUpdateForm {
@@ -68,4 +76,28 @@ func (u *UserUseCase) UpdatePassword(userID int, form *accountPasswordUpdateForm
 	}
 
 	return u.userRepo.UpdatePassword(userID, form.CurrentPassword, form.NewPassword)
+}
+
+func (u *UserUseCase) CreateModerationRequest(userId int, form *ModerationRequestForm) error {
+	exists, err := u.userRepo.ExistsModerationRequest(userId)
+	if err != nil {
+		return err
+	}
+	if exists {
+		form.CheckField(false, "user", "The form has already been submitted")
+		return entities.ErrFormAlreadySubmitted
+	}
+
+	form.CheckField(validator.NotBlank(form.Reason), "reason", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Reason, validator.TextRX), "reason", "This field must contain only english or russian letters")
+	if !form.Valid() {
+		return entities.ErrInvalidData
+	}
+
+	err = u.userRepo.InsertModerationRequest(userId, form.Reason)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

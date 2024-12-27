@@ -125,3 +125,73 @@ func (app *Application) moderationReportPost(w http.ResponseWriter, r *http.Requ
 
 	http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 }
+
+func (app *Application) moderationApplicationView(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in editPostView")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	userRole, ok := sess.Get(UserRoleSessionKey).(string)
+	if !ok {
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+
+	}
+	data := app.newTemplateData(r)
+
+	if userRole == entities.RoleUser {
+		app.render(w, http.StatusOK, "moderation_application.html", data)
+
+	}
+
+}
+
+func (app *Application) createModerationApplication(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in editPostView")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	userRole, ok := sess.Get(UserRoleSessionKey).(string)
+	if !ok {
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+
+	}
+
+	form := app.Service.User.NewModerationForm()
+	form.Reason = r.PostForm.Get("reason")
+
+	if userRole == entities.RoleUser {
+		err := app.Service.User.CreateModerationRequest(userId, &form)
+		if err != nil {
+			if errors.Is(err, entities.ErrInvalidData) || errors.Is(err, entities.ErrFormAlreadySubmitted) {
+				data := app.newTemplateData(r)
+				data.Form = form
+				app.render(w, http.StatusUnprocessableEntity, "moderation_application.html", data)
+			} else {
+				app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			}
+			return
+
+		}
+
+	}
+
+	http.Redirect(w, r, "/account/view", http.StatusSeeOther)
+
+}
