@@ -7,7 +7,16 @@
         <tr>
             <th>Role</th>
             <td>{{.Role}}</td>
+        </tr> 
+        {{if eq .Role "user"}}
+        <tr>
+           
+
+            <th>Moderation Application</th>
+            <td><a href="/moderation-application">Apply to be a moderator</a></td>
         </tr>
+        {{end}}
+
         <tr>
             <th>Username</th>
             <td>{{.Username}}</td>

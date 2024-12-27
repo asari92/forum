@@ -107,6 +107,15 @@ CREATE TABLE IF NOT EXISTS users(
   created TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS moderation_requests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  user_id INTEGER NOT NULL,
+  created TEXT NOT NULL, 
+  reason TEXT NOT NULL, 
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+
+);
+
 CREATE UNIQUE INDEX IF NOT EXISTS users_uc_email ON users(email);
 CREATE UNIQUE INDEX IF NOT EXISTS users_uc_username ON users(username);
 

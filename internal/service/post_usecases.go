@@ -735,7 +735,12 @@ func (uc *PostUseCase) DeletePost(postID, userID int) error {
 		return err
 	}
 
-	if post.UserID == userID {
+	user, err := uc.userRepo.Get(userID)
+	if err != nil {
+		return err
+	}
+
+	if (post.UserID == userID) || (user.Role == entities.RoleModerator) || (user.Role == entities.RoleAdmin) {
 		filePaths, err := uc.postRepo.GetImagesByPost(postID)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -768,7 +773,12 @@ func (uc *PostUseCase) DeleteComment(commentID, userID int) error {
 		return err
 	}
 
-	if comment.UserID == userID {
+	user, err := uc.userRepo.Get(userID)
+	if err != nil {
+		return err
+	}
+
+	if (comment.UserID == userID) || (user.Role == entities.RoleAdmin) {
 		return uc.commentRepo.DeleteComment(commentID)
 	}
 	return nil

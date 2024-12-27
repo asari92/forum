@@ -107,14 +107,14 @@ func (r *UserSqlite3) Authenticate(email, password string) (*entities.User, erro
 }
 
 func (r *UserSqlite3) Get(id int) (*entities.User, error) {
-	stmt := `SELECT id, username, email, created, role FROM users WHERE id = ?`
+	stmt := `SELECT id, username, email, role, created, role FROM users WHERE id = ?`
 
 	row := r.DB.QueryRow(stmt, id)
 
 	u := &entities.User{}
 	var created string
 
-	err := row.Scan(&u.ID, &u.Username, &u.Email, &created, &u.Role)
+	err := row.Scan(&u.ID, &u.Username, &u.Email, &u.Role, &created, &u.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, entities.ErrNoRecord

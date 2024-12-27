@@ -1,0 +1,16 @@
+{{define "title"}}Moderation request{{end}}
+
+{{define "main"}}
+<body>
+
+    <h1>Apply to be a Moderator</h1>
+
+    <form action="/moderation-application" method="POST"> 
+        <label for="reason">Reason for applying:</label><br>
+        <textarea id="reason" name="reason" rows="4" cols="50" required></textarea><br><br>
+
+        <input type="submit" value="Submit Application">
+    </form>
+
+</body>
+{{end}}
