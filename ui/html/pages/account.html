@@ -63,6 +63,12 @@
         {{end}}
         {{if eq .Role "admin"}}
         <tr>
+            <th>Moderation Applicants</th>
+            <td><a href="/moderation-applicants">Show moderation applicants</a></td>
+        </tr>
+        {{end}}
+        {{if eq .Role "admin"}}
+        <tr>
             <th>All moderators</th>
             <td><a href="/moderators/list">Show moderators list</a></td>
         </tr>

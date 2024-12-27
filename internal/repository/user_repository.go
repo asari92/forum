@@ -181,7 +181,8 @@ func (r *UserSqlite3) ExistsModerationRequest(userId int) (bool, error) {
 
 func (r *UserSqlite3) ListModeratorApplicants() ([]*entities.ModeratorApplicant, error) {
 	stmt := `SELECT u.id, reason, m.created, username  FROM moderation_requests as m
-	INNER JOIN users as u ON m.user_id = u.id`
+	INNER JOIN users as u ON m.user_id = u.id
+	ORDER BY m.created DESC`
 	rows, err := r.DB.Query(stmt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

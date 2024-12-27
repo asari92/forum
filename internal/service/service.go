@@ -20,6 +20,7 @@ type User interface {
 	NewModerationForm() ModerationRequestForm
 	GetModerators() ([]*entities.User, error)
 	DeleteModerator(userId int) error
+	GetModerationApplicants() ([]*entities.ModeratorApplicant, error)
 }
 
 type Post interface {

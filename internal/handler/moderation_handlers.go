@@ -267,3 +267,37 @@ func (app *Application) deleteModerator(w http.ResponseWriter, r *http.Request) 
 
 	http.Redirect(w, r, "/moderators/list", http.StatusSeeOther)
 }
+
+func (app *Application) moderationApplicantsView(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in editPostView")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	userRole, ok := sess.Get(UserRoleSessionKey).(string)
+	if !ok {
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+
+	}
+	applicants, err := app.Service.User.GetModerationApplicants()
+	if err != nil {
+		if errors.Is(err, entities.ErrNoRecord) {
+		} else {
+
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			return
+
+		}
+	}
+	data := app.newTemplateData(r)
+	data.Applicants = applicants
+
+	if userRole == entities.RoleAdmin {
+		app.render(w, http.StatusOK, "moderation-applicants.html", data)
+	}
+}

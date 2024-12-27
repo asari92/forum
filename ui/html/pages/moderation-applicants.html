@@ -1,0 +1,42 @@
+{{define "title"}}moderation applicants{{end}}
+
+{{define "main"}}
+{{$CSRFToken := .CSRFToken}}
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>UserID</th>
+            <th>Reason</th>
+            <th>Created</th>
+            <th>Username</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .Applicants}}
+        <tr>
+            <td>{{.ID}}</td>
+            <td>{{.Reason}}</td>
+            <td>{{.Created}}</td>
+            <td>{{.Username}}</td>
+            <td>
+                <form action="/moderation/accept" method="POST" style="display:inline;">
+                    <input type="hidden" name="id" value="{{.ID}}">
+                    <input type="hidden" name="token" value="{{$CSRFToken}}">
+                    <button type="submit">Accept</button>
+                </form>
+                <!-- Кнопка для отклонения заявки -->
+                <form action="/moderation/reject" method="POST" style="display:inline;">
+                    <input type="hidden" name="id" value="{{.ID}}">
+                    <input type="hidden" name="token" value="{{$CSRFToken}}">
+                    <button type="submit">Reject</button>
+                </form>
+            </td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+
+    
+{{end }}

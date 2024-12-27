@@ -49,6 +49,7 @@ type templateData struct {
 	IsAuthenticated bool
 	User            *entities.User
 	Users           []*entities.User
+	Applicants      []*entities.ModeratorApplicant
 	ReactionData    *ReactionData
 	Header          string
 	Pagination      any
