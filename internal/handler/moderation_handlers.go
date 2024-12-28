@@ -301,3 +301,88 @@ func (app *Application) moderationApplicantsView(w http.ResponseWriter, r *http.
 		app.render(w, http.StatusOK, "moderation-applicants.html", data)
 	}
 }
+
+func (app *Application) requestModeratorRole(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in editPostView")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	userRole, ok := sess.Get(UserRoleSessionKey).(string)
+	if !ok {
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+
+	}
+
+	applicantId, err := validator.ValidateID(r.PostForm.Get("id"))
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	if userRole == entities.RoleAdmin {
+		err := app.Service.User.ApproveModerationRequest(applicantId)
+		if err != nil {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			return
+		}
+		err = app.Service.User.DeleteModerationRequest(applicantId)
+		if err != nil {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			return
+		}
+
+	}
+
+	http.Redirect(w, r, "/moderation-applicants", http.StatusSeeOther)
+}
+
+func (app *Application) rejectModeratorRequest(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in editPostView")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	userRole, ok := sess.Get(UserRoleSessionKey).(string)
+	if !ok {
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+
+	}
+
+	applicantId, err := validator.ValidateID(r.PostForm.Get("id"))
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	if userRole == entities.RoleAdmin {
+		err := app.Service.User.DeleteModerationRequest(applicantId)
+		if err != nil {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			return
+		}
+
+	}
+
+	http.Redirect(w, r, "/moderation-applicants", http.StatusSeeOther)
+}

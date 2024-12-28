@@ -94,6 +94,8 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("GET /moderation-applicants", administrated.ThenFunc(app.moderationApplicantsView))
 	mux.Handle("GET /moderators/list", administrated.ThenFunc(app.moderatorsView))
 	mux.Handle("POST /moderators/delete", administrated.ThenFunc(app.deleteModerator))
+	mux.Handle("POST /moderation/accept", administrated.ThenFunc(app.requestModeratorRole))
+	mux.Handle("POST /moderation/reject", administrated.ThenFunc(app.rejectModeratorRequest))
 
 	standard := New(app.recoverPanic, app.logRequest, secureHeaders, app.rateLimiting)
 	return standard.Then(mux)

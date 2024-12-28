@@ -18,6 +18,9 @@ type UserRepository interface {
 	ListModeratorApplicants() ([]*entities.ModeratorApplicant, error)
 	GetModerators() ([]*entities.User, error)
 	DeleteModerator(userId int) error
+	ApproveModeratorRequest(userId int) error
+	DeleteModerationRequest(userId int) error
+
 }
 
 type PostRepository interface {

@@ -21,6 +21,9 @@ type User interface {
 	GetModerators() ([]*entities.User, error)
 	DeleteModerator(userId int) error
 	GetModerationApplicants() ([]*entities.ModeratorApplicant, error)
+	DeleteModerationRequest(userId int) error
+	ApproveModerationRequest(userId int) error 
+
 }
 
 type Post interface {

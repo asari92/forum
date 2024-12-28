@@ -114,3 +114,11 @@ func (u *UserUseCase) DeleteModerator(userId int) error {
 func (u *UserUseCase) GetModerationApplicants() ([]*entities.ModeratorApplicant, error) {
 	return u.userRepo.ListModeratorApplicants()
 }
+
+func (u *UserUseCase) DeleteModerationRequest(userId int) error {
+	return u.userRepo.DeleteModerationRequest(userId)
+}
+
+func (u *UserUseCase) ApproveModerationRequest(userId int) error {
+	return u.userRepo.ApproveModeratorRequest(userId)
+}

@@ -254,3 +254,18 @@ func (r *UserSqlite3) DeleteModerator(userId int) error {
 	_, err := r.DB.Exec(stmt, entities.RoleUser, userId)
 	return err
 }
+
+func (r *UserSqlite3) ApproveModeratorRequest(userId int) error {
+	stmt := `UPDATE users
+	SET role = ?
+	WHERE id = ?`
+	_, err := r.DB.Exec(stmt, entities.RoleModerator, userId)
+	return err
+}
+
+func (r *UserSqlite3) DeleteModerationRequest(userId int) error {
+	stmt := `DELETE FROM moderation_requests
+	WHERE user_id = ?`
+	_, err := r.DB.Exec(stmt, userId)
+	return err
+}
