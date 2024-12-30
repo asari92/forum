@@ -22,8 +22,7 @@ type User interface {
 	DeleteModerator(userId int) error
 	GetModerationApplicants() ([]*entities.ModeratorApplicant, error)
 	DeleteModerationRequest(userId int) error
-	ApproveModerationRequest(userId int) error 
-
+	ApproveModerationRequest(userId int) error
 }
 
 type Post interface {
@@ -44,6 +43,7 @@ type Post interface {
 	GetUserNotifications(userID int) ([]*entities.Notification, error)
 	ApprovePost(postID int) error
 	DeletePost(postID, userID int) error
+	DeleteReport(userId, postId int) error
 }
 
 type Reaction interface {
@@ -55,10 +55,11 @@ type Reaction interface {
 }
 
 type Category interface {
-	Insert(name string) (int, error)
+	Insert(form *CategoryForm) (int, error)
 	Get(categoryId int) (*entities.Category, error)
 	GetAll() ([]*entities.Category, error)
 	Delete(categoryId int) error
+	NewCategoryCreateForm() CategoryForm
 }
 
 type Service struct {

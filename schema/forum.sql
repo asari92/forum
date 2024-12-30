@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS post_categories(
   post_id INTEGER NOT NULL,
   PRIMARY KEY(post_id, category_id),
   CONSTRAINT categories_post_categories
-    FOREIGN KEY (category_id) REFERENCES categories (id) ON DELETE No action
+    FOREIGN KEY (category_id) REFERENCES categories (id) ON DELETE Cascade
       ON UPDATE No action,
   CONSTRAINT posts_post_categories
     FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE Cascade
@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS moderation_requests (
 CREATE UNIQUE INDEX IF NOT EXISTS users_uc_email ON users(email);
 CREATE UNIQUE INDEX IF NOT EXISTS users_uc_username ON users(username);
 
+
 CREATE TABLE IF NOT EXISTS reports(
   id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   post_id INTEGER NOT NULL,
@@ -126,9 +127,11 @@ CREATE TABLE IF NOT EXISTS reports(
   reason TEXT NOT NULL,
   created TEXT NOT NULL,
   CONSTRAINT posts_comments
-  FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE Cascade
+  FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE
     ON UPDATE No action
   CONSTRAINT users_posts
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE No action
       ON UPDATE No action
 );
+
+

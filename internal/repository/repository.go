@@ -61,6 +61,7 @@ type ReportRepository interface {
 	CreateReport(userID, postID int, reason string) error
 	GetPostReport(postID int) (*entities.Report, error)
 	GetAllPaginatedPostReports(page, pageSize int) ([]*entities.Report, error)
+	DeleteReport(userID, postID int) error
 }
 
 type CommentRepository interface {
@@ -89,6 +90,7 @@ type CategoryRepository interface {
 	Delete(categoryId int) error
 	GetCategoriesForPost(postId int) ([]*entities.Category, error)
 	DeleteCategoriesForPost(postId int) error
+	ExistName(name string) (bool, error)
 }
 
 type Repository struct {

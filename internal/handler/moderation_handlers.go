@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"forum/internal/entities"
@@ -385,4 +386,227 @@ func (app *Application) rejectModeratorRequest(w http.ResponseWriter, r *http.Re
 	}
 
 	http.Redirect(w, r, "/moderation-applicants", http.StatusSeeOther)
+}
+
+func (app *Application) acceptReport(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in editPostView")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	userRole, ok := sess.Get(UserRoleSessionKey).(string)
+	if !ok {
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+
+	}
+
+	postId, err := validator.ValidateID(r.PostForm.Get("postId"))
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	if userRole == entities.RoleAdmin {
+		err := app.Service.Post.DeletePost(postId, userId)
+		if err != nil {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			return
+		}
+
+	}
+
+	http.Redirect(w, r, "/administration/reports", http.StatusSeeOther)
+}
+
+func (app *Application) rejectReport(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in editPostView")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	userRole, ok := sess.Get(UserRoleSessionKey).(string)
+	if !ok {
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+
+	}
+
+	postId, err := validator.ValidateID(r.PostForm.Get("postId"))
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+	reporterId, err := validator.ValidateID(r.PostForm.Get("reporter_id"))
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+
+	if userRole == entities.RoleAdmin {
+		err := app.Service.Post.DeleteReport(reporterId, postId)
+		if err != nil {
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			return
+		}
+
+	}
+
+	http.Redirect(w, r, "/administration/reports", http.StatusSeeOther)
+}
+
+func (app *Application) categoryEditView(w http.ResponseWriter, r *http.Request) {
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in editPostView")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	userRole, ok := sess.Get(UserRoleSessionKey).(string)
+	if !ok {
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+
+	}
+
+	categories, err := app.Service.Category.GetAll() //дальше больше надо будет передавать
+	if err != nil {
+		app.Logger.Error("get all categories", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	data := app.newTemplateData(r)
+	data.Categories = categories
+
+	if userRole == entities.RoleAdmin {
+		app.render(w, http.StatusOK, "categoryedit.html", data)
+	}
+}
+
+func (app *Application) createCategory(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in editPostView")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	userRole, ok := sess.Get(UserRoleSessionKey).(string)
+	if !ok {
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+
+	}
+
+	form := app.Service.Category.NewCategoryCreateForm()
+	form.Name = r.PostForm.Get("category_name")
+
+	if userRole == entities.RoleAdmin {
+		_, err := app.Service.Category.Insert(&form)
+		if err != nil {
+			if errors.Is(err, entities.ErrInvalidData) {
+				data := app.newTemplateData(r)
+				categories, err := app.Service.Category.GetAll() //дальше больше надо будет передавать
+				if err != nil {
+					app.Logger.Error("get all categories", "error", err)
+					app.render(w, http.StatusInternalServerError, Errorpage, nil)
+					return
+				}
+				data.Categories = categories
+
+				data.Form = form
+				app.render(w, http.StatusUnprocessableEntity, "categoryedit.html", data)
+			} else {
+				app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			}
+			return
+
+		}
+
+	}
+
+	http.Redirect(w, r, "/edit/category", http.StatusSeeOther)
+}
+
+func (app *Application) deleteCategory(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+	}
+	sess := app.SessionFromContext(r)
+	userId, ok := sess.Get(AuthUserIDSessionKey).(int)
+	if !ok || userId < 1 {
+		err := errors.New("get userID in editPostView")
+		app.Logger.Error("get userid from session", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
+	userRole, ok := sess.Get(UserRoleSessionKey).(string)
+	if !ok {
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+
+	}
+
+	categoryId, err := validator.ValidateID(r.PostForm.Get("category_id"))
+	if err != nil {
+		app.render(w, http.StatusBadRequest, Errorpage, nil)
+		return
+
+	}
+	if userRole == entities.RoleAdmin {
+		err := app.Service.Category.Delete(categoryId)
+		fmt.Println(err)
+		if err != nil {
+			if errors.Is(err, entities.ErrInvalidData) || errors.Is(err, entities.ErrNoRecord) {
+				data := app.newTemplateData(r)
+				categories, err := app.Service.Category.GetAll() //дальше больше надо будет передавать
+				if err != nil {
+					app.Logger.Error("get all categories", "error", err)
+					app.render(w, http.StatusInternalServerError, Errorpage, nil)
+					return
+				}
+				data.Categories = categories
+				app.render(w, http.StatusUnprocessableEntity, "categoryedit.html", data)
+			} else {
+				app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			}
+			return
+
+		}
+
+	}
+
+	http.Redirect(w, r, "/edit/category", http.StatusSeeOther)
 }

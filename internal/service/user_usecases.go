@@ -122,3 +122,5 @@ func (u *UserUseCase) DeleteModerationRequest(userId int) error {
 func (u *UserUseCase) ApproveModerationRequest(userId int) error {
 	return u.userRepo.ApproveModeratorRequest(userId)
 }
+
+

@@ -206,6 +206,7 @@ func (r *UserSqlite3) ListModeratorApplicants() ([]*entities.ModeratorApplicant,
 		if err != nil {
 			return nil, err
 		}
+		
 
 		applicant.Created = commentTime.Format(time.RFC3339)
 		Applicants = append(Applicants, applicant)
@@ -269,3 +270,7 @@ func (r *UserSqlite3) DeleteModerationRequest(userId int) error {
 	_, err := r.DB.Exec(stmt, userId)
 	return err
 }
+
+
+
+

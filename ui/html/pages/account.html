@@ -61,10 +61,17 @@
             <td><a href="/administration/reports">Show post reports</a></td>
         </tr>
         {{end}}
+       
         {{if eq .Role "admin"}}
         <tr>
             <th>Moderation Applicants</th>
             <td><a href="/moderation-applicants">Show moderation applicants</a></td>
+        </tr>
+        {{end}}
+        {{if eq .Role "admin"}}
+        <tr>
+            <th>Manage category</th>
+            <td><a href="/edit/category">edit category</a></td>
         </tr>
         {{end}}
         {{if eq .Role "admin"}}

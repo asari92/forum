@@ -6,3 +6,4 @@ type ModeratorApplicant struct {
 	Created  string
 	Username string
 }
+

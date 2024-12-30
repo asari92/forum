@@ -825,3 +825,51 @@ body, table, th, td, a, time {
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility; /* Оптимизация рендеринга */
 }
+
+
+
+
+
+/* Общий стиль для кнопок */
+.btn {
+    background-color: #6d4c41; /* Средний коричневый цвет */
+    color: white;
+    border: 2px solid #5d4037; /* Темно-коричневый для границы */
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s ease-in-out;
+}
+
+/* Кнопка создания */
+.btn-create {
+    background-color: #8d6e63; /* Светло-коричневый */
+}
+
+.btn-create:hover {
+    background-color: #3e2723; /* Темно-коричневый при наведении */
+    transform: scale(1.05); /* Увеличение кнопки при наведении */
+}
+
+/* Кнопка удаления */
+.btn-delete {
+    background-color: #3e2723; /* Темный рыжевато-коричневый */
+}
+
+.btn-delete:hover {
+    background-color: #8d6e63; /* Светлый коричневый при наведении */
+    transform: scale(1.05); /* Увеличение кнопки при наведении */
+}
+
+/* Добавить эффект для кнопок при наведении */
+.btn:hover {
+    transform: scale(1.1); /* Увеличение кнопки на 10% */
+}
+
+/* Фон страницы */
+body {
+    background-color: #3e2723; /* Темно-коричневый фон страницы */
+    color: white; /* Белый текст для контраста */
+}

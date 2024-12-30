@@ -89,6 +89,7 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("POST /moderation/approve/{post_id}", protected.ThenFunc(app.moderationApprovePost))
 	mux.Handle("POST /moderation/report/{post_id}", protected.ThenFunc(app.moderationReportPost))
 
+
 	administrated := protected.Append(app.requireAdministration)
 	mux.Handle("GET /administration/reports", administrated.ThenFunc(app.administrationReportsView))
 	mux.Handle("GET /moderation-applicants", administrated.ThenFunc(app.moderationApplicantsView))
@@ -96,6 +97,15 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("POST /moderators/delete", administrated.ThenFunc(app.deleteModerator))
 	mux.Handle("POST /moderation/accept", administrated.ThenFunc(app.requestModeratorRole))
 	mux.Handle("POST /moderation/reject", administrated.ThenFunc(app.rejectModeratorRequest))
+	mux.Handle("POST /report/accept", administrated.ThenFunc(app.acceptReport))
+	mux.Handle("POST /report/reject", administrated.ThenFunc(app.rejectReport))
+	mux.Handle("GET /edit/category", administrated.ThenFunc(app.categoryEditView))
+	mux.Handle("POST /admin/category/create", administrated.ThenFunc(app.createCategory))
+	mux.Handle("POST /admin/category/delete", administrated.ThenFunc(app.deleteCategory))
+
+
+	
+
 
 	standard := New(app.recoverPanic, app.logRequest, secureHeaders, app.rateLimiting)
 	return standard.Then(mux)

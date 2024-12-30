@@ -18,7 +18,8 @@
         <tr>
             <td>{{.ID}}</td>
             <td>{{.Reason}}</td>
-            <td>{{.Created}}</td>
+            <td><time class="timezone" data-time="{{.Created}}"></time></td> 
+
             <td>{{.Username}}</td>
             <td>
                 <form action="/moderation/accept" method="POST" style="display:inline;">

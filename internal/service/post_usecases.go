@@ -28,6 +28,7 @@ type PostUseCase struct {
 	postRepo            repository.PostRepository
 	postReactionRepo    repository.PostReactionRepository
 	userRepo            repository.UserRepository
+	reportRepo          repository.ReportRepository
 }
 
 type PostDTO struct {
@@ -70,6 +71,7 @@ func NewPostUseCase(repo *repository.Repository) *PostUseCase {
 		postRepo:            repo.PostRepository,
 		postReactionRepo:    repo.PostReactionRepository,
 		userRepo:            repo.UserRepository,
+		reportRepo:          repo.ReportRepository,
 	}
 }
 
@@ -808,4 +810,23 @@ func (form *postCreateForm) validateCategories(allCategories []*entities.Categor
 	} else {
 		form.AddFieldError("categories", "Need one or more category")
 	}
+}
+
+func (uc *PostUseCase) DeleteReport(userId, postId int) error {
+	exists, err := uc.postRepo.Exists(postId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
+	exists, err = uc.userRepo.Exists(userId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
+
+	return uc.reportRepo.DeleteReport(userId, postId)
 }
