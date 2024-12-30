@@ -873,3 +873,53 @@ body {
     background-color: #3e2723; /* Темно-коричневый фон страницы */
     color: white; /* Белый текст для контраста */
 }
+
+
+
+.social-login {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.social-login a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-google {
+    background-color: #db4437; /* Red for Google */
+    border: 1px solid #db4437;
+}
+
+.btn-google img {
+    width: 20px;
+    height: 20px;
+}
+
+.btn-google:hover {
+    background-color: #c33d2f;
+}
+
+.btn-github {
+    background-color: #333333; /* Dark gray for GitHub */
+    border: 1px solid #333333;
+}
+
+.btn-github img {
+    width: 20px;
+    height: 20px;
+}
+
+.btn-github:hover {
+    background-color: #242424;
+}
