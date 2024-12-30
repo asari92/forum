@@ -3,13 +3,9 @@ package repository
 import (
 	"database/sql"
 	"errors"
+	"time"
 
 	"forum/internal/entities"
-)
-
-const (
-	activeStatus  = "read"
-	passiveStatus = "unread"
 )
 
 type PostReactionSqlite3 struct {
@@ -20,26 +16,15 @@ func NewPostReactionSqlite3(db *sql.DB) *PostReactionSqlite3 {
 	return &PostReactionSqlite3{DB: db}
 }
 
-func (r *PostReactionSqlite3) UpdateNotificationStatus(userID int) error {
-	stmt := `UPDATE notifications
-	SET status = ?
-	WHERE user_id = ?`
-	_, err := r.DB.Exec(stmt, activeStatus, userID)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (r *PostReactionSqlite3) GetNotifications(userID int) ([]*entities.Notification, error) {
 	stmt := `
 	SELECT n.id,n.post_id,n.action_type, n.trigger_user_id,n.created, u.username, p.title, p.content FROM notifications as n 
 	JOIN users as u ON n.trigger_user_id = u.id JOIN posts as p ON n.post_id = p.id
-	WHERE n.user_id = ? and n.status = ?
+	WHERE n.user_id = ?
 	ORDER BY n.created DESC
 	`
 
-	rows, err := r.DB.Query(stmt, userID, passiveStatus)
+	rows, err := r.DB.Query(stmt, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, entities.ErrNoRecord
@@ -49,32 +34,42 @@ func (r *PostReactionSqlite3) GetNotifications(userID int) ([]*entities.Notifica
 	}
 	notifications := []*entities.Notification{}
 	for rows.Next() {
+		var created string
 		notification := &entities.Notification{}
 		err := rows.Scan(
 			&notification.ID,
 			&notification.PostID,
 			&notification.Action,
 			&notification.TriggerUserID,
-			&notification.Created,
+			&created,
 			&notification.TriggerUserName,
 			&notification.PostTitle,
 			&notification.PostContent)
 		if err != nil {
 			return nil, err
 		}
+
+		commentTime, err := time.Parse("2006-01-02 15:04:05", created)
+		if err != nil {
+			return nil, err
+		}
+
+		notification.Created = commentTime.Format(time.RFC3339)
+
 		notifications = append(notifications, notification)
 
 	}
+
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 	return notifications, nil
 }
 
-func (r *PostReactionSqlite3) AddNotification(userID, postID, triggerUserID int, actionType string) error {
-	stmt := `INSERT INTO notifications (user_id, post_id, action_type, trigger_user_id, created)
-	VALUES (?,?,?,?, datetime('now'))`
-	_, err := r.DB.Exec(stmt, userID, postID, actionType, triggerUserID)
+func (r *PostReactionSqlite3) AddNotification(userID, postID, triggerUserID int, actionType string, commentID *int) error {
+	stmt := `INSERT INTO notifications (user_id, post_id, comment_id, action_type, trigger_user_id, created)
+	VALUES (?,?,?,?,?, datetime('now'))`
+	_, err := r.DB.Exec(stmt, userID, postID, commentID, actionType, triggerUserID)
 	if err != nil {
 		return err
 	}
@@ -93,9 +88,20 @@ func (r *PostReactionSqlite3) RemoveNotification(userID, postID, triggerUserID i
 
 func (r *PostReactionSqlite3) UpdateNotification(userID, postID, triggerUserID int, oldAction, newAction string) error {
 	stmt := `UPDATE notifications
-	SET action_type = ?
+	SET action_type = ?, created = datetime('now')
 	WHERE user_id = ? AND post_id = ? AND trigger_user_id = ? AND action_type = ?`
 	_, err := r.DB.Exec(stmt, newAction, userID, postID, triggerUserID, oldAction)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *PostReactionSqlite3) UpdateNotificationTime(commentID int) error {
+	stmt := `UPDATE notifications
+	SET created = datetime('now')
+	WHERE comment_id = ?`
+	_, err := r.DB.Exec(stmt, commentID)
 	if err != nil {
 		return err
 	}

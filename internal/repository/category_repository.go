@@ -22,6 +22,13 @@ func (r *CategorySqlite3) Exists(id int) (bool, error) {
 	return exists, err
 }
 
+func (r *CategorySqlite3) ExistName(name string) (bool, error) {
+	var exists bool
+	stmt := "SELECT EXISTS(SELECT 1 FROM categories WHERE LOWER(name) = LOWER(?))"
+	err := r.DB.QueryRow(stmt, name).Scan(&exists)
+	return exists, err
+}
+
 func (r *CategorySqlite3) Insert(name string) (int, error) {
 	stmt := `INSERT INTO categories (name) VALUES (?)`
 	result, err := r.DB.Exec(stmt, name)

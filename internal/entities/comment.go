@@ -5,6 +5,7 @@ type Comment struct {
 	PostID       int
 	UserID       int
 	UserName     string
+	UserRole string
 	Content      string
 	UserReaction int
 	Like         int

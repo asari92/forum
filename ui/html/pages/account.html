@@ -5,6 +5,19 @@
     {{with .User}}
      <table>
         <tr>
+            <th>Role</th>
+            <td>{{.Role}}</td>
+        </tr> 
+        {{if eq .Role "user"}}
+        <tr>
+           
+
+            <th>Moderation Application</th>
+            <td><a href="/moderation-application">Apply to be a moderator</a></td>
+        </tr>
+        {{end}}
+
+        <tr>
             <th>Username</th>
             <td>{{.Username}}</td>
         </tr>
@@ -36,6 +49,37 @@
             <th>My commented posts</th>
             <td><a href="/user/commented">Show commented posts</a></td>
         </tr>
+        {{if or (eq .Role "moderator") (eq .Role "admin")}}
+        <tr>
+            <th>Unapproved posts</th>
+            <td><a href="/moderation/posts/unapproved">Show unapproved posts</a></td>
+        </tr>
+        {{end}}
+        {{if eq .Role "admin"}}
+        <tr>
+            <th>All post reports from moderators</th>
+            <td><a href="/administration/reports">Show post reports</a></td>
+        </tr>
+        {{end}}
+       
+        {{if eq .Role "admin"}}
+        <tr>
+            <th>Moderation Applicants</th>
+            <td><a href="/moderation-applicants">Show moderation applicants</a></td>
+        </tr>
+        {{end}}
+        {{if eq .Role "admin"}}
+        <tr>
+            <th>Manage category</th>
+            <td><a href="/edit/category">edit category</a></td>
+        </tr>
+        {{end}}
+        {{if eq .Role "admin"}}
+        <tr>
+            <th>All moderators</th>
+            <td><a href="/moderators/list">Show moderators list</a></td>
+        </tr>
+        {{end}}
     </table>
     {{end }}
 {{end}}

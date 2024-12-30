@@ -1,0 +1,50 @@
+{{define "title"}}Manage Categories{{end}}
+
+{{define "main"}}
+{{$CSRFToken := .CSRFToken}}
+
+<h1>Manage Categories</h1>
+
+<!-- Форма создания новой категории -->
+<h2>Create New Category</h2>
+<form method="POST" action="/admin/category/create">
+    <label for="category_name">Category Name:</label>
+    <input type="hidden" name="token" value="{{$CSRFToken}}">
+    {{if .Form}}
+    {{with .Form.FieldErrors.category}}
+        <label class='error'>{{.}}</label>
+    {{end}}
+    {{end}}
+    <input type="text" id="category_name" name="category_name" value='{{if .Form}}{{.Form.Name}}{{end}}' required>
+    <button type="submit" class="btn btn-create">Create</button>
+</form>
+<p><strong>Note:</strong> Category name cannot be empty or a duplicate.</p>
+
+<!-- Список категорий с кнопками удаления -->
+<h2>Existing Categories</h2>
+<div class="category-list">
+    <p><strong>Note:</strong> The default category cannot be deleted.</p>
+    {{range .Categories}}
+    <div class="category-item">
+        {{if eq .Name "Others"}}
+        {{continue}}
+        {{end}}
+        <span>{{.Name}}</span>
+        
+        <!-- Удаление категории -->
+        
+        
+        <form method="POST" action="/admin/category/delete" style="display:inline;">
+            <input type="hidden" name="category_id" value="{{.ID}}">
+            <input type="hidden" name="token" value="{{$CSRFToken}}">
+            <button type="submit" class="btn btn-delete">Delete</button>
+        </form>
+
+        
+        
+        
+    </div>
+    {{end}}
+</div>
+
+{{end}}

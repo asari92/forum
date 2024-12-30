@@ -37,11 +37,14 @@
     </div>
     {{$CSRFToken := .CSRFToken}}
     {{$userid := .User.ID}}
+    {{$role := .Role}}
 
-    {{if eq .User.ID .Post.UserID}}
+    
+    
+    {{if or (eq .User.ID .Post.UserID) (eq .Role "moderator")  (eq .Role "admin")}}
     {{with .Post}}
     <div>
-        <p class="error-message" style="color: red; font-size: 16px;">You can only delete your own post.</p>
+        <p class="error-message" style="color: red; font-size: 16px;">Only the owner of the post or users with special privileges can delete it.</p>
     </div>
 
     <div>
@@ -51,6 +54,10 @@
             <button type="submit" class="btn btn-delete delete-button">Delete post</button>
         </form>
     </div>
+    {{end}}
+    {{end}}
+    {{if eq .User.ID .Post.UserID}}
+    {{with .Post}}
 
     <div>
         <p class="error-message" style="color: red; font-size: 16px;">You can only update your own post.</p>
@@ -70,23 +77,32 @@
         <form method="POST" action="/post/view/{{.Post.ID}}">
             <input type="hidden" name="token" value="{{.CSRFToken}}">
             {{if eq .ReactionData.GetUserReaction 1}}
+            <!-- Кнопка лайка -->
             <button type="submit" name="post_is_like" value="true" class="like-button">
                 <span class="icon icon-like-active">{{.ReactionData.Likes}} 👍</span>
             </button>
+            
+            <!-- Кнопка дизлайка -->
             <button type="submit" name="post_is_like" value="false" class="dislike-button">
                 <span class="icon icon-neutral">{{.ReactionData.Dislikes}} 👎🏿</span>
             </button>
             {{else if eq .ReactionData.GetUserReaction -1}}
+            <!-- Кнопка лайка -->
             <button type="submit" name="post_is_like" value="true" class="like-button">
                 <span class="icon icon-neutral">{{.ReactionData.Likes}} 👍🏿</span>
             </button>
+            
+            <!-- Кнопка дизлайка -->
             <button type="submit" name="post_is_like" value="false" class="dislike-button">
                 <span class="icon icon-dislike-active">{{.ReactionData.Dislikes}} 👎</span>
             </button>
             {{else}}
+            <!-- Кнопка лайка -->
             <button type="submit" name="post_is_like" value="true" class="like-button">
                 <span class="icon icon-neutral">{{.ReactionData.Likes}} 👍🏿</span>
             </button>
+            
+            <!-- Кнопка дизлайка -->
             <button type="submit" name="post_is_like" value="false" class="dislike-button">
                 <span class="icon icon-neutral">{{.ReactionData.Dislikes}} 👎🏿</span>
             </button>
@@ -105,7 +121,7 @@
             </div>
             <div class="comment-content">{{.Content}}</div>
 
-            {{if eq .UserID $userid}}
+            {{if or (eq .UserID $userid) (eq $role "admin")}}
             <!-- Удаление комментария -->
             <form action="/comment/delete" method="POST">
                 <input type="hidden" name="token" value="{{$CSRFToken}}">
@@ -114,8 +130,10 @@
 
                 <button type="submit" class="btn btn-delete delete-button">Delete Comment</button>
             </form>
+            {{end}}
             
             <!-- Обновление комментария -->
+            {{if eq .UserID $userid}}
             <form action="/comment/edit" method="GET">
                 <input type="hidden" name="token" value="{{$CSRFToken}}">
                 <input type="hidden" name="comment_id" value="{{.ID}}">
@@ -157,24 +175,58 @@
         {{end}}
     </ul>
     {{end}}
-
 </div>
 
-{{if .IsAuthenticated}}
-<!-- Форма для создания комментария -->
-<div class="comment-section">
-    <h3>Leave a Comment</h3>
-    <form method="POST" action="/post/view/{{.Post.ID}}" class="comment-form">
-        <input type="hidden" name="token" value="{{.CSRFToken}}">
-        <input type="hidden" name="post_id" value="{{.Post.ID}}">
-        {{with .Form}}
-            <label class='error'>{{.FieldErrors.comment}}</label>
+    {{if .IsAuthenticated}}
+    <!-- Форма для создания комментария -->
+    <div class="comment-section">
+        <h3>Leave a Comment</h3>
+        <form method="POST" action="/post/view/{{.Post.ID}}" class="comment-form">
+            <input type="hidden" name="token" value="{{.CSRFToken}}">
+            <input type="hidden" name="post_id" value="{{.Post.ID}}">
+            {{with .Form}}
+                <label class='error'>{{.FieldErrors.comment}}</label>
+            {{end}}
+            <textarea name="comment_content" placeholder="Write your comment here..." required class="comment-input"></textarea>
+            <button type="submit" class="comment-submit-btn">Submit</button>
+        </form>
+    </div>
+    {{else}}
+    <p class="custom-paragraph">You must <a href="/user/signup">signup</a> or <a href="/user/login">login</a> to leave a comment</p>
+    {{end}}
+
+    {{if or (eq .Role "moderator") (eq .Role "admin")}}
+        {{if .Post.IsApproved}}
+        <div class="moderation-section">
+            <h3>Complain about the post</h3>
+            <form method="POST" action="/moderation/report/{{.Post.ID}}" class="report-form">
+                <input type="hidden" name="token" value="{{.CSRFToken}}">
+                <input type="hidden" name="post_id" value="{{.Post.ID}}">
+                <textarea name="report_reason" placeholder="Write your report here..." required class="report-input"></textarea>
+                <button type="submit" class="report-submit-btn">Report</button>
+            </form>
+        </div>
+        {{else}} 
+            {{if .Report}}
+            <div class='metadata'>
+                <span>report by {{.Report.UserID}}</span>   
+                <time class="timezone" data-time="{{.Report.Created}}"></time>
+                <br>
+            </div>
+            <div class="post-content">
+                <h2>Report reason:</h2>
+                <pre><code>{{.Report.Reason}}</code></pre>
+            </div>
+            {{else}}
+            <div class="moderation-section">
+                <h3>Approval</h3>
+                <form method="POST" action="/moderation/approve/{{.Post.ID}}" class="approval-form">
+                    <input type="hidden" name="token" value="{{.CSRFToken}}">
+                    <button type="submit" class="approve-submit-btn">Approve</button>
+                </form>
+            </div>
+            {{end}}
         {{end}}
-        <textarea name="comment_content" placeholder="Write your comment here..." required class="comment-input"></textarea>
-        <button type="submit" class="comment-submit-btn">Submit</button>
-    </form>
-</div>
-{{else}}
-<p class="custom-paragraph">You must <a href="/user/signup">signup</a> or <a href="/user/login">login</a> to leave a comment</p>
-{{end}}
+    {{end}}
+
 {{end}}

@@ -39,6 +39,29 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userRole, ok := sess.Get(UserRoleSessionKey).(string)
+	if !ok {
+		userRole = ""
+	}
+
+	var report *entities.Report
+	if !postData.Post.IsApproved {
+		if !(userRole == entities.RoleModerator || userRole == entities.RoleAdmin || userID == postData.Post.UserID) {
+			app.render(w, http.StatusForbidden, Errorpage,
+				&templateData{AppError: AppError{Message: "This post is under moderation", StatusCode: http.StatusForbidden}})
+			return
+		}
+		report, err = app.Service.Reaction.GetPostReport(postID)
+		if err != nil {
+			app.Logger.Error("get post report", "error", err)
+			if errors.Is(err, entities.ErrNoRecord) {
+			} else {
+				app.render(w, http.StatusInternalServerError, Errorpage, nil)
+				return
+			}
+		}
+	}
+
 	data := app.newTemplateData(r)
 	data.User = &entities.User{}
 	data.User.ID = userID
@@ -50,6 +73,8 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	data.ReactionData.Dislikes = postData.Dislikes
 	data.ReactionData.UserReaction = postData.UserReaction
 	data.Form = sess.Get(ReactionFormSessionKey)
+	data.Role = userRole
+	data.Report = report
 	err = sess.Delete(ReactionFormSessionKey)
 	if err != nil {
 		app.Logger.Error("Session error during delete reaction form", "error", err)
@@ -117,6 +142,13 @@ func (app *Application) editPostView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	categories, err := app.Service.Category.GetAll() //дальше больше надо будет передавать
+	if err != nil {
+		app.Logger.Error("get all categories", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
+
 	postID, err := validator.ValidateID(r.PathValue("post_id"))
 	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
@@ -131,6 +163,14 @@ func (app *Application) editPostView(w http.ResponseWriter, r *http.Request) {
 
 	// Передаем данные в шаблон
 	data := app.newTemplateData(r)
+	data.Categories = categories
+	form := app.Service.Post.NewPostCreateForm()
+	for _, category := range postDTO.Categories {
+		form.Categories = append(form.Categories, category.ID)
+	}
+	form.Title = postDTO.Post.Title
+	form.Content = postDTO.Post.Content
+	data.Form = form
 	data.Post = postDTO.Post
 
 	app.render(w, http.StatusOK, "editpost.html", data)
@@ -287,7 +327,7 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 	form.Categories = categoryIDs
 	files := r.MultipartForm.File["image"]
 
-	postId, allCategories, err := app.Service.Post.CreatePostWithCategories(&form, files, userId)
+	postID, allCategories, err := app.Service.Post.CreatePostWithCategories(&form, files, userId)
 	if err != nil {
 		app.Logger.Error("insert post and categories", "error", err)
 		if errors.Is(err, entities.ErrInvalidCredentials) {
@@ -307,13 +347,13 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = sess.Set(FlashSessionKey, "Post successfully created!")
+	err = sess.Set(FlashSessionKey, "Your post will be published after passing moderation")
 	if err != nil {
 		// кажется тут не нужна ошибка, достаточно логирования
 		app.Logger.Error("Session error during set flash", "error", err)
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/post/view/%d", postId), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/post/view/%d", postID), http.StatusSeeOther)
 }
 
 func (app *Application) editPost(w http.ResponseWriter, r *http.Request) {
@@ -324,8 +364,13 @@ func (app *Application) editPost(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
+	categories, err := app.Service.Category.GetAll() //дальше больше надо будет передавать
+	if err != nil {
+		app.Logger.Error("get all categories", "error", err)
+		app.render(w, http.StatusInternalServerError, Errorpage, nil)
+		return
+	}
 	postID, err := validator.ValidateID(r.PathValue("post_id"))
-
 	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
@@ -340,9 +385,20 @@ func (app *Application) editPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var categoryIDs []int
+	for _, id := range r.PostForm["categories"] {
+		intID, err := validator.ValidateID(id)
+		if err != nil {
+			app.render(w, http.StatusBadRequest, Errorpage, nil)
+			return
+		}
+		categoryIDs = append(categoryIDs, intID)
+	}
+
 	form := app.Service.Post.NewPostCreateForm()
 	form.Title = r.PostForm.Get("title")
 	form.Content = r.PostForm.Get("content")
+	form.Categories = categoryIDs
 	files := r.MultipartForm.File["image"]
 
 	err = app.Service.Post.UpdatePostWithImage(&form, postID, files, userId)
@@ -350,6 +406,10 @@ func (app *Application) editPost(w http.ResponseWriter, r *http.Request) {
 		app.Logger.Error("update post and image", "error", err)
 		if errors.Is(err, entities.ErrInvalidCredentials) {
 			data := app.newTemplateData(r)
+			data.Categories = categories
+			if len(form.Categories) == 0 {
+				form.Categories = []int{DefaultCategory}
+			}
 			data.Form = form
 			data.Post = &entities.Post{}
 			data.Post.ID = postID
@@ -379,14 +439,12 @@ func (app *Application) editComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	postID, err := validator.ValidateID(r.PostForm.Get("post_id"))
-
 	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return
 	}
 
 	commentID, err := validator.ValidateID(r.PostForm.Get("comment_id"))
-
 	if err != nil {
 		app.render(w, http.StatusBadRequest, Errorpage, nil)
 		return

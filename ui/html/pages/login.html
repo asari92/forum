@@ -24,6 +24,14 @@
         <input type='submit' value='Login'>
     </div>
 </form>
-<a href="/auth/google/login">Войти через Google</a>
-<a href="/auth/github/login">Войти через Github</a>
+<div class="social-login">
+    <a href="/auth/google/login" class="btn-google">
+        <img src="/static/images/google-logo.png" alt="Google Logo">
+        Sign in with Google
+    </a>
+    <a href="/auth/github/login" class="btn-github">
+        <img src="/static/images/github-logo.png" alt="GitHub Logo">
+        Sign in with GitHub
+    </a>
+</div>
 {{end}}

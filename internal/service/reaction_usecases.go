@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-
 	"forum/internal/entities"
 	"forum/internal/repository"
 	"forum/pkg/validator"
@@ -15,6 +13,7 @@ type ReactionUseCase struct {
 	postRepo            repository.PostRepository
 	postReactionRepo    repository.PostReactionRepository
 	userRepo            repository.UserRepository
+	reportRepo          repository.ReportRepository
 }
 
 type reactionForm struct {
@@ -25,6 +24,14 @@ type reactionForm struct {
 	validator.Validator
 }
 
+type ReportsDTO struct {
+	Reports       []*entities.Report
+	HasNextPage   bool
+	CurrentPage   int
+	PaginationURL string
+	Header        string
+}
+
 func NewReactionUseCase(repo *repository.Repository) *ReactionUseCase {
 	return &ReactionUseCase{
 		categoryRepo:        repo.CategoryRepository,
@@ -33,15 +40,16 @@ func NewReactionUseCase(repo *repository.Repository) *ReactionUseCase {
 		postRepo:            repo.PostRepository,
 		postReactionRepo:    repo.PostReactionRepository,
 		userRepo:            repo.UserRepository,
+		reportRepo:          repo.ReportRepository,
 	}
 }
 
-func (uc *ReactionUseCase) NewReactionForm() reactionForm {
+func (ruc *ReactionUseCase) NewReactionForm() reactionForm {
 	return reactionForm{}
 }
 
-func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reactionForm) error {
-	exists, err := uc.userRepo.Exists(userID)
+func (ruc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reactionForm) error {
+	exists, err := ruc.userRepo.Exists(userID)
 	if err != nil {
 		return err
 	}
@@ -49,7 +57,7 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 		return entities.ErrNoRecord
 	}
 
-	exists, err = uc.postRepo.Exists(postID)
+	exists, err = ruc.postRepo.Exists(postID)
 	if err != nil {
 		return err
 	}
@@ -57,7 +65,7 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 		return entities.ErrNoRecord
 	}
 
-	ownerID, err := uc.postRepo.GetPostOwner(postID)
+	ownerID, err := ruc.postRepo.GetPostOwner(postID)
 	if err != nil {
 		return err
 	}
@@ -68,13 +76,15 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 		if !form.Valid() {
 			return entities.ErrInvalidData
 		}
-		err := uc.commentRepo.InsertComment(postID, userID, form.Comment)
+		commentId, err := ruc.commentRepo.InsertComment(postID, userID, form.Comment)
 		if err != nil {
 			return err
 		}
-		err = uc.postReactionRepo.AddNotification(ownerID, postID, userID, "comment")
-		if err != nil {
-			return err
+		if ownerID != userID {
+			err = ruc.postReactionRepo.AddNotification(ownerID, postID, userID, "comment", &commentId)
+			if err != nil {
+				return err
+			}
 		}
 
 	} else if form.PostIsLike != "" {
@@ -88,18 +98,17 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 		}
 
 		var userReaction *entities.PostReaction
-		userReaction, err := uc.postReactionRepo.GetUserReaction(userID, postID) // Получите реакцию пользователя
+		userReaction, err := ruc.postReactionRepo.GetUserReaction(userID, postID) // Получите реакцию пользователя
 		if err != nil {
 			return err
 		}
 
 		if userReaction != nil && userReaction.IsLike == like {
-			err = uc.postReactionRepo.RemoveReaction(userID, postID)
+			err = ruc.postReactionRepo.RemoveReaction(userID, postID)
 			if err != nil {
 				return err
 			}
-			fmt.Println(action)
-			err = uc.postReactionRepo.RemoveNotification(ownerID, postID, userID, action)
+			err = ruc.postReactionRepo.RemoveNotification(ownerID, postID, userID, action)
 			if err != nil {
 				return err
 			}
@@ -107,9 +116,11 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 		} else {
 
 			if userReaction == nil {
-				err = uc.postReactionRepo.AddNotification(ownerID, postID, userID, action)
-				if err != nil {
-					return err
+				if ownerID != userID {
+					err = ruc.postReactionRepo.AddNotification(ownerID, postID, userID, action, nil)
+					if err != nil {
+						return err
+					}
 				}
 			} else if userReaction.IsLike != like {
 				var oldAction string
@@ -118,15 +129,16 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 				} else {
 					oldAction = "dislike"
 				}
-
-				err = uc.postReactionRepo.UpdateNotification(ownerID, postID, userID, oldAction, action)
-				if err != nil {
-					return err
+				if ownerID != userID {
+					err = ruc.postReactionRepo.UpdateNotification(ownerID, postID, userID, oldAction, action)
+					if err != nil {
+						return err
+					}
 				}
 
 			}
 
-			err = uc.postReactionRepo.AddReaction(userID, postID, like)
+			err = ruc.postReactionRepo.AddReaction(userID, postID, like)
 			if err != nil {
 				return err
 			}
@@ -135,7 +147,7 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 	} else if form.CommentIsLike != "" {
 		reaction := form.CommentIsLike == "true"
 
-		exists, err := uc.commentRepo.Exists(form.CommentID)
+		exists, err := ruc.commentRepo.Exists(form.CommentID)
 		if err != nil {
 			return err
 		}
@@ -143,19 +155,19 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 			return entities.ErrNoRecord
 		}
 
-		commentReaction, err := uc.commentReactionRepo.GetUserReaction(userID, form.CommentID)
+		commentReaction, err := ruc.commentReactionRepo.GetUserReaction(userID, form.CommentID)
 		if err != nil {
 			return err
 		}
 
 		if commentReaction != nil && reaction == commentReaction.IsLike {
 
-			err = uc.commentReactionRepo.RemoveReaction(userID, form.CommentID)
+			err = ruc.commentReactionRepo.RemoveReaction(userID, form.CommentID)
 			if err != nil {
 				return err
 			}
 		} else {
-			err = uc.commentReactionRepo.AddReaction(userID, form.CommentID, reaction)
+			err = ruc.commentReactionRepo.AddReaction(userID, form.CommentID, reaction)
 			if err != nil {
 				return err
 			}
@@ -163,4 +175,60 @@ func (uc *ReactionUseCase) UpdatePostReaction(userID, postID int, form *reaction
 	}
 
 	return nil
+}
+
+func (ruc *ReactionUseCase) CreateReport(userID, postID int, reason string) error {
+	exists, err := ruc.userRepo.Exists(userID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
+
+	exists, err = ruc.postRepo.Exists(postID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return entities.ErrNoRecord
+	}
+
+	err = ruc.reportRepo.CreateReport(userID, postID, reason)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ruc *ReactionUseCase) GetPostReport(postID int) (*entities.Report, error) {
+	report, err := ruc.reportRepo.GetPostReport(postID)
+	if err != nil {
+		return nil, err
+	}
+
+	return report, nil
+}
+
+func (ruc *ReactionUseCase) GetAllPaginatedPostReportsDTO(page, pageSize int, paginationURL string) (*ReportsDTO, error) {
+	// Получаем репорты для нужной страницы.
+	reports, err := ruc.reportRepo.GetAllPaginatedPostReports(page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	// Проверяем, есть ли следующая страница
+	hasNextPage := len(reports) > pageSize
+	// Если постов больше, чем pageSize, обрезаем список до pageSize
+	if hasNextPage {
+		reports = reports[:pageSize]
+	}
+
+	return &ReportsDTO{
+		Reports:       reports,
+		HasNextPage:   hasNextPage,
+		CurrentPage:   page,
+		PaginationURL: paginationURL,
+	}, nil
 }

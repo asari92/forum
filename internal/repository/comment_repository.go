@@ -25,19 +25,23 @@ func (r *CommentSqlite3) Exists(id int) (bool, error) {
 	return exists, err
 }
 
-func (c *CommentSqlite3) InsertComment(postID, userID int, content string) error {
+func (c *CommentSqlite3) InsertComment(postID, userID int, content string) (int, error) {
 	stmt := `INSERT INTO comments (post_id, user_id,content, created)
 	VALUES (?,?,?, datetime('now'))`
-	_, err := c.DB.Exec(stmt, postID, userID, content)
+	res, err := c.DB.Exec(stmt, postID, userID, content)
 	if err != nil {
-		return err
+		return 0, err
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
 	}
 
-	return nil
+	return int(id), nil
 }
 
 func (r *CommentSqlite3) GetUserCommentsByPosts(postId, userId int) ([]*entities.Comment, error) {
-	stmt := `SELECT c.id, post_id, username, content, c.created 
+	stmt := `SELECT c.id, post_id, c.user_id, username, content, c.created, role
 	FROM comments as c INNER JOIN users as u ON c.user_id = u.id
 	WHERE u.id = ? AND c.post_id = ?`
 	rows, err := r.DB.Query(stmt, userId, postId)
@@ -51,7 +55,7 @@ func (r *CommentSqlite3) GetUserCommentsByPosts(postId, userId int) ([]*entities
 		comment := &entities.Comment{}
 		var created string
 
-		if err := rows.Scan(&comment.ID, &comment.PostID, &comment.UserName, &comment.Content, &created); err != nil {
+		if err := rows.Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.UserName, &comment.Content, &created, &comment.UserRole); err != nil {
 			return nil, err
 		}
 
@@ -147,7 +151,7 @@ func (r *CommentSqlite3) GetComment(commentId int) (*entities.Comment, error) {
 	row := r.DB.QueryRow(stmt, commentId)
 	c := &entities.Comment{}
 
-	err := row.Scan(&c.ID, &c.PostID, &c.UserID,&c.Content)
+	err := row.Scan(&c.ID, &c.PostID, &c.UserID, &c.Content)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, entities.ErrNoRecord

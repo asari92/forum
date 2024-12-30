@@ -99,7 +99,7 @@ func (r *PostSqlite3) InsertPostWithCategories(title, content string, userID int
 	return int(postID), nil
 }
 
-func (r *PostSqlite3) UpdatePostWithImage(title, content string, postID int, filePaths []string) error {
+func (r *PostSqlite3) UpdatePostWithImage(title, content string, postID int, filePaths []string, categoryIDs []int) error {
 	// Начинаем транзакцию
 	tx, err := r.DB.Begin()
 	if err != nil {
@@ -122,6 +122,27 @@ func (r *PostSqlite3) UpdatePostWithImage(title, content string, postID int, fil
 		return err
 	}
 
+	stmt = `DELETE FROM post_categories
+		WHERE post_id = ?`
+
+	_, err = tx.Exec(stmt, postID)
+	if err != nil {
+		fmt.Println(true)
+		return nil
+	}
+
+	stmt = `INSERT INTO post_categories (category_id, post_id)
+	VALUES (?,?)`
+
+	for _, categoryId := range categoryIDs {
+		_, err := tx.Exec(stmt, categoryId, postID)
+		if err != nil {
+
+			fmt.Println(false)
+			return err
+		}
+	}
+
 	if len(filePaths) != 0 {
 		stmt = `INSERT INTO post_images (post_id, image_url) VALUES (?,?)`
 		for _, imageUrl := range filePaths {
@@ -142,7 +163,7 @@ func (r *PostSqlite3) UpdatePostWithImage(title, content string, postID int, fil
 }
 
 func (r *PostSqlite3) GetPost(postID int) (*entities.Post, error) {
-	stmt := `SELECT posts.id,title,username, posts.user_id, content, posts.created 
+	stmt := `SELECT posts.id,title,content,posts.created,is_approved,users.id,username 
 	FROM posts LEFT JOIN users ON posts.user_id = users.id
     WHERE posts.id = ?`
 
@@ -152,7 +173,7 @@ func (r *PostSqlite3) GetPost(postID int) (*entities.Post, error) {
 	var created string
 	var username sql.NullString
 
-	err := row.Scan(&p.ID, &p.Title, &username, &p.UserID, &p.Content, &created)
+	err := row.Scan(&p.ID, &p.Title, &p.Content, &created, &p.IsApproved, &p.UserID, &username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, entities.ErrNoRecord
@@ -176,6 +197,41 @@ func (r *PostSqlite3) GetPost(postID int) (*entities.Post, error) {
 	return p, nil
 }
 
+// func (r *PostSqlite3) GetUnapprovedPost(postID int) (*entities.Post, error) {
+// 	stmt := `SELECT posts.id,title,content,posts.created,is_approved,users.id,username
+// 	FROM posts LEFT JOIN users ON posts.user_id = users.id
+//     WHERE posts.id = ? AND is_approved = false`
+
+// 	row := r.DB.QueryRow(stmt, postID)
+
+// 	p := &entities.Post{}
+// 	var created string
+// 	var username sql.NullString
+
+// 	err := row.Scan(&p.ID, &p.Title, &p.Content, &created, &p.IsApproved, &p.UserID, &username)
+// 	if err != nil {
+// 		if errors.Is(err, sql.ErrNoRows) {
+// 			return nil, entities.ErrNoRecord
+// 		} else {
+// 			return nil, err
+// 		}
+// 	}
+
+// 	if username.Valid {
+// 		p.UserName = username.String
+// 	} else {
+// 		p.UserName = "Deleted User"
+// 	}
+
+// 	postTime, err := time.Parse("2006-01-02 15:04:05", created)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	p.Created = postTime.Format(time.RFC3339)
+
+// 	return p, nil
+// }
+
 // Получение постов по категориям с пагинацией
 func (r *PostSqlite3) GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error) {
 	placeholders := make([]string, len(categoryIDs))
@@ -191,7 +247,7 @@ func (r *PostSqlite3) GetPaginatedPostsByCategory(categoryIDs []int, page, pageS
         SELECT p.id, p.title, p.content, p.user_id, p.created 
         FROM posts p
         INNER JOIN post_categories pc ON p.id = pc.post_id
-        WHERE pc.category_id IN (%s)
+        WHERE pc.category_id IN (%s) AND is_approved = true
         GROUP BY p.id
         HAVING COUNT(DISTINCT pc.category_id) = ?
         ORDER BY p.created DESC
@@ -236,7 +292,7 @@ func (r *PostSqlite3) GetUserPaginatedPosts(userId, page, pageSize int) ([]*enti
 	offset := (page - 1) * pageSize
 
 	stmt := `SELECT id, title, content, user_id, created FROM posts
-	WHERE user_id = ?
+	WHERE user_id = ? AND is_approved = true
     ORDER BY id DESC
 	LIMIT ? OFFSET ?`
 
@@ -357,6 +413,7 @@ func (r *PostSqlite3) GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post
 	offset := (page - 1) * pageSize // Вычисляем смещение для текущей страницы
 
 	stmt := `SELECT id, title, content, user_id, created FROM posts
+			 WHERE is_approved = true
              ORDER BY created DESC
              LIMIT ? OFFSET ?`
 
@@ -392,11 +449,44 @@ func (r *PostSqlite3) GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post
 	return posts, nil
 }
 
-// Удаление поста
-func (r *PostSqlite3) DeletePost(postID int) error {
-	stmt := `DELETE FROM posts WHERE id = ?`
-	_, err := r.DB.Exec(stmt, postID)
-	return err
+func (r *PostSqlite3) GetAllPaginatedUnapprovedPosts(page, pageSize int) ([]*entities.Post, error) {
+	offset := (page - 1) * pageSize // Вычисляем смещение для текущей страницы
+
+	stmt := `SELECT id, title, content, user_id, created FROM posts
+			 WHERE is_approved = false
+             ORDER BY created DESC
+             LIMIT ? OFFSET ?`
+
+	rows, err := r.DB.Query(stmt, pageSize+1, offset) // Лимит на одну запись больше
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	posts := []*entities.Post{}
+	var created string
+
+	for rows.Next() {
+		p := &entities.Post{}
+		err = rows.Scan(&p.ID, &p.Title, &p.Content, &p.UserID, &created)
+		if err != nil {
+			return nil, err
+		}
+
+		postTime, err := time.Parse("2006-01-02 15:04:05", created)
+		if err != nil {
+			return nil, err
+		}
+		p.Created = postTime.Format(time.RFC3339)
+
+		posts = append(posts, p)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
 }
 
 func (r *PostSqlite3) GetImagesByPost(postID int) ([]*entities.Image, error) {
@@ -426,7 +516,15 @@ func (r *PostSqlite3) GetImagesByPost(postID int) ([]*entities.Image, error) {
 	return images, nil
 }
 
+func (r *PostSqlite3) ApprovePost(postID int) error {
+	stmt := "UPDATE posts SET is_approved = true WHERE id = ?"
+	_, err := r.DB.Exec(stmt, postID)
+	return err
+}
 
-
-
-
+// Удаление поста
+func (r *PostSqlite3) DeletePost(postID int) error {
+	stmt := `DELETE FROM posts WHERE id = ?`
+	_, err := r.DB.Exec(stmt, postID)
+	return err
+}

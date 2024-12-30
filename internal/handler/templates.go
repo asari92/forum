@@ -48,9 +48,14 @@ type templateData struct {
 	Flash           string
 	IsAuthenticated bool
 	User            *entities.User
+	Users           []*entities.User
+	Applicants      []*entities.ModeratorApplicant
 	ReactionData    *ReactionData
 	Header          string
 	Pagination      any
+	Role            string
+	Report          *entities.Report
+	Reports         []*entities.Report
 }
 
 func contains(s []int, e int) bool {

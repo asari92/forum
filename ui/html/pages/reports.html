@@ -1,0 +1,50 @@
+{{define "title"}}{{.Header}}{{end}}
+
+{{define "main"}}
+{{$CSRFToken := .CSRFToken}}
+
+    <h2>{{.Header}}</h2>
+    {{if .Reports}}
+     <table>
+        <tr>
+            <th>ID</th>
+            <th>Report from</th>
+            <th>Created</th>
+            <th>Reason</th>
+            <th>Link to post</th>
+            <th>Action</th>
+        </tr>
+        {{range .Reports}}
+        <tr>
+            <td>#{{.ID}}</td>
+            <td>{{.ReporterName}}</td>
+            <td><time class="timezone" data-time="{{.Created}}"></time></td>
+            <td>#{{.Reason}}</td>
+            <td><a href='/post/view/{{.PostID}}'>{{.PostID}}</a></td>
+            <td>
+                  <!-- Форма для принятия репорта -->
+                  <form action="/report/accept" method="POST" style="display:inline;">
+                    <input type="hidden" name="postId" value="{{.PostID}}">
+                    <input type="hidden" name="token" value="{{$CSRFToken}}">
+                    <button type="submit">Accept</button>
+                </form>
+                <!-- Форма для отклонения репорта -->
+                <form action="/report/reject" method="POST" style="display:inline;">
+                    <input type="hidden" name="reporter_id" value="{{.UserID}}">
+                    <input type="hidden" name="postId" value="{{.PostID}}">
+                    <input type="hidden" name="token" value="{{$CSRFToken}}">
+                    <button type="submit">Reject</button>
+                </form>
+
+            </td>
+
+        </tr>
+        {{end}}
+    </table>
+    {{else}}
+        <p>There's nothing to see here... yet!</p>
+    {{end}}
+
+    <!-- Включаем частичный шаблон пагинации -->
+    {{template "pagination" .}}
+{{end}}

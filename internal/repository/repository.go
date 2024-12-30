@@ -8,27 +8,41 @@ import (
 
 type UserRepository interface {
 	Exists(id int) (bool, error)
-	Insert(username, email, password string) (int, error)
-	OauthAuthenticate(email string) (int, error)
-	Authenticate(email, password string) (int, error)
+	Insert(username, email, password, role string) (int, error)
+	OauthAuthenticate(email string) (*entities.User, error)
+	Authenticate(email, password string) (*entities.User, error)
 	Get(id int) (*entities.User, error)
 	UpdatePassword(id int, currentPassword, newPassword string) error
+	InsertModerationRequest(userId int, reason string) error
+	ExistsModerationRequest(userId int) (bool, error)
+	ListModeratorApplicants() ([]*entities.ModeratorApplicant, error)
+	GetModerators() ([]*entities.User, error)
+	DeleteModerator(userId int) error
+	ApproveModeratorRequest(userId int) error
+	DeleteModerationRequest(userId int) error
+
 }
 
 type PostRepository interface {
 	GetPostOwner(postID int) (int, error)
 	Exists(id int) (bool, error)
 	InsertPostWithCategories(title, content string, userID int, categoryIDs []int, filePaths []string) (int, error)
+
 	GetPost(postID int) (*entities.Post, error)
+	// GetUnapprovedPost(postID int) (*entities.Post, error)
+
 	GetImagesByPost(postID int) ([]*entities.Image, error)
 	GetPaginatedPostsByCategory(categoryIDs []int, page, pageSize int) ([]*entities.Post, error)
 	GetUserCommentedPosts(userId, page, pageSize int) ([]*entities.Post, error)
 	GetUserPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
 	GetUserLikedPaginatedPosts(userID, page, pageSize int) ([]*entities.Post, error)
+
 	GetAllPaginatedPosts(page, pageSize int) ([]*entities.Post, error)
+	GetAllPaginatedUnapprovedPosts(page, pageSize int) ([]*entities.Post, error)
+
+	ApprovePost(postID int) error
 	DeletePost(postID int) error
-	UpdatePostWithImage(title, content string, postID int, filePaths []string) error
-	
+	UpdatePostWithImage(title, content string, postID int, filePaths []string, categoryIDs []int) error
 }
 
 type PostReactionRepository interface {
@@ -36,16 +50,23 @@ type PostReactionRepository interface {
 	RemoveReaction(userID, postID int) error
 	GetUserReaction(userID, postID int) (*entities.PostReaction, error)
 	GetReactionsCount(postID int) (likes int, dislikes int, err error)
-	AddNotification(userID, postID, triggerUserID int, actionType string) error
+	AddNotification(userID, postID, triggerUserID int, actionType string, commentID *int) error
 	RemoveNotification(userID, postID, triggerUserID int, actionType string) error
 	UpdateNotification(userID, postID, triggerUserID int, oldAction, newAction string) error
 	GetNotifications(userID int) ([]*entities.Notification, error)
-	UpdateNotificationStatus(userID int) error
+	UpdateNotificationTime(commentID int) error
+}
+
+type ReportRepository interface {
+	CreateReport(userID, postID int, reason string) error
+	GetPostReport(postID int) (*entities.Report, error)
+	GetAllPaginatedPostReports(page, pageSize int) ([]*entities.Report, error)
+	DeleteReport(userID, postID int) error
 }
 
 type CommentRepository interface {
 	Exists(id int) (bool, error)
-	InsertComment(postID, userID int, content string) error
+	InsertComment(postID, userID int, content string) (int, error)
 	GetComments(postID int) ([]*entities.Comment, error)
 	GetUserCommentsByPosts(postId, userId int) ([]*entities.Comment, error)
 	UpdateComment(commentID int, content string) error
@@ -69,6 +90,7 @@ type CategoryRepository interface {
 	Delete(categoryId int) error
 	GetCategoriesForPost(postId int) ([]*entities.Category, error)
 	DeleteCategoriesForPost(postId int) error
+	ExistName(name string) (bool, error)
 }
 
 type Repository struct {
@@ -78,6 +100,7 @@ type Repository struct {
 	CommentRepository
 	CommentReactionRepository
 	CategoryRepository
+	ReportRepository
 }
 
 func NewRepository(db *sql.DB) *Repository {
@@ -88,5 +111,6 @@ func NewRepository(db *sql.DB) *Repository {
 		CommentRepository:         NewCommentSqlite3(db),
 		CommentReactionRepository: NewCommentReactionSqlite3(db),
 		CategoryRepository:        NewCategorySqlite3(db),
+		ReportRepository:          NewReportSqlite3(db),
 	}
 }

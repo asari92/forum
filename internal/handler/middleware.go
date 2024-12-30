@@ -3,12 +3,12 @@ package handler
 import (
 	"context"
 	"fmt"
+	"forum/internal/entities"
+	"forum/internal/session"
 	"net/http"
 	"runtime/debug"
 	"sync"
 	"time"
-
-	"forum/internal/session"
 )
 
 // Middleware type for handling HTTP requests
@@ -207,6 +207,44 @@ func (app *Application) requireAuthentication(next http.Handler) http.Handler {
 	})
 }
 
+func (app *Application) requireModeration(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sess := app.SessionFromContext(r)
+		userRole, ok := sess.Get(UserRoleSessionKey).(string)
+		if !ok {
+			app.Logger.Error("cannot extract user role from session in requireModeration")
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			return
+		}
+		if !(userRole == entities.RoleModerator || userRole == entities.RoleAdmin) {
+			app.Logger.Warn("user role not moderator or admin in requireModeration")
+			app.render(w, http.StatusForbidden, Errorpage, nil)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *Application) requireAdministration(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sess := app.SessionFromContext(r)
+		userRole, ok := sess.Get(UserRoleSessionKey).(string)
+		if !ok {
+			app.Logger.Error("cannot extract user role from session in requireAdministration")
+			app.render(w, http.StatusInternalServerError, Errorpage, nil)
+			return
+		}
+		if !(userRole == entities.RoleAdmin) {
+			app.Logger.Warn("user role not moderator or admin in requireAdministration")
+			app.render(w, http.StatusForbidden, Errorpage, nil)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 type rateLimiter struct {
 	visitors      sync.Map
 	rate          int           // Количество запросов
@@ -231,7 +269,7 @@ func NewRateLimiter(rate int, interval time.Duration) *rateLimiter {
 // Middleware реализует ограничение скорости
 func (app *Application) rateLimiting(next http.Handler) http.Handler {
 	// Создаем Rate Limiter
-	rl := NewRateLimiter(60, 1*time.Minute) // 30 запросов в минуту
+	rl := NewRateLimiter(120, 1*time.Minute) // 60 запросов в минуту
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := r.RemoteAddr
@@ -263,4 +301,13 @@ func (rl *rateLimiter) cleanupVisitors() {
 			return true
 		})
 	}
+}
+
+// Middleware для добавления заголовков кэширования
+func cacheControlMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Устанавливаем заголовки для кэширования
+		w.Header().Set("Cache-Control", "public, max-age=10800") // Кэширование на 3 часа
+		next.ServeHTTP(w, r)
+	})
 }

@@ -1,0 +1,28 @@
+{{define "title"}}Moderation request{{end}}
+
+{{define "main"}}
+<body>
+
+    <h1>Apply to be a Moderator</h1>
+   
+
+    <form action="/moderation-application" method="POST"> 
+        <input type="hidden" name="token" value="{{.CSRFToken}}">
+        <label for="reason">Reason for applying:</label><br>
+        {{if .Form}}
+        {{with .Form.FieldErrors.user}}
+        <label class='error'>{{.}}</label>
+        {{end}}
+        {{end}}
+        {{if .Form}}
+        {{with .Form.FieldErrors.reason}}
+            <label class='error'>{{.}}</label>
+        {{end}}
+        {{end}}
+        <textarea id="reason" name="reason" rows="4" cols="50" required>{{if .Form}}{{.Form.Reason}}{{end}}</textarea><br><br>
+
+        <input type="submit" value="Submit Application">
+    </form>
+
+</body>
+{{end}}

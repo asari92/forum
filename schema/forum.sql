@@ -13,11 +13,12 @@ CREATE TABLE IF NOT EXISTS notifications (
     user_id INTEGER,          -- Владелец поста, который получает уведомление
     post_id INTEGER,          -- ID поста
     action_type TEXT,         -- 'like', 'dislike', или 'comment'
+    comment_id INTEGER,
     trigger_user_id INTEGER,  -- ID пользователя, который вызвал уведомление
-    status TEXT DEFAULT 'unread', -- unread/read
     created TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
     FOREIGN KEY (trigger_user_id) REFERENCES users(id) ON DELETE CASCADE
 
 );
@@ -57,12 +58,15 @@ CREATE TABLE IF NOT EXISTS comments(
       ON UPDATE No action
 );
 
+CREATE INDEX IF NOT EXISTS comments_idx_post_id ON comments(post_id);
+
+
 CREATE TABLE IF NOT EXISTS post_categories(
   category_id INTEGER NOT NULL,
   post_id INTEGER NOT NULL,
   PRIMARY KEY(post_id, category_id),
   CONSTRAINT categories_post_categories
-    FOREIGN KEY (category_id) REFERENCES categories (id) ON DELETE No action
+    FOREIGN KEY (category_id) REFERENCES categories (id) ON DELETE Cascade
       ON UPDATE No action,
   CONSTRAINT posts_post_categories
     FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE Cascade
@@ -88,6 +92,7 @@ CREATE TABLE IF NOT EXISTS posts(
   content TEXT NOT NULL,
   user_id INTEGER NOT NULL,
   created TEXT NOT NULL,
+  is_approved BOOLEAN DEFAULT FALSE, -- для модерации
   CONSTRAINT users_posts
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE No action
       ON UPDATE No action
@@ -98,8 +103,35 @@ CREATE TABLE IF NOT EXISTS users(
   username TEXT NOT NULL,
   email TEXT NOT NULL,
   password TEXT NOT NULL,
+  role TEXT NOT NULL,
   created TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS moderation_requests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  user_id INTEGER NOT NULL,
+  created TEXT NOT NULL, 
+  reason TEXT NOT NULL, 
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS users_uc_email ON users(email);
 CREATE UNIQUE INDEX IF NOT EXISTS users_uc_username ON users(username);
+
+
+CREATE TABLE IF NOT EXISTS reports(
+  id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  post_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  reason TEXT NOT NULL,
+  created TEXT NOT NULL,
+  CONSTRAINT posts_comments
+  FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE
+    ON UPDATE No action
+  CONSTRAINT users_posts
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE No action
+      ON UPDATE No action
+);
+
+

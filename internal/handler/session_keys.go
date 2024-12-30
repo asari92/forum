@@ -4,6 +4,7 @@ package handler
 const (
 	FlashSessionKey                  = "flash"
 	AuthUserIDSessionKey             = "authenticated_userID"
+	UserRoleSessionKey               = "user_role"
 	CsrfTokenSessionKey              = "token"
 	RedirectPathAfterLoginSessionKey = "redirect_path_after_login"
 	ReactionFormSessionKey           = "reaction_form"

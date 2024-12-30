@@ -751,3 +751,175 @@ h1 a:hover {
 .error-message {
     color: red;
 }
+
+/* Общие стили для таблицы */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif; /* Четкий стандартный шрифт */
+    background-color: #ffffff; /* Белый фон для лучшей контрастности */
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 2px solid #ddd;
+    font-size: 16px;
+}
+
+th {
+    background-color: #333333; /* Очень темный фон */
+    color: #ffffff; /* Белый текст для контраста */
+    font-weight: bold;
+}
+
+td {
+    color: #000000; /* Черный текст */
+    background-color: #f9f9f9; /* Светло-серый фон */
+}
+
+/* Стиль для столбца Action */
+.action-column {
+    font-weight: bold;
+    color: #000000; /* Черный текст */
+    background-color: #e0f7fa; /* Очень светло-голубой фон */
+    padding: 10px;
+    border-radius: 4px;
+}
+
+/* Стиль для столбца Triggered By */
+.triggered-by-column {
+    color: #000000; /* Черный текст */
+    font-style: normal;
+    font-weight: bold;
+}
+
+/* Стили для ссылок */
+a {
+    color: #0000ff; /* Чисто синий цвет */
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: #00008b; /* Темно-синий цвет при наведении */
+}
+
+/* Стили для текста времени */
+time {
+    color: #000000; /* Черный текст */
+    font-size: 16px;
+}
+
+/* Убираем любые эффекты размытия или прозрачности */
+body, table, th, td, a, time {
+    opacity: 1; /* Полная непрозрачность */
+    filter: none; /* Убираем возможные фильтры */
+    text-shadow: none; /* Убираем тени */
+}
+
+/* Увеличение четкости текста */
+* {
+    -webkit-font-smoothing: antialiased; /* Сглаживание текста */
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility; /* Оптимизация рендеринга */
+}
+
+
+
+
+
+/* Общий стиль для кнопок */
+.btn {
+    background-color: #6d4c41; /* Средний коричневый цвет */
+    color: white;
+    border: 2px solid #5d4037; /* Темно-коричневый для границы */
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s ease-in-out;
+}
+
+/* Кнопка создания */
+.btn-create {
+    background-color: #8d6e63; /* Светло-коричневый */
+}
+
+.btn-create:hover {
+    background-color: #3e2723; /* Темно-коричневый при наведении */
+    transform: scale(1.05); /* Увеличение кнопки при наведении */
+}
+
+/* Кнопка удаления */
+.btn-delete {
+    background-color: #3e2723; /* Темный рыжевато-коричневый */
+}
+
+.btn-delete:hover {
+    background-color: #8d6e63; /* Светлый коричневый при наведении */
+    transform: scale(1.05); /* Увеличение кнопки при наведении */
+}
+
+/* Добавить эффект для кнопок при наведении */
+.btn:hover {
+    transform: scale(1.1); /* Увеличение кнопки на 10% */
+}
+
+/* Фон страницы */
+body {
+    background-color: #3e2723; /* Темно-коричневый фон страницы */
+    color: white; /* Белый текст для контраста */
+}
+
+
+
+.social-login {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.social-login a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-google {
+    background-color: #db4437; /* Red for Google */
+    border: 1px solid #db4437;
+}
+
+.btn-google img {
+    width: 20px;
+    height: 20px;
+}
+
+.btn-google:hover {
+    background-color: #c33d2f;
+}
+
+.btn-github {
+    background-color: #333333; /* Dark gray for GitHub */
+    border: 1px solid #333333;
+}
+
+.btn-github img {
+    width: 20px;
+    height: 20px;
+}
+
+.btn-github:hover {
+    background-color: #242424;
+}
