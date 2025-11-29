@@ -61,9 +61,3 @@ This project is Dockerized for easy deployment. Follow the steps below to run th
    ```bash
    make stop
    ```
-
----
-
-## 👨‍💻 Authors
-- [adulmaev](https://01.alem.school/git/adulmaev)
-- [dkurmant](https://01.alem.school/git/dkurmant)
