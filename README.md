@@ -2,6 +2,8 @@
 
 Welcome to the **Web Forum Project**! This project aims to create an interactive web forum that enables users to communicate, share thoughts, and engage in discussions.
 
+Project docs and implementation notes: https://zread.ai/asari92/forum
+
 ## 🚀 Features
 
 - **🗣️ User Communication**: Facilitate discussions between users through posts and comments.
