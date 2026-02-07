@@ -9,7 +9,7 @@ The project demonstrates clean layered architecture, server-side rendering, auth
 
 ## What This Project Demonstrates
 
-This project was built as a **portfolio backend application** to showcase practical Go development skills and architectural decisions commonly used in production systems.
+This project showcases practical Go backend development and architectural decisions commonly used in production systems.
 
 It demonstrates:
 
@@ -145,12 +145,4 @@ make stop
 
 ## Notes
 
-This project is part of a personal backend portfolio.
-
-The main focus was placed on:
-- clear and maintainable architecture
-- explicit dependency management
-- separation of business logic from infrastructure
-- realistic backend workflows
-
-The technology choices were made intentionally to emphasize core Go concepts and backend fundamentals rather than framework-specific abstractions.
+Technology choices were made intentionally to emphasize core Go concepts: explicit dependency management, clear separation of concerns, and predictable HTTP and data-access flows.
