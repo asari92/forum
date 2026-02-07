@@ -1,65 +1,156 @@
-# 🌐 Web Forum Project
+# Web Forum (Go)
 
-Welcome to the **Web Forum Project**! This project aims to create an interactive web forum that enables users to communicate, share thoughts, and engage in discussions.
+📄 [Русская версия README](README.ru.md)
 
-Project docs and implementation notes: https://zread.ai/asari92/forum
-
-## 🚀 Features
-
-- **🗣️ User Communication**: Facilitate discussions between users through posts and comments.
-- **📂 Post Categories**: Associate categories with your posts for better organization.
-- **👍👎 Likes and Dislikes**: Users can like or dislike posts and comments.
-- **🔍 Post Filtering**: Easily filter posts by categories, created posts, and liked posts.
+A feature-rich web forum application built with Go.  
+The project demonstrates clean layered architecture, server-side rendering, authentication, moderation workflows, and secure HTTP handling using the Go standard library with minimal external dependencies.
 
 ---
 
-## 📦 Running the Server Locally (Without Docker)
+## What This Project Demonstrates
 
-1. **Install Go**: Ensure you have Go(v.1.22) installed on your machine. You can download it from the [official Go website](https://golang.org/dl/).
+This project was built as a **portfolio backend application** to showcase practical Go development skills and architectural decisions commonly used in production systems.
 
-2. **Clone the Repository**: Use Git to clone the project repository to your local machine.
-   ```bash
-   git clone https://github.com/asari92/forum
-   cd forum
-   ```
-3. **Initialize project**:
-   Execute the following command to initialize database and create TLS certificates:
-   ```bash
-   make init
-   ```
+It demonstrates:
 
-4. **Run the Server**:
-   Execute the following command to start the server locally:
-   ```bash
-   go run ./cmd/web/main.go
-   ```
-
-   The server will be available at [https://localhost:4000](https://localhost:4000).
+- Layered architecture with clear separation of concerns (handler, service, repository)
+- Clean dependency injection without frameworks
+- Server-side rendering using Go `html/template`
+- Authentication and authorization with session management
+- OAuth 2.0 integration (Google and GitHub)
+- Moderation and approval workflows
+- SQLite database design with foreign key constraints
+- HTTPS setup with TLS
+- Dockerized deployment workflow
 
 ---
 
-## 🐳 Docker Integration
+## Core Features
 
-This project is Dockerized for easy deployment. Follow the steps below to run the server using Docker.
+- User registration and authentication
+- OAuth login via Google and GitHub
+- Role system: user, moderator, administrator
+- Post creation with categories and optional images
+- Threaded comments
+- Like and dislike reactions
+- Post approval workflow
+- Content reporting and moderation
+- Notification system
+- Secure sessions and CSRF protection
 
-### Running the Server with Docker
+---
 
-1. **Build the Docker Image**:
-   Run the following command to build the Docker image:
-   ```bash
-   make build
-   ```
+## Architecture Overview
 
-2. **Run the Docker Container**:
-   Start the server inside a Docker container with:
-   ```bash
-   make run
-   ```
+The application follows a layered architecture pattern:
 
-   The server will be available at [https://localhost:4000](https://localhost:4000).
+- **Handler layer**: HTTP request handling, routing, and response rendering
+- **Service layer**: business logic and use cases
+- **Repository layer**: database access abstraction
+- **Entities**: domain models
+- **UI layer**: embedded HTML templates and static assets
 
-3. **Stop the Docker Container**:
-   If you need to stop the running container, use:
-   ```bash
-   make stop
-   ```
+Each layer communicates through interfaces, allowing independent testing and future replacement of implementations.
+
+---
+
+## Project Structure
+
+```
+cmd/          – application entry point
+internal/     – core application logic
+  handler/    – HTTP handlers and routing
+  service/    – business logic
+  repository/ – data access
+  entities/   – domain models
+  session/    – session management
+pkg/          – reusable packages and configuration
+ui/           – HTML templates and static assets
+schema/       – database schema
+```
+
+This structure follows Go conventions and keeps implementation details encapsulated inside the `internal` package.
+
+---
+
+## Technology Stack
+
+- Go 1.22
+- SQLite
+- `net/http`
+- `html/template`
+- OAuth 2.0
+- Docker
+- TLS (HTTPS)
+
+---
+
+## Running Locally
+
+### Requirements
+
+- Go 1.22+
+- Git
+- SQLite
+- OpenSSL
+
+### Setup
+
+Clone the repository:
+
+```bash
+git clone https://github.com/asari92/forum
+cd forum
+```
+
+Initialize database and TLS certificates:
+
+```bash
+make init
+```
+
+Run the server:
+
+```bash
+go run ./cmd/web/main.go
+```
+
+The application will be available at:
+
+https://localhost:4000
+
+---
+
+## Running with Docker
+
+Build the image:
+
+```bash
+make build
+```
+
+Run the container:
+
+```bash
+make run
+```
+
+Stop the container:
+
+```bash
+make stop
+```
+
+---
+
+## Notes
+
+This project is part of a personal backend portfolio.
+
+The main focus was placed on:
+- clear and maintainable architecture
+- explicit dependency management
+- separation of business logic from infrastructure
+- realistic backend workflows
+
+The technology choices were made intentionally to emphasize core Go concepts and backend fundamentals rather than framework-specific abstractions.
